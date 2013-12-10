@@ -1,0 +1,320 @@
+#ifndef INCLUDED_ORANG_MERGER_H
+#define INCLUDED_ORANG_MERGER_H
+
+#include <cstddef>
+#include <vector>
+#include <memory>
+#include <iterator>
+#include <algorithm>
+#include <functional>
+#include <utility>
+
+#include <boost/foreach.hpp>
+#include <boost/ptr_container/ptr_vector.hpp>
+
+#include <orang/base.h>
+#include <orang/table.h>
+#include <orang/task.h>
+#include <orang/marginalizer.h>
+
+namespace orang {
+
+template<typename T>
+class TableMerger {
+public:
+  typedef T task_type; ///< Task
+  typedef typename task_type::table_type table_type;
+  typedef typename task_type::table_smartptr table_smartptr;
+  typedef typename task_type::table_vector table_vector;
+  typedef typename task_type::marginalizer_type marginalizer_type;
+private:
+  const task_type& task_;
+
+  static void constraints() {
+    DomIndex (T::*ds)(Var) const = &T::domSize;
+    typedef typename T::value_type value_type;
+    value_type (*cmb)(const value_type&, const value_type&) = &T::combine;
+    static_cast<void>(ds);
+    static_cast<void>(cmb);
+  }
+
+public:
+  TableMerger(const task_type& task) : task_(task) {
+    void (*cs)() = &TableMerger::constraints;
+    static_cast<void>(cs);
+  }
+
+  template<typename TblIter>
+  table_smartptr operator()(
+      const VarVector& outScope,
+      const TblIter& tablesBegin,
+      const TblIter& tablesEnd,
+      marginalizer_type& marginalizer) const;
+};
+
+
+
+namespace internal {
+
+template<typename Tbl>
+struct TableVarIter {
+  typedef typename std::vector<TableVar>::const_iterator var_iterator;
+  typedef typename Tbl::const_iterator tbl_iterator;
+
+  var_iterator varIter;
+  var_iterator varEnd;
+  tbl_iterator* tableIter;
+
+  TableVarIter(var_iterator varIter0, var_iterator varEnd0, tbl_iterator* tableIter0) :
+    varIter(varIter0), varEnd(varEnd0), tableIter(tableIter0) {}
+};
+
+template<typename Iter>
+class StepIter {
+private:
+  Iter* iter_;
+  std::size_t stepSize_;
+public:
+  StepIter(Iter* iter, std::size_t stepSize) : iter_(iter), stepSize_(stepSize) {}
+  void operator+=(int n) {
+    *iter_ += n * stepSize_;
+  }
+};
+
+template<typename T>
+class GrayVar {
+public:
+  typedef typename T::table_type table_type;
+  typedef typename table_type::const_iterator table_const_iterator;
+  typedef std::vector<StepIter<table_const_iterator> > tableiter_vector;
+
+private:
+
+  DomIndex domIndex_;
+  int dir_;
+  const DomIndex domSize_;
+
+  tableiter_vector inIters_;
+  StepIter<std::size_t> outIndex_;
+
+public:
+  GrayVar(
+      DomIndex domSize,
+      std::size_t* outIndex,
+      std::size_t outDelta) :
+        domIndex_(0),
+        dir_(1),
+        domSize_(domSize),
+        inIters_(),
+        outIndex_(outIndex, outDelta) {}
+
+  void addInIter(table_const_iterator* inIter, std::size_t stepSize) {
+    inIters_.push_back(StepIter<table_const_iterator>(inIter, stepSize));
+  }
+
+  bool advance() {
+    DomIndex nextDomIndex = domIndex_ + dir_;
+
+    // nextDomIndex is unsigned, so things >= domSize_
+    // are precisely the invalid values, regardless of dir_
+    if (nextDomIndex < domSize_) {
+      BOOST_FOREACH( StepIter<typename table_type::const_iterator>& inIter, inIters_ ) {
+        inIter += dir_;
+      }
+      outIndex_ += dir_;
+      domIndex_ = nextDomIndex;
+      return true;
+
+    } else {
+      dir_ = -dir_;
+      return false;
+    }
+  }
+};
+
+}
+
+
+
+template<typename T>
+template<typename TblIter>
+typename TableMerger<T>::table_smartptr
+TableMerger<T>::operator ()(
+    const VarVector& outScope,
+    const TblIter& tablesBegin,
+    const TblIter& tablesEnd,
+    typename TableMerger<T>::marginalizer_type& marginalize) const {
+
+  //===========================================================================================================
+  // typedef and using declarations
+
+  using std::size_t;
+  using std::auto_ptr;
+  using std::vector;
+  using std::find_if;
+  using std::mem_fun_ref;
+  using std::distance;
+  using std::make_pair;
+
+  using boost::ptr_vector;
+
+  using internal::GrayVar;
+  using internal::TableVarIter;
+
+  typedef typename TableMerger<T>::table_type table_type;
+  typedef typename table_type::const_iterator table_const_iterator;
+  typedef typename table_type::smartptr table_smartptr;
+
+  typedef typename vector<TableVar>::const_iterator tablevar_const_iterator;
+
+  typedef TableVarIter<table_type> tablevariter_type;
+  typedef vector<tablevariter_type> tablevariter_vector;
+
+  typedef ptr_vector<GrayVar<T> > grayvar_ptrvector;
+
+  //===========================================================================================================
+  //
+  //  Validate input
+  //
+
+  size_t numTables = distance(tablesBegin, tablesEnd);
+  if (numTables == 0) {
+    table_smartptr t( new table_type(VarVector(), DomIndexVector()) );
+    (*t)[0] = task_type::combineIdentity();
+    return t;
+  }
+
+  BOOST_FOREACH( const table_type& t, make_pair(tablesBegin, tablesEnd) ) {
+    BOOST_FOREACH( const TableVar& v, t.vars() ) {
+      if (v.domSize != task_.domSize(v.index)) {
+        throw InvalidArgumentException("Table and Task domain sizes don't match");
+      }
+    }
+  }
+
+  //===========================================================================================================
+  //
+  //  Variables needed throughout this function
+  //
+
+  // inTable iterators.  For each inTable element, there will be an iterator pointer (with corresponding step
+  // sizes) for each of its variables.  These pointers (for a single input table) all refer to the same
+  // iterator which must exist somewhere.  That somewhere is here.
+  vector<table_const_iterator> inTableIters;
+  inTableIters.reserve(numTables);
+
+  // output table, domain sizes, and index.
+  DomIndexVector outDomSizes;
+  outDomSizes.reserve(outScope.size());
+  BOOST_FOREACH( Var var, outScope ) {
+    outDomSizes.push_back(task_.domSize(var));
+  }
+  table_smartptr outTable( new table_type(outScope, outDomSizes));
+  table_type& outTableRef = *outTable.get();
+  size_t outIndex = 0;
+
+  // marginalization table scope, domain sizes and index.  These are built during Phase 1
+  VarVector mrgScope;
+  DomIndexVector mrgDomSizes;
+  size_t mrgIndex = 0;
+
+  // Gray-counting vectors.  One for variables in outScope, one for all other variables appearing in inTables.
+  grayvar_ptrvector outGrayVars(outScope.size());
+  grayvar_ptrvector mrgGrayVars(0);
+
+  //===========================================================================================================
+  //
+  //  Phase 1: construct the GrayVar vectors for iterating over output variables and
+  //           marginalized-out input variables.
+  //
+
+  // First pass: initialize TableVarIter vector and determine first (ie. lowest-index) variable to process.
+  Var nextVar = outScope.empty() ? Var(-1) : outScope.front();
+  tablevariter_vector tableVarIters;
+  BOOST_FOREACH( const table_type& t, make_pair(tablesBegin, tablesEnd) ) {
+    inTableIters.push_back(t.begin());
+    tableVarIters.push_back(tablevariter_type(t.vars().begin(), t.vars().end(), &inTableIters.back()));
+
+    Var tableVar0 = t.vars().empty() ? Var(-1) : t.var(0).index;
+    nextVar = tableVar0 < nextVar ? tableVar0 : nextVar;
+  }
+
+  // Now iterate over all variables in all tables (input and output) and build GrayVar vectors
+  tablevar_const_iterator outVarIter = outTableRef.vars().begin();
+  tablevar_const_iterator outVarEnd = outTableRef.vars().end();
+  size_t mrgDelta = 1;
+  for (bool done = false; !done; ) {
+    done = true;
+    Var currentVar = nextVar;
+    GrayVar<T>* grayVar;
+
+    // Determine which GrayVar vector is to receive the new GrayVar.
+    if (outVarIter != outVarEnd && currentVar == outVarIter->index) {
+      outGrayVars.push_back(new GrayVar<T>(outVarIter->domSize, &outIndex, outVarIter->stepSize));
+      grayVar = &outGrayVars.back();
+      ++outVarIter;
+    } else {
+      DomIndex domSize = task_.domSize(currentVar);
+      mrgScope.push_back(currentVar);
+      mrgDomSizes.push_back(domSize);
+      mrgGrayVars.push_back(new GrayVar<T>(domSize, &mrgIndex, mrgDelta));
+      grayVar = &mrgGrayVars.back();
+      mrgDelta *= domSize;
+    }
+
+    if (outVarIter != outVarEnd) {
+      nextVar = outVarIter->index;
+      done = false;
+    } else {
+      nextVar = Var(-1);
+    }
+
+    // Add all inTableIters (with appropriate step sizes) for tables containing currentVar to grayVar
+    BOOST_FOREACH( tablevariter_type& tvi, tableVarIters ) {
+      if (tvi.varIter != tvi.varEnd && tvi.varIter->index == currentVar) {
+        grayVar->addInIter(tvi.tableIter, tvi.varIter->stepSize);
+        ++tvi.varIter;
+      }
+
+      if (tvi.varIter != tvi.varEnd) {
+        nextVar = nextVar < tvi.varIter->index ? nextVar : tvi.varIter->index;
+        done = false;
+      }
+    }
+  }
+
+  //===========================================================================================================
+  //
+  //  Phase 2: Loop through output table entries using outGrayVars.  At each step, loop through variables
+  //           to be marginalized out using mrgGrayVars, combining entries from all input tables.
+  //
+
+  // construct table for combining input table values.  Scope is variables to be marginalized out.
+  table_type mrgTable((mrgScope), mrgDomSizes);
+
+  // now loop over output variables
+  do {
+
+    // build table of marginalized-out variable values for current setting of output variables
+    do {
+      mrgTable[mrgIndex] = *inTableIters.front();
+      BOOST_FOREACH( const table_const_iterator& tblIt, make_pair(inTableIters.begin() + 1, inTableIters.end()) ) {
+        mrgTable[mrgIndex] = task_type::combine(mrgTable[mrgIndex], *tblIt);
+      }
+    } while (find_if(mrgGrayVars.begin(), mrgGrayVars.end(), mem_fun_ref(&GrayVar<T>::advance)) != mrgGrayVars.end());
+
+    outTableRef[outIndex] = marginalize(outIndex, mrgTable);
+
+    // loop condition: GrayVar<T>::advance returns true iff its value changed.  Continue until no value changes
+  } while (find_if(outGrayVars.begin(), outGrayVars.end(), mem_fun_ref(&GrayVar<T>::advance)) != outGrayVars.end());
+
+  //===========================================================================================================
+  //
+  //  Done!
+  //
+  return outTable;
+}
+
+}
+
+#endif
