@@ -240,3 +240,25 @@ void sample_ising(
     pairMrgData, pairMrgRows, pairMrgCols, pairData, pairRows, pairCols);
 }
 
+void sample_qubo(
+  double* qData, int qRows, int qCols,
+  int* voData, int voLen,
+  double maxComplexity, int numSamples, bool marginals, double beta, int rngSeed,
+  double* logPf,
+  int** samplesData, int* samplesRows, int* samplesCols,
+  double** singleMrgData, int* singleMrgLen,
+  double** pairMrgData, int* pairMrgRows, int* pairMrgCols,
+  int** pairData, int* pairRows, int* pairCols) {
+
+  boost::mt19937 rngEngine(randomSeed(rngSeed));
+  Rng rng(rngEngine, boost::uniform_01<>());
+
+  int minVars = max(qRows, qCols);
+  vector<Table<double>::smartptr> tables = quboTables(qRows, qCols, qData, beta);
+  SampleTask task(make_indirect_iterator(tables.begin()), make_indirect_iterator(tables.end()), rng, minVars);
+
+  sample(task, 0, voData, voLen, maxComplexity, numSamples, marginals,
+    logPf, samplesData, samplesRows, samplesCols, singleMrgData, singleMrgLen,
+    pairMrgData, pairMrgRows, pairMrgCols, pairData, pairRows, pairCols);
+}
+
