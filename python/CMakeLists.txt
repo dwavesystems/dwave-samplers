@@ -2,7 +2,10 @@ set(SWIG_WRAPPER orang_wrap.cpp)
 set(SWIG_WRAPPER_PY orang.py)
 set(SWIG_WRAPPER_PYC orang.pyc)
 
+find_package(Boost 1.37 REQUIRED)
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/src)
+add_definitions(-DBOOST_ALL_NO_LIB)
 
 add_custom_command(OUTPUT ${SWIG_WRAPPER} ${SWIG_WRAPPER_PY}
   COMMAND ${SWIG_EXECUTABLE} -c++ -python -o ${SWIG_WRAPPER}
@@ -16,7 +19,7 @@ add_custom_command(OUTPUT ${SWIG_WRAPPER_PYC}
   COMMENT "Compiling orang Python bytecode")
 
 find_path(NUMPY_INCLUDEDIR numpy/arrayobject.h)
-include_directories(${NUMPY_INCLUDEDIR})
+include_directories(${NUMPY_INCLUDEDIR} ${Boost_INCLUDE_DIR})
 
 add_library(_orang MODULE
   ${SWIG_WRAPPER}
