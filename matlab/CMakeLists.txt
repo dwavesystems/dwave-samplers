@@ -1,5 +1,4 @@
 find_package(Boost 1.37 REQUIRED)
-set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake-modules)
 find_package(MATLAB COMPONENTS mex REQUIRED)
 
 set(MEX_EXTRA_ARGS "" CACHE STRING "Extra arguments for mex command")
