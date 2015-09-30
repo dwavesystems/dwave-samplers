@@ -15,6 +15,9 @@ add_custom_command(OUTPUT ${SWIG_WRAPPER_PYC}
   DEPENDS ${SWIG_WRAPPER_PY} VERBATIM
   COMMENT "Compiling orang Python bytecode")
 
+find_path(NUMPY_INCLUDEDIR numpy/arrayobject.h)
+include_directories(${NUMPY_INCLUDEDIR})
+
 add_library(_orang MODULE
   ${SWIG_WRAPPER}
   conversions.cpp

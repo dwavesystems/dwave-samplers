@@ -36,6 +36,7 @@ def build_egg():
 def add_egg_info(egg):
     # egg.writestr('EGG-INFO/dependency_links.txt', '')
     # egg.writestr('EGG-INFO/SOURCES.txt', '')
+    egg.writestr('EGG-INFO/requires.txt', 'numpy\n')
     egg.writestr('EGG-INFO/not-zip-safe', '')
     egg.writestr('EGG-INFO/top_level.txt',
                  ''.join('{0}\n_{0}\n'.format(x) for x in SWIG_MODULES))
