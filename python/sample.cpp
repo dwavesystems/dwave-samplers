@@ -109,6 +109,7 @@ PairMrgMap pairMarginals(const BucketTree<SampleTask>& bucketTree) {
   BOOST_FOREACH( const BucketTree<SampleTask>::nodetables_type& nt, bucketTree.nodeTables() ) {
     BOOST_FOREACH( Var v, nt.sepVars ) {
       VarPair p(min(nt.nodeVar, v), max(nt.nodeVar, v));
+      if (mrg.find(p) == mrg.end()) continue;
       vars2[0] = p.first;
       vars2[1] = p.second;
       SampleTask::table_smartptr mTable = mergeTables(vars2, make_indirect_iterator(nt.tables.begin()),
