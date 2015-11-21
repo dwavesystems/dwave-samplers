@@ -4,6 +4,8 @@
 
 extern "C"{
 
+extern const int MAX_ERROR_LENGTH;
+
 enum {
     HEURISTIC_MIN_DEG    = 0,
     HEURISTIC_W_MIN_DEG  = 1,
@@ -42,11 +44,13 @@ struct TableEntry{
 int greedyVarOrder(TableEntry * tables, int tables_len, int maxComplexity,
                    int * clampRanks, int clampRanks_len,
                    int heuristic, float selectionScale,
-                   int ** variableOrder, int * variableOrder_len, char ** errorMessage);
+                   int ** variableOrder, int * variableOrder_len, char * errorMessage);
+
+int optimize(TableEntry * tables, int tables_len, int * variableOrder, int variableOrder_len,
+             int maxComplexity, int maxSolutions, int * initState, int initState_len, int minVars,
+             double ** energies, int * energies_len, int ** states, int * varNum, char * errorMessage);
 
 void free_varOrder(int * varOrder);
-
-void free_errorMessage(char * errMsg);
 
 };
 

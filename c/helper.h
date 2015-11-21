@@ -16,7 +16,8 @@ using orang::Task;
 typedef Task<DummyOperations> task_type;
 typedef DummyOperations::CtorArgs ctor_args;
 
-
+template<typename Tinp, typename Tout>
+Tout doNothing(const Tinp & a) {return a;}
 
 template<typename Y>
 std::vector<typename Table<Y>::smartptr> createTables(TableEntry * tables, int tableNum){

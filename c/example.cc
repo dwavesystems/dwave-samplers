@@ -33,16 +33,18 @@ int main(){
     int varNum = 5;
     vector<TableEntry> tables(11);
     vector<int> clampRanks;
-    char * errMsg;
+    char errMsg[MAX_ERROR_LENGTH];
     int * varOrder;
     int varOrderLen;
 
+    int maxComplexity = 3;
+
     // Unary terms
     CREATE_UNARY_ISING(tables[0], 0, 0);
-    CREATE_UNARY_ISING(tables[1], 1, 0);
-    CREATE_UNARY_ISING(tables[2], 2, 0);
-    CREATE_UNARY_ISING(tables[3], 3, 0);
-    CREATE_UNARY_ISING(tables[4], 4, 0);
+    CREATE_UNARY_ISING(tables[1], 1, 1);
+    CREATE_UNARY_ISING(tables[2], 2, -2);
+    CREATE_UNARY_ISING(tables[3], 3, 3);
+    CREATE_UNARY_ISING(tables[4], 4, -4);
 
     CREATE_PAIRWISE_ISING(tables[5] , 0, 1, 0);
     CREATE_PAIRWISE_ISING(tables[6] , 1, 2, 0);
@@ -52,19 +54,39 @@ int main(){
     CREATE_PAIRWISE_ISING(tables[10], 3, 4, 0);
 
 
-    int res = greedyVarOrder(tables.data(), tables.size(), 3,
+    int res = greedyVarOrder(tables.data(), tables.size(), maxComplexity,
                              clampRanks.data(), clampRanks.size(),
-                             HEURISTIC_MIN_FILL, 1, &varOrder, &varOrderLen, &errMsg);
+                             HEURISTIC_MIN_FILL, 1, &varOrder, &varOrderLen, errMsg);
     if (res){
         cleanup(tables);
         printf("%s\n", errMsg);
-        free_errorMessage(errMsg);
         return 1;
     }
     printf("order = ");
     for (int i = 0; i < varOrderLen; i++)
         printf("%d ", varOrder[i]);
     printf("\n");
+
+    int maxSolutions = 2;
+    double * energies;
+    int energyLen;
+    int * samples;
+    int v;
+
+    res = optimize(tables.data(), tables.size(), varOrder, varOrderLen, maxComplexity,
+        maxSolutions, NULL, 0, varNum, &energies, &energyLen, &samples, &v, errMsg);
+    if (res){
+        cleanup(tables);
+        printf("%s\n", errMsg);
+        return 1;
+    }
+    for (int i = 0; i < energyLen; i++){
+        printf("%f -> ", energies[i]);
+        for (int j = 0; j < v; j++)
+            printf("%d ", samples[i * v + j]);
+        printf("\n");
+    }
+
     free_varOrder(varOrder);
     cleanup(tables);
     return 0;
