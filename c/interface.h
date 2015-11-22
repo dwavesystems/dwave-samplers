@@ -41,6 +41,18 @@ struct TableEntry{
     double * values;
 };
 
+// The struct of unary and pairwise marginals.
+struct Marginal{
+    // The length of vars vector -> either 1 (unary) or 2 (pairwise)
+    int vars_len;
+    // The list of variables 
+    int * vars;
+    // The marginal values, the order is the same as described in TableEntry struct
+    // The length pf values is 2 for unary marginals and 4 for pairwise marginals
+    // The order of elements of values is the same as values in TableEntry
+    double * values;
+};
+
 int greedyVarOrder(TableEntry * tables, int tables_len, int maxComplexity,
                    int * clampRanks, int clampRanks_len,
                    int heuristic, float selectionScale,
@@ -51,6 +63,8 @@ int optimize(TableEntry * tables, int tables_len, int * variableOrder, int varia
              double ** energies, int * energies_len, int ** states, int * varNum, char * errorMessage);
 
 void free_varOrder(int * varOrder);
+void free_energies(double * energies);
+void free_samples(int * samples);
 
 };
 

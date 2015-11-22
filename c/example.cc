@@ -40,7 +40,7 @@ int main(){
     int maxComplexity = 3;
 
     // Unary terms
-    CREATE_UNARY_ISING(tables[0], 0, 0);
+    CREATE_UNARY_ISING(tables[0], 0, 2);
     CREATE_UNARY_ISING(tables[1], 1, 1);
     CREATE_UNARY_ISING(tables[2], 2, -2);
     CREATE_UNARY_ISING(tables[3], 3, 3);
@@ -74,7 +74,7 @@ int main(){
     int v;
 
     res = optimize(tables.data(), tables.size(), varOrder, varOrderLen, maxComplexity,
-        maxSolutions, NULL, 0, varNum, &energies, &energyLen, &samples, &v, errMsg);
+        maxSolutions, NULL, 0, 0, &energies, &energyLen, &samples, &v, errMsg);
     if (res){
         cleanup(tables);
         printf("%s\n", errMsg);
@@ -88,6 +88,8 @@ int main(){
     }
 
     free_varOrder(varOrder);
+    free_energies(energies);
+    free_samples(samples);
     cleanup(tables);
     return 0;
 }

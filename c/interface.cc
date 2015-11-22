@@ -28,15 +28,19 @@ using orang::MinOperations;
 using orang::Plus;
 using orang::MinSolution;
 using orang::MinSolutionSet;
+using orang::LogSumProductOperations;
+using orang::TableMerger;
+using orang::LogSumMarginalizer;
 
-
-
-typedef boost::uniform_01<boost::mt19937> Rng;
+typedef boost::uniform_01<boost::mt19937> varOrder_Rng;
+typedef boost::variate_generator<boost::mt19937&, boost::uniform_01<> > sample_Rng;
 
 typedef Task<DummyOperations> varOrder_task_type;
 typedef Task<MinOperations<double, Plus<double> > > optimize_task_type;
+typedef Task<LogSumProductOperations<sample_Rng> > sample_task_type;
 
 typedef DummyOperations::CtorArgs ctor_args;
+typedef LogSumProductOperations<sample_Rng>::CtorArgs logsumprod_ops_ctorargs;
 
 const int MAX_ERROR_LENGTH = 200;
 
@@ -57,6 +61,64 @@ void validateVarOrder(const VarVector& varOrder, Var numVars) {
     }
 }
 
+class Normalizer {
+private:
+  double logPf_;
+
+public:
+  Normalizer(double logPf) : logPf_(logPf) {}
+  double operator()(double x) const { return exp(x - logPf_); }
+};
+
+Marginal * createMarginals(const BucketTree<sample_task_type>& bucketTree){
+    size_t numMarginals = 0;
+    BOOST_FOREACH( const BucketTree<sample_task_type>::nodetables_type& nt, bucketTree.nodeTables() ) {
+        numMarginals += nt.sepVars.size() + 1;
+    }
+    Marginal * marginals = new Marginal[numMarginals];
+    size_t i = 0;
+    VarVector vars1(1);
+    VarVector vars2(2);
+    TableMerger<sample_task_type> mergeTables(bucketTree.task());
+    sample_task_type::marginalizer_smartptr marginalizer = bucketTree.task().marginalizer();
+    BOOST_FOREACH( const BucketTree<sample_task_type>::nodetables_type& nt, bucketTree.nodeTables() ) {
+    // unary marginals
+    {
+      vars1[0] = nt.nodeVar;
+      sample_task_type::table_smartptr mTable = mergeTables(vars1, make_indirect_iterator(nt.tables.begin()),
+          make_indirect_iterator(nt.tables.end()), *marginalizer);
+      marginals[i].vars_len = 1;
+      marginals[i].vars = new int[1];
+      marginals[i].vars[0] = nt.nodeVar;
+      marginals[i].values = new double[2];
+      Normalizer normalize((*marginalizer)(0, *mTable));
+      transform(mTable->begin(), mTable->end(), marginals[i].values, normalize);
+      ++i;
+    }
+    // pairwise marginals
+    BOOST_FOREACH( Var v, nt.sepVars ) {
+      if (v < nt.nodeVar) {
+        vars2[0] = v;
+        vars2[1] = nt.nodeVar;
+      } else {
+        vars2[0] = nt.nodeVar;
+        vars2[1] = v;
+      }
+      sample_task_type::table_smartptr mTable = mergeTables(vars2, make_indirect_iterator(nt.tables.begin()),
+          make_indirect_iterator(nt.tables.end()), *marginalizer);
+      marginals[i].vars_len = 2;
+      marginals[i].vars = new int[2];
+      marginals[i].vars[0] = vars2[0];
+      marginals[i].vars[1] = vars2[1];
+      marginals[i].values = new double[4];
+      Normalizer normalize((*marginalizer)(0, *mTable));
+      transform(mTable->begin(), mTable->end(), marginals[i].values, normalize);
+      ++i;
+    }
+  }
+  return marginals;
+}
+
 extern "C"{
 
 
@@ -70,7 +132,7 @@ int greedyVarOrder(TableEntry * tables, int tables_len, int maxComplexity,
         if (variableOrder_len == NULL)
             throw Errors("variableOrder_len is NULL");
         *variableOrder = NULL;
-        static Rng rng(boost::mt19937(static_cast<unsigned int>(std::time(0))));
+        static varOrder_Rng rng(boost::mt19937(static_cast<unsigned int>(std::time(0))));
         vector<Table<char>::smartptr> tb = createTables<char>(tables, tables_len);
         vector<int> cr;
         cr.reserve(clampRanks_len);
@@ -135,7 +197,7 @@ int optimize(TableEntry * tables, int tables_len, int * variableOrder, int varia
             throw Errors("varNum is NULL");
         *energies = NULL;
         *states = NULL;
-        vector<Table<char>::smartptr> tb = createTables<char>(tables, tables_len);
+        vector<Table<double>::smartptr> tb = createTables<double>(tables, tables_len);
         bool solvable = maxSolutions > 0;
         optimize_task_type task(make_indirect_iterator(tb.begin()), make_indirect_iterator(tb.end()), 1, (Var)minVars);
         VarVector varOrder;
@@ -184,10 +246,98 @@ int optimize(TableEntry * tables, int tables_len, int * variableOrder, int varia
         }
         *varNum = numVars;
         *states = new int[numVars * numSolutions];
+        int * st = *states;
         BOOST_FOREACH( const MinSolution<double>& s, solutionSet.solutions() ) {
-            transform(s.solution.begin(), s.solution.end(), *states, doNothing<double, int>);
-            *states += numVars;
+            transform(s.solution.begin(), s.solution.end(), st, doNothing<double, int>);
+            st += numVars;
         }
+        return 0;
+    }
+    catch(Errors & e){
+        sprintf(errorMessage, "%s", e.what());
+        return 1;
+    }
+    catch (std::bad_alloc &){
+        sprintf(errorMessage, "Out of memory");
+        return 1;
+    }
+    catch (Exception & e){
+        sprintf(errorMessage, "%s", e.what().c_str());
+        return 1;
+    }
+}
+
+int sample(TableEntry * tables, int tables_len, int * variableOrder, int variableOrder_len,
+             int maxComplexity, int sampleNum, int * initState, int initState_len, int minVars, 
+             int seed, int returnMarginals,
+             double * logZ, int ** samples, int * varNum, 
+             Marginal ** marginals, int * marginals_len, 
+             char * errorMessage){
+    char errMsg[MAX_ERROR_LENGTH];
+    static boost::mt19937 defaultRngEngine(std::time(0));
+    static sample_Rng defaultRng(defaultRngEngine, boost::uniform_01<>());
+    static boost::mt19937 seededRngEngine;
+    static sample_Rng seededRng(seededRngEngine, boost::uniform_01<>());
+    try{
+        if (logZ == NULL)
+            throw Errors("logZ is NULL");
+        if (samples == NULL)
+            throw Errors("samples is NULL");
+        if (varNum == NULL)
+            throw Errors("varNum is NULL");
+        if (returnMarginals && marginals == NULL)
+            throw Errors("marginals is NULL");
+        if (returnMarginals && marginals_len == NULL)
+            throw Errors("marginals_len is NULL");
+        *samples = NULL;
+        *marginals = NULL;
+        sample_Rng * rng = &defaultRng;
+        if (seed >= 0){
+            seededRngEngine.seed((unsigned int)seed);
+            rng = &seededRng;
+        }
+        vector<Table<double>::smartptr> tb = createTables<double>(tables, tables_len);
+        bool solvable = sampleNum > 0;
+        sample_task_type task(make_indirect_iterator(tb.begin()), make_indirect_iterator(tb.end()), *rng, (Var)minVars);
+        VarVector varOrder;
+        varOrder.reserve(variableOrder_len);
+        for (int i = 0; i < variableOrder_len; i++){
+            varOrder.push_back(variableOrder[i]);
+        }
+        validateVarOrder(varOrder, task.numVars());
+        DomIndexVector x0(task.numVars());
+        if (initState_len > 0 && initState_len != task.numVars()){
+            sprintf(errMsg, "'x0' parameter must have %zu variables", task.numVars());
+            throw Errors(errMsg);
+        }
+        for (int i = 0; i < initState_len; i++){
+            x0[i] = initState[i];
+            if (x0[i] > task.domSize(i)) {
+                sprintf(errMsg, "x0(%u) is invalid: domain size of variable is %zu", i + 1, task.domSize(i));
+                throw Errors(errMsg);
+            }
+        }
+        TreeDecomp decomp(task.graph(), varOrder, task.domSizes());
+        if (decomp.complexity() > maxComplexity) {
+            sprintf(errMsg, "Tree decomposition complexity is too high (%f)", decomp.complexity());
+            throw Errors(errMsg);
+        }
+        BucketTree<sample_task_type> bucketTree(task, decomp, x0, solvable, returnMarginals);
+        *logZ = bucketTree.problemValue();
+        if (solvable){
+            size_t numVars = task.numVars();
+            *varNum = numVars;
+            *samples = new int[numVars * sampleNum];
+            int * st = *samples;
+            for (size_t i = 0; i < sampleNum; ++i){
+                DomIndexVector s = bucketTree.solve();
+                transform(s.begin(), s.end(), st, doNothing<double, int>);
+                st += numVars;
+            }
+        }
+        if (returnMarginals){
+            *marginals = createMarginals(bucketTree);
+        }    
         return 0;
     }
     catch(Errors & e){

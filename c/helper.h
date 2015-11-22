@@ -3,6 +3,7 @@
 #define __ORANG_C_HELPER_H__
 
 #include <vector>
+#include <algorithm>
 #include <orang/orang.h>
 #include "interface.h"
 
@@ -34,8 +35,14 @@ std::vector<typename Table<Y>::smartptr> createTables(TableEntry * tables, int t
             domSizes.push_back(tables[i].domSizes[j]);
         }
         typename Table<Y>::smartptr tableptr( new Table<Y>(vars, domSizes) );
+        std::transform(tables[i].values, tables[i].values + tableptr->size(), tableptr->begin(), doNothing<double, Y>);
         tb.push_back(tableptr);
     }
+/*for (int i =0; i < tb.size(); i++){
+  for (typename std::vector<typename Table<Y>::smartptr>::iterator j = tb[i]->begin(); j!= tb[i]->end(); j++)
+    printf("%f ", *j);
+  printf("\n");
+}*/
     return tb;
 }
 
