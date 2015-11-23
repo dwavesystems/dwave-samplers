@@ -30,6 +30,9 @@ void cleanup(vector<TableEntry> & tables){
 }
 
 int main(){
+
+    // ---------------------------------- Create problem -------------------------------------------
+
     int varNum = 5;
     vector<TableEntry> tables(11);
     vector<int> clampRanks;
@@ -54,6 +57,9 @@ int main(){
     CREATE_PAIRWISE_ISING(tables[10], 3, 4, 0);
 
 
+    // --------------------------- Compute elimination order ---------------------------------------
+
+    printf("Calling greedyVarOrder\n");
     int res = greedyVarOrder(tables.data(), tables.size(), maxComplexity,
                              clampRanks.data(), clampRanks.size(),
                              HEURISTIC_MIN_FILL, 1, &varOrder, &varOrderLen, errMsg);
@@ -67,29 +73,79 @@ int main(){
         printf("%d ", varOrder[i]);
     printf("\n");
 
+   // --------------------------------- Run Optimization -------------------------------------------
+
     int maxSolutions = 2;
     double * energies;
     int energyLen;
-    int * samples;
+    int * states;
     int v;
 
+    printf("\nCalling optimize\n");
     res = optimize(tables.data(), tables.size(), varOrder, varOrderLen, maxComplexity,
-        maxSolutions, NULL, 0, 0, &energies, &energyLen, &samples, &v, errMsg);
+        maxSolutions, NULL, 0, 0, &energies, &energyLen, &states, &v, errMsg);
     if (res){
         cleanup(tables);
         printf("%s\n", errMsg);
         return 1;
     }
+    printf("Best %d objective value(s) -> state(s)\n", energyLen);
     for (int i = 0; i < energyLen; i++){
         printf("%f -> ", energies[i]);
+        for (int j = 0; j < v; j++)
+            printf("%d ", states[i * v + j]);
+        printf("\n");
+    }
+
+
+    // ----------------------------------- Run Sampling --------------------------------------------
+    // Note that orang samples from p(s)=exp(E(s)) not exp(-E(s))
+
+    int sampleNum = 10;
+    int * samples;
+    double logZ;
+    Marginal * marginals;
+    int marginals_len;
+    int initState[varNum];
+
+    for (int i = 0; i < varNum; i++){
+        initState[i] = 0;
+    }
+
+    printf("\nCalling sample\n");
+    res = sample(tables.data(), tables.size(), varOrder, varOrderLen, maxComplexity, sampleNum,
+        initState, varNum, 0, 1234, 1, &logZ, &samples, &v, &marginals, &marginals_len, errMsg);
+
+    printf("logz = %f\n\n", logZ);
+    for (int i = 0; i < sampleNum; i++){
+        printf("sample %d -> ", i);
         for (int j = 0; j < v; j++)
             printf("%d ", samples[i * v + j]);
         printf("\n");
     }
+    printf("\nMarginals = \n");
+    for (int i = 0; i < marginals_len; i++){
+        if (marginals[i].vars_len == 1){
+            printf("p[v(%d)=dom(0)]=%f, p[v(%d)=dom(1)]=%f\n",
+                   marginals[i].vars[0], marginals[i].values[0],
+                   marginals[i].vars[0], marginals[i].values[1]);
+        }
+        else{
+            printf("p[v(%d)=dom(0) & v(%d)=dom(0)]=%f, p[v(%d)=dom(1) & v(%d)=dom(0)]=%f, p[v(%d)=dom(0) & v(%d)=dom(1)]=%f, p[v(%d)=dom(1) & v(%d)=dom(1)]=%f\n",
+                   marginals[i].vars[0], marginals[i].vars[1], marginals[i].values[0],
+                   marginals[i].vars[0], marginals[i].vars[1], marginals[i].values[1],
+                   marginals[i].vars[0], marginals[i].vars[1], marginals[i].values[2],
+                   marginals[i].vars[0], marginals[i].vars[1], marginals[i].values[3]);
+        }
+    }
 
+
+    // ------------------ Memory Cleanup ----------------------
     free_varOrder(varOrder);
     free_energies(energies);
-    free_samples(samples);
+    free_states(states);
+    free_states(samples);
+    free_marginals(marginals, marginals_len);
     cleanup(tables);
     return 0;
 }

@@ -70,12 +70,13 @@ public:
   double operator()(double x) const { return exp(x - logPf_); }
 };
 
-Marginal * createMarginals(const BucketTree<sample_task_type>& bucketTree){
+int createMarginals(const BucketTree<sample_task_type>& bucketTree, Marginal ** marginals){
     size_t numMarginals = 0;
     BOOST_FOREACH( const BucketTree<sample_task_type>::nodetables_type& nt, bucketTree.nodeTables() ) {
         numMarginals += nt.sepVars.size() + 1;
     }
-    Marginal * marginals = new Marginal[numMarginals];
+    *marginals = new Marginal[numMarginals];
+    Marginal * m = *marginals;
     size_t i = 0;
     VarVector vars1(1);
     VarVector vars2(2);
@@ -87,15 +88,15 @@ Marginal * createMarginals(const BucketTree<sample_task_type>& bucketTree){
       vars1[0] = nt.nodeVar;
       sample_task_type::table_smartptr mTable = mergeTables(vars1, make_indirect_iterator(nt.tables.begin()),
           make_indirect_iterator(nt.tables.end()), *marginalizer);
-      marginals[i].vars_len = 1;
-      marginals[i].vars = new int[1];
-      marginals[i].vars[0] = nt.nodeVar;
-      marginals[i].values = new double[2];
+      m[i].vars_len = 1;
+      m[i].vars = new int[1];
+      m[i].vars[0] = nt.nodeVar;
+      m[i].values = new double[2];
       Normalizer normalize((*marginalizer)(0, *mTable));
-      transform(mTable->begin(), mTable->end(), marginals[i].values, normalize);
+      transform(mTable->begin(), mTable->end(), m[i].values, normalize);
       ++i;
     }
-    // pairwise marginals
+    // pairwise m
     BOOST_FOREACH( Var v, nt.sepVars ) {
       if (v < nt.nodeVar) {
         vars2[0] = v;
@@ -106,17 +107,17 @@ Marginal * createMarginals(const BucketTree<sample_task_type>& bucketTree){
       }
       sample_task_type::table_smartptr mTable = mergeTables(vars2, make_indirect_iterator(nt.tables.begin()),
           make_indirect_iterator(nt.tables.end()), *marginalizer);
-      marginals[i].vars_len = 2;
-      marginals[i].vars = new int[2];
-      marginals[i].vars[0] = vars2[0];
-      marginals[i].vars[1] = vars2[1];
-      marginals[i].values = new double[4];
+      m[i].vars_len = 2;
+      m[i].vars = new int[2];
+      m[i].vars[0] = vars2[0];
+      m[i].vars[1] = vars2[1];
+      m[i].values = new double[4];
       Normalizer normalize((*marginalizer)(0, *mTable));
-      transform(mTable->begin(), mTable->end(), marginals[i].values, normalize);
+      transform(mTable->begin(), mTable->end(), m[i].values, normalize);
       ++i;
     }
   }
-  return marginals;
+  return numMarginals;
 }
 
 extern "C"{
@@ -268,10 +269,10 @@ int optimize(TableEntry * tables, int tables_len, int * variableOrder, int varia
 }
 
 int sample(TableEntry * tables, int tables_len, int * variableOrder, int variableOrder_len,
-             int maxComplexity, int sampleNum, int * initState, int initState_len, int minVars, 
+             int maxComplexity, int sampleNum, int * initState, int initState_len, int minVars,
              int seed, int returnMarginals,
-             double * logZ, int ** samples, int * varNum, 
-             Marginal ** marginals, int * marginals_len, 
+             double * logZ, int ** samples, int * varNum,
+             Marginal ** marginals, int * marginals_len,
              char * errorMessage){
     char errMsg[MAX_ERROR_LENGTH];
     static boost::mt19937 defaultRngEngine(std::time(0));
@@ -336,8 +337,8 @@ int sample(TableEntry * tables, int tables_len, int * variableOrder, int variabl
             }
         }
         if (returnMarginals){
-            *marginals = createMarginals(bucketTree);
-        }    
+            *marginals_len = createMarginals(bucketTree, marginals);
+        }
         return 0;
     }
     catch(Errors & e){
@@ -364,9 +365,19 @@ void free_energies(double * energies){
         delete [] energies;
 }
 
-void free_samples(int * samples){
-    if (samples)
-        delete [] samples;
+void free_states(int * states){
+    if (states)
+        delete [] states;
+}
+
+void free_marginals(Marginal * marginals, int marginals_len){
+    if (!marginals)
+        return;
+    for (int i = 0; i < marginals_len; i++){
+        delete [] marginals[i].vars;
+        delete [] marginals[i].values;
+    }
+    delete [] marginals;
 }
 
 } // extern "C"
