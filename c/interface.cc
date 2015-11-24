@@ -10,6 +10,7 @@
 #include "interface.h"
 #include "helper.h"
 #include "errors.h"
+#include "mempool.h"
 
 using std::vector;
 using std::transform;
@@ -49,12 +50,12 @@ void validateVarOrder(const VarVector& varOrder, Var numVars) {
     BOOST_FOREACH( Var v, varOrder ) {
         if (v >= numVars) {
             char errMsg[MAX_ERROR_LENGTH];
-            sprintf(errMsg, "Invalid variable elimination order: it contains %u but there are only %u variables", v + 1, numVars);
+            snprintf(errMsg, MAX_ERROR_LENGTH, "Invalid variable elimination order: it contains %u but there are only %u variables", v + 1, numVars);
             throw Errors(errMsg);
         }
         if (seen[v]) {
             char errMsg[MAX_ERROR_LENGTH];
-            sprintf(errMsg, "Invalid variable elimination order: variable %u appears more than once", v + 1);
+            snprintf(errMsg, MAX_ERROR_LENGTH, "Invalid variable elimination order: variable %u appears more than once", v + 1);
             throw Errors(errMsg);
         }
         seen[v] = 1;
@@ -70,12 +71,13 @@ public:
   double operator()(double x) const { return exp(x - logPf_); }
 };
 
-int createMarginals(const BucketTree<sample_task_type>& bucketTree, Marginal ** marginals){
+int createMarginals(const BucketTree<sample_task_type>& bucketTree, Marginal ** marginals,
+                    MemPool & mempool){
     size_t numMarginals = 0;
     BOOST_FOREACH( const BucketTree<sample_task_type>::nodetables_type& nt, bucketTree.nodeTables() ) {
         numMarginals += nt.sepVars.size() + 1;
     }
-    *marginals = new Marginal[numMarginals];
+    *marginals = (Marginal *)mempool.malloc(numMarginals * sizeof(Marginal));
     Marginal * m = *marginals;
     size_t i = 0;
     VarVector vars1(1);
@@ -89,9 +91,9 @@ int createMarginals(const BucketTree<sample_task_type>& bucketTree, Marginal ** 
       sample_task_type::table_smartptr mTable = mergeTables(vars1, make_indirect_iterator(nt.tables.begin()),
           make_indirect_iterator(nt.tables.end()), *marginalizer);
       m[i].vars_len = 1;
-      m[i].vars = new int[1];
+      m[i].vars = (int *)mempool.malloc(1 * sizeof(int));
       m[i].vars[0] = nt.nodeVar;
-      m[i].values = new double[2];
+      m[i].values = (double *)mempool.malloc(2 * sizeof(double));
       Normalizer normalize((*marginalizer)(0, *mTable));
       transform(mTable->begin(), mTable->end(), m[i].values, normalize);
       ++i;
@@ -108,10 +110,10 @@ int createMarginals(const BucketTree<sample_task_type>& bucketTree, Marginal ** 
       sample_task_type::table_smartptr mTable = mergeTables(vars2, make_indirect_iterator(nt.tables.begin()),
           make_indirect_iterator(nt.tables.end()), *marginalizer);
       m[i].vars_len = 2;
-      m[i].vars = new int[2];
+      m[i].vars = (int *)mempool.malloc(2 * sizeof(int));
       m[i].vars[0] = vars2[0];
       m[i].vars[1] = vars2[1];
-      m[i].values = new double[4];
+      m[i].values = (double *)mempool.malloc(4 * sizeof(double));
       Normalizer normalize((*marginalizer)(0, *mTable));
       transform(mTable->begin(), mTable->end(), m[i].values, normalize);
       ++i;
@@ -164,21 +166,24 @@ int greedyVarOrder(TableEntry * tables, int tables_len, int maxComplexity,
         };
         VarVector varOrder = greedyVarOrder(task, maxComplexity, cr, h, rng, selectionScale);
         *variableOrder_len = varOrder.size();
-        *variableOrder = new int[varOrder.size()];
-        for (int i = 0; i < varOrder.size(); i++)
+        // No mempool call is required as there is no later code that may throw.
+        *variableOrder = (int *)malloc(varOrder.size() * sizeof(int));
+        if (*variableOrder == NULL)
+            throw std::bad_alloc();
+        for (unsigned int i = 0; i < varOrder.size(); i++)
             (*variableOrder)[i] = varOrder[i];
         return 0;
     }
     catch(Errors & e){
-        sprintf(errorMessage, "%s", e.what());
+        snprintf(errorMessage, MAX_ERROR_LENGTH, "%s", e.what());
         return 1;
     }
     catch (std::bad_alloc &){
-        sprintf(errorMessage, "Out of memory");
+        snprintf(errorMessage, MAX_ERROR_LENGTH, "Out of memory");
         return 1;
     }
     catch (Exception & e){
-        sprintf(errorMessage, "%s", e.what().c_str());
+        snprintf(errorMessage, MAX_ERROR_LENGTH, "%s", e.what().c_str());
         return 1;
     }
 }
@@ -187,6 +192,7 @@ int optimize(TableEntry * tables, int tables_len, int * variableOrder, int varia
              int maxComplexity, int maxSolutions, int * initState, int initState_len, int minVars,
              double ** energies, int * energies_len, int ** states, int * varNum, char * errorMessage){
     char errMsg[MAX_ERROR_LENGTH];
+    MemPool mempool;
     try{
         if (energies == NULL)
             throw Errors("energies is NULL");
@@ -208,27 +214,27 @@ int optimize(TableEntry * tables, int tables_len, int * variableOrder, int varia
         }
         validateVarOrder(varOrder, task.numVars());
         DomIndexVector x0(task.numVars());
-        if (initState_len > 0 && initState_len != task.numVars()){
-            sprintf(errMsg, "'x0' parameter must have %zu variables", task.numVars());
+        if (initState_len > 0 && initState_len != (int)task.numVars()){
+            snprintf(errMsg, MAX_ERROR_LENGTH, "'x0' parameter must have %d variables", task.numVars());
             throw Errors(errMsg);
         }
         for (int i = 0; i < initState_len; i++){
             x0[i] = initState[i];
             if (x0[i] > task.domSize(i)) {
-                sprintf(errMsg, "x0(%u) is invalid: domain size of variable is %zu", i + 1, task.domSize(i));
+                snprintf(errMsg, MAX_ERROR_LENGTH, "x0(%u) is invalid: domain size of variable is %d", i + 1, task.domSize(i));
                 throw Errors(errMsg);
             }
         }
         TreeDecomp decomp(task.graph(), varOrder, task.domSizes());
         if (decomp.complexity() > maxComplexity) {
-            sprintf(errMsg, "Tree decomposition complexity is too high (%f)", decomp.complexity());
+            snprintf(errMsg, MAX_ERROR_LENGTH, "Tree decomposition complexity is too high (%f)", decomp.complexity());
             throw Errors(errMsg);
         }
         BucketTree<optimize_task_type> bucketTree(task, decomp, x0, solvable, false);
         double baseValue = bucketTree.problemValue();
         if (!solvable){
             *energies_len = 1;
-            *energies = new double[1];
+            *energies = (double *)malloc(1 * sizeof(double));
             (*energies)[0] = baseValue;
             return 0;
         }
@@ -239,31 +245,32 @@ int optimize(TableEntry * tables, int tables_len, int * variableOrder, int varia
         size_t numVars = task.numVars();
 
         *energies_len = numSolutions;
-        *energies = new double[numSolutions];
+        *energies = (double *)mempool.malloc(numSolutions * sizeof(double));
 
         double* valueOffsetData = *energies;
         BOOST_FOREACH( const MinSolution<double>& s, solutionSet.solutions() ) {
             *valueOffsetData++ = baseValue + s.value;
         }
         *varNum = numVars;
-        *states = new int[numVars * numSolutions];
+        *states = (int *)mempool.malloc(numVars * numSolutions * sizeof(int));
         int * st = *states;
         BOOST_FOREACH( const MinSolution<double>& s, solutionSet.solutions() ) {
             transform(s.solution.begin(), s.solution.end(), st, doNothing<double, int>);
             st += numVars;
         }
+        mempool.release();
         return 0;
     }
     catch(Errors & e){
-        sprintf(errorMessage, "%s", e.what());
+        snprintf(errorMessage, MAX_ERROR_LENGTH, "%s", e.what());
         return 1;
     }
     catch (std::bad_alloc &){
-        sprintf(errorMessage, "Out of memory");
+        snprintf(errorMessage, MAX_ERROR_LENGTH, "Out of memory");
         return 1;
     }
     catch (Exception & e){
-        sprintf(errorMessage, "%s", e.what().c_str());
+        snprintf(errorMessage, MAX_ERROR_LENGTH, "%s", e.what().c_str());
         return 1;
     }
 }
@@ -275,6 +282,7 @@ int sample(TableEntry * tables, int tables_len, int * variableOrder, int variabl
              Marginal ** marginals, int * marginals_len,
              char * errorMessage){
     char errMsg[MAX_ERROR_LENGTH];
+    MemPool mempool;
     static boost::mt19937 defaultRngEngine(std::time(0));
     static sample_Rng defaultRng(defaultRngEngine, boost::uniform_01<>());
     static boost::mt19937 seededRngEngine;
@@ -307,20 +315,20 @@ int sample(TableEntry * tables, int tables_len, int * variableOrder, int variabl
         }
         validateVarOrder(varOrder, task.numVars());
         DomIndexVector x0(task.numVars());
-        if (initState_len > 0 && initState_len != task.numVars()){
-            sprintf(errMsg, "'x0' parameter must have %zu variables", task.numVars());
+        if (initState_len > 0 && initState_len != (int)task.numVars()){
+            snprintf(errMsg, MAX_ERROR_LENGTH, "'x0' parameter must have %d variables", task.numVars());
             throw Errors(errMsg);
         }
         for (int i = 0; i < initState_len; i++){
             x0[i] = initState[i];
             if (x0[i] > task.domSize(i)) {
-                sprintf(errMsg, "x0(%u) is invalid: domain size of variable is %zu", i + 1, task.domSize(i));
+                snprintf(errMsg, MAX_ERROR_LENGTH, "x0(%u) is invalid: domain size of variable is %d", i + 1, task.domSize(i));
                 throw Errors(errMsg);
             }
         }
         TreeDecomp decomp(task.graph(), varOrder, task.domSizes());
         if (decomp.complexity() > maxComplexity) {
-            sprintf(errMsg, "Tree decomposition complexity is too high (%f)", decomp.complexity());
+            snprintf(errMsg, MAX_ERROR_LENGTH, "Tree decomposition complexity is too high (%f)", decomp.complexity());
             throw Errors(errMsg);
         }
         BucketTree<sample_task_type> bucketTree(task, decomp, x0, solvable, returnMarginals);
@@ -328,56 +336,54 @@ int sample(TableEntry * tables, int tables_len, int * variableOrder, int variabl
         if (solvable){
             size_t numVars = task.numVars();
             *varNum = numVars;
-            *samples = new int[numVars * sampleNum];
+            *samples = (int *)mempool.malloc(numVars * sampleNum * sizeof(int));
             int * st = *samples;
-            for (size_t i = 0; i < sampleNum; ++i){
+            for (int i = 0; i < sampleNum; ++i){
                 DomIndexVector s = bucketTree.solve();
                 transform(s.begin(), s.end(), st, doNothing<double, int>);
                 st += numVars;
             }
         }
         if (returnMarginals){
-            *marginals_len = createMarginals(bucketTree, marginals);
+            *marginals_len = createMarginals(bucketTree, marginals, mempool);
         }
+        mempool.release();
         return 0;
     }
     catch(Errors & e){
-        sprintf(errorMessage, "%s", e.what());
+        snprintf(errorMessage, MAX_ERROR_LENGTH, "%s", e.what());
         return 1;
     }
     catch (std::bad_alloc &){
-        sprintf(errorMessage, "Out of memory");
+        snprintf(errorMessage, MAX_ERROR_LENGTH, "Out of memory");
         return 1;
     }
     catch (Exception & e){
-        sprintf(errorMessage, "%s", e.what().c_str());
+        snprintf(errorMessage, MAX_ERROR_LENGTH, "%s", e.what().c_str());
         return 1;
     }
 }
 
 void free_varOrder(int * varOrder){
-    if (varOrder)
-        delete [] varOrder;
+    free(varOrder);
 }
 
 void free_energies(double * energies){
-    if (energies)
-        delete [] energies;
+    free(energies);
 }
 
 void free_states(int * states){
-    if (states)
-        delete [] states;
+    free(states);
 }
 
 void free_marginals(Marginal * marginals, int marginals_len){
-    if (!marginals)
+    if (marginals == NULL || marginals_len == 0)
         return;
     for (int i = 0; i < marginals_len; i++){
-        delete [] marginals[i].vars;
-        delete [] marginals[i].values;
+        free(marginals[i].vars);
+        free(marginals[i].values);
     }
-    delete [] marginals;
+    free(marginals);
 }
 
 } // extern "C"

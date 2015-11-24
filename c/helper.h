@@ -38,11 +38,6 @@ std::vector<typename Table<Y>::smartptr> createTables(TableEntry * tables, int t
         std::transform(tables[i].values, tables[i].values + tableptr->size(), tableptr->begin(), doNothing<double, Y>);
         tb.push_back(tableptr);
     }
-/*for (int i =0; i < tb.size(); i++){
-  for (typename std::vector<typename Table<Y>::smartptr>::iterator j = tb[i]->begin(); j!= tb[i]->end(); j++)
-    printf("%f ", *j);
-  printf("\n");
-}*/
     return tb;
 }
 

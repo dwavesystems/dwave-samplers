@@ -85,6 +85,7 @@ int main(){
     res = optimize(tables.data(), tables.size(), varOrder, varOrderLen, maxComplexity,
         maxSolutions, NULL, 0, 0, &energies, &energyLen, &states, &v, errMsg);
     if (res){
+        free_varOrder(varOrder);
         cleanup(tables);
         printf("%s\n", errMsg);
         return 1;
@@ -96,6 +97,8 @@ int main(){
             printf("%d ", states[i * v + j]);
         printf("\n");
     }
+    free_energies(energies);
+    free_states(states);
 
 
     // ----------------------------------- Run Sampling --------------------------------------------
@@ -115,7 +118,12 @@ int main(){
     printf("\nCalling sample\n");
     res = sample(tables.data(), tables.size(), varOrder, varOrderLen, maxComplexity, sampleNum,
         initState, varNum, 0, 1234, 1, &logZ, &samples, &v, &marginals, &marginals_len, errMsg);
-
+    if (res){
+        free_varOrder(varOrder);
+        cleanup(tables);
+        printf("%s\n", errMsg);
+        return 1;
+    }
     printf("logz = %f\n\n", logZ);
     for (int i = 0; i < sampleNum; i++){
         printf("sample %d -> ", i);
@@ -123,6 +131,7 @@ int main(){
             printf("%d ", samples[i * v + j]);
         printf("\n");
     }
+    free_states(samples);
     printf("\nMarginals = \n");
     for (int i = 0; i < marginals_len; i++){
         if (marginals[i].vars_len == 1){
@@ -138,13 +147,7 @@ int main(){
                    marginals[i].vars[0], marginals[i].vars[1], marginals[i].values[3]);
         }
     }
-
-
-    // ------------------ Memory Cleanup ----------------------
     free_varOrder(varOrder);
-    free_energies(energies);
-    free_states(states);
-    free_states(samples);
     free_marginals(marginals, marginals_len);
     cleanup(tables);
     return 0;
