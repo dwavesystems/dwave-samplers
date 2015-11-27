@@ -21,3 +21,8 @@ if(ENABLE_PYTHON)
   include(python)
   add_subdirectory(python)
 endif()
+
+OPTION(ENABLE_C "Build C interface?" OFF)
+if(ENABLE_C)
+  add_subdirectory(c)
+endif()
