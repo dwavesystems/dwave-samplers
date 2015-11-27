@@ -1,6 +1,8 @@
 
 #include <vector>
 #include <algorithm>
+#include <stdio.h>
+#include <ctime>
 #include <boost/random.hpp>
 #include <boost/iterator/indirect_iterator.hpp>
 
