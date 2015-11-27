@@ -24,6 +24,5 @@ endif()
 
 OPTION(ENABLE_C "Build C interface?" OFF)
 if(ENABLE_C)
-  include(c)
   add_subdirectory(c)
 endif()
