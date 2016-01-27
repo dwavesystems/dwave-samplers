@@ -68,7 +68,7 @@ log_pf, samples, single_mrg, pair_mrg, pairs = sample_ising(
 %define SAMPLE_QUBO_DOCSTRING
 "Draw samples and compute marginals of a QUBO.
 
-log_pf, samples, single_mrg, pair_mrg, pairs = sample_ising(
+log_pf, samples, single_mrg, pair_mrg, pairs = sample_qubo(
     q, var_order, max_complexity, num_samples, marginals, beta, rng_seed)
 
     Args:
@@ -102,7 +102,7 @@ log_pf, samples, single_mrg, pair_mrg, pairs = sample_ising(
 %define SOLVE_ISING_DOCSTRING
 "Optimize an Ising problem.
 
-log_pf, samples, single_mrg, pair_mrg, pairs = sample_ising(
+energies, solutions = solve_ising(
     h, j, var_order, max_complexity, max_solutions)
 
     Args:
@@ -122,7 +122,7 @@ log_pf, samples, single_mrg, pair_mrg, pairs = sample_ising(
 %define SOLVE_QUBO_DOCSTRING
 "Optimize a QUBO.
 
-log_pf, samples, single_mrg, pair_mrg, pairs = sample_ising(
+energies, solutions = solve_qubo(
     q, var_order, max_complexity, max_solutions)
 
     Args:
