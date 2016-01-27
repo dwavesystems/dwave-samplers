@@ -159,3 +159,24 @@ log_pf, samples, single_mrg, pair_mrg, pairs = sample_ising(
 %apply (double** ARGOUTVIEWM_ARRAY2, int* DIM1, int* DIM2) {(double** pairMrgData, int* pairMrgRows, int* pairMrgCols)};
 %apply (int** ARGOUTVIEWM_ARRAY2, int* DIM1, int* DIM2) {(int** pairData, int* pairRows, int* pairCols)};
 %include "python-api.h"
+
+%pythoncode %{
+def chimera_var_order(m, n, k):
+    """Generate a var_order for a chimera graph.
+
+    Args:
+        m, n, k: chimera dimensions: m-by-n grid of K_{k,k} cells.
+    Returns:
+        var_order suitable for any of the orang sample/optimize functions."""
+    col_range = range(0, 2 * k * n, 2 * k)
+    row_range = range(0, 2 * k * n * m, 2 * k * n)
+    dir_range = [0, k]
+    if m > n:
+        col_range, row_range = row_range, col_range
+        dir_range = [k, 0]
+    return [ci + di + ri + qi
+            for ci in col_range
+            for di in dir_range
+            for ri in row_range
+            for qi in xrange(k)]
+%}
