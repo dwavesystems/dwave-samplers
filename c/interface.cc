@@ -95,7 +95,7 @@ int createMarginals(const BucketTree<sample_task_type>& bucketTree, Marginal ** 
       m[i].vars_len = 1;
       m[i].vars = (int *)mempool.malloc(1 * sizeof(int));
       m[i].vars[0] = nt.nodeVar;
-      m[i].values = (double *)mempool.malloc(2 * sizeof(double));
+      m[i].values = (double *)mempool.malloc(mTable->size() * sizeof(double));
       Normalizer normalize((*marginalizer)(0, *mTable));
       transform(mTable->begin(), mTable->end(), m[i].values, normalize);
       ++i;
@@ -115,7 +115,8 @@ int createMarginals(const BucketTree<sample_task_type>& bucketTree, Marginal ** 
       m[i].vars = (int *)mempool.malloc(2 * sizeof(int));
       m[i].vars[0] = vars2[0];
       m[i].vars[1] = vars2[1];
-      m[i].values = (double *)mempool.malloc(4 * sizeof(double));
+      m[i].values = (double *)mempool.malloc(mTable->size() * sizeof(double));
+
       Normalizer normalize((*marginalizer)(0, *mTable));
       transform(mTable->begin(), mTable->end(), m[i].values, normalize);
       ++i;
