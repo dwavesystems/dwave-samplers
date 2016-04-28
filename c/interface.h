@@ -49,7 +49,7 @@ struct Marginal{
     // The list of variables
     int * vars;
     // The marginal values, the order is the same as described in TableEntry struct
-    // The length pf values is 2 for unary marginals and 4 for pairwise marginals
+    // The length of values is domSize[0] for unary and domSize[0]*domSize[1] for pairwise marginals
     // The order of elements of values is the same as values in TableEntry
     double * values;
 };
