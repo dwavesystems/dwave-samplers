@@ -3,7 +3,7 @@ import networkx as nx
 
 def bqm_to_agreement_graph(bqm):
     """todo"""
-    if any(bqm.linear.values()):
+    if any(bqm.spin.linear.values()):
         raise NotImplementedError("not yet implemented for non-zero linear biases")
 
     offset = bqm.spin.offset
