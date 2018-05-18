@@ -80,3 +80,19 @@ class TestExpandedDual(unittest.TestCase):
         self.assertEqual(len(H), len(G.edges) * 2)
 
         self.assertIn(('a', 'b'), H)
+
+
+class TestRotationSystemFromCoords(unittest.TestCase):
+    def test_simple(self):
+        G = nx.star_graph(4)
+
+        pos = {0: (0, 0),
+               1: (1, 0),  # north
+               2: (0, 1),  # east
+               3: (-1, 0),  # south
+               4: (0, -1)}  # west
+
+        rotation_system = savanna.rotation_system_from_coordinates(G, pos)
+
+        self.assertEqual(rotation_system,
+                         {0: [4, 1, 2, 3], 1: [0], 2: [0], 3: [0], 4: [0]})

@@ -1,5 +1,6 @@
-import logging
 import itertools
+import logging
+import math
 
 from collections import Counter
 
@@ -80,3 +81,21 @@ def expanded_dual(planar_G, rotation_system):
         edual.add_edge((u, v), (v, u), weight=planar_G[u][v].get('weight', 0))
 
     return edual
+
+
+def rotation_system_from_coordinates(G, pos):
+    """assume G is planar"""
+    if callable(pos):
+        pos = {v: pos(v) for v in G}
+
+    rotation_system = {}
+    for u in G:
+        x0, y0 = pos[u]
+
+        def angle(v):
+            x, y = pos[v]
+            return math.atan2(y - y0, x - x0)
+
+        rotation_system[u] = sorted(G[u], key=angle)
+
+    return rotation_system
