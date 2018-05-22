@@ -1,4 +1,14 @@
 
+def dual_matching_to_cut(G, matching):
+    cut = set(G.edges)
+
+    # need to get the cut from the matching
+    for u, v in matching:
+        cut.discard(u)
+        cut.discard(v)
+
+    return cut
+
 
 def cut_to_state(G, cut, node=None, val=0):
     if node is None:
@@ -8,7 +18,7 @@ def cut_to_state(G, cut, node=None, val=0):
 
     def _cut_to_state(v, s):
         if v in state:
-            assert state[v] == s
+            assert state[v] == s, "Inconsistent state"
         else:
             state[v] = s
             for u in G[v]:
