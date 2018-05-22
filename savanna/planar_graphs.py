@@ -38,7 +38,7 @@ def planar_faces(planar_G, rotation_system):
 
         # get the next step
         next_ = _clockwise_step(tail, head, rotation_system)
-        log.debug('walked from %s -> %s, now heading %s', tail, head, next_)
+        log.debug('walked from %s -> %s, now heading  to %s', tail, head, next_)
         face.add((head, next_))
         edges.discard((head, next_))
 
@@ -47,13 +47,15 @@ def planar_faces(planar_G, rotation_system):
         # while we haven't returned to our original edge
         while (head != root_head) or (tail != root_tail):
             next_ = _clockwise_step(tail, head, rotation_system)
-            log.debug('walked from %s -> %s, now heading %s', tail, head, next_)
+            log.debug('walked from %s -> %s, now heading to %s', tail, head, next_)
             face.add((head, next_))
             edges.discard((head, next_))
 
             tail, head = head, next_
 
         faces.append(face)
+
+    log.debug('faces: %s', faces)
 
     return faces
 
@@ -88,14 +90,51 @@ def rotation_system_from_coordinates(G, pos):
     if callable(pos):
         pos = {v: pos(v) for v in G}
 
+    # dev note: we use G.adj so that G can be a bqm
+
     rotation_system = {}
-    for u in G:
+    for u in G.adj:
         x0, y0 = pos[u]
 
         def angle(v):
             x, y = pos[v]
             return math.atan2(y - y0, x - x0)
 
-        rotation_system[u] = sorted(G[u], key=angle)
+        rotation_system[u] = sorted(G.adj[u], key=angle)
 
     return rotation_system
+
+
+def is_perfect_matching(G, matching):
+    """Decides whether the given set represents a valid perfect matching in
+    ``G``.
+
+    A *perfect matching* in a graph is a matching in which exactly one edge
+    is incident upon each vertex.
+
+    Parameters
+    ----------
+    G : NetworkX graph
+
+    matching : dict or set
+        A dictionary or set representing a matching. If a dictionary, it
+        must have ``matching[u] == v`` and ``matching[v] == u`` for each
+        edge ``(u, v)`` in the matching. If a set, it must have elements
+        of the form ``(u, v)``, where ``(u, v)`` is an edge in the
+        matching.
+
+    Returns
+    -------
+    bool
+        Whether the given set or dictionary represents a valid perfect
+        matching in the graph.
+    """
+    if isinstance(matching, dict):
+        matching = nx.algorithms.matching.matching_dict_to_set(matching)
+
+    if not nx.is_matching(G, matching):
+        return False
+
+    count = Counter(sum(matching, ()))
+
+    return all(count[v] == 1 for v in G)

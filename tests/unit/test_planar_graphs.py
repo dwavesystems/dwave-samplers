@@ -6,9 +6,6 @@ import networkx as nx
 import savanna
 
 
-# logging.basicConfig(level=logging.DEBUG)
-
-
 class TestPlanarFaces(unittest.TestCase):
     def test_paper_example(self):
         G = nx.Graph()
@@ -96,3 +93,37 @@ class TestRotationSystemFromCoords(unittest.TestCase):
 
         self.assertEqual(rotation_system,
                          {0: [4, 1, 2, 3], 1: [0], 2: [0], 3: [0], 4: [0]})
+
+
+class TestIsPerfectMatching(unittest.TestCase):
+    """Unit tests for the
+    :func:`~networkx.algorithms.matching.is_perfect_matching` function.
+
+    """
+
+    def test_dict(self):
+        G = nx.path_graph(4)
+        self.assertTrue(savanna.is_perfect_matching(G, {0: 1, 1: 0, 2: 3, 3: 2}))
+
+    def test_valid(self):
+        G = nx.path_graph(4)
+        self.assertTrue(savanna.is_perfect_matching(G, {(0, 1), (2, 3)}))
+
+    def test_valid_not_path(self):
+        G = nx.cycle_graph(4)
+        G.add_edge(0, 4)
+        G.add_edge(1, 4)
+        G.add_edge(5, 2)
+
+        self.assertTrue(savanna.is_perfect_matching(G, {(1, 4), (0, 3), (5, 2)}))
+
+    def test_not_matching(self):
+        G = nx.path_graph(4)
+        self.assertFalse(savanna.is_perfect_matching(G, {(0, 1), (1, 2), (2, 3)}))
+
+    def test_maximal_but_not_perfect(self):
+        G = nx.cycle_graph(4)
+        G.add_edge(0, 4)
+        G.add_edge(1, 4)
+
+        self.assertFalse(savanna.is_perfect_matching(G, {(1, 4), (0, 3)}))
