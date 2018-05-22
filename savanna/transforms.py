@@ -1,5 +1,8 @@
 
 def dual_matching_to_cut(G, matching):
+
+    print(matching)
+
     cut = set(G.edges)
 
     # need to get the cut from the matching

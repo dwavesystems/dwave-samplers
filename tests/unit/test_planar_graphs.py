@@ -78,6 +78,25 @@ class TestExpandedDual(unittest.TestCase):
 
         self.assertIn(('a', 'b'), H)
 
+    def test_empty(self):
+        G = nx.Graph()
+
+        rotation_system = {}
+
+        H = savanna.expanded_dual(G, rotation_system)
+
+        self.assertFalse(H)
+
+    def test_one_edge(self):
+        G = nx.Graph()
+        G.add_edge(0, 1)
+
+        rotation_system = {0: [1], 1: [0]}
+
+        H = savanna.expanded_dual(G, rotation_system)
+
+        self.assertEqual(len(H), 2)
+
 
 class TestRotationSystemFromCoords(unittest.TestCase):
     def test_simple(self):

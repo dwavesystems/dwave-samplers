@@ -30,8 +30,21 @@ class TestBQMToAgreementIsing(unittest.TestCase):
         self.assertEqual(bqm.energy({}),
                          savanna.agreement_energy({}, G, offset))
 
-    def test_functional_one_interaction(self):
+    def test_functional_one_eq_interaction(self):
         bqm = dimod.BinaryQuadraticModel.from_ising({}, {('a', 'b'): -1})
+        G, offset = savanna.bqm_to_agreement_graph(bqm)
+
+        variables = list(bqm)
+        for config in itertools.product((-1, 1), repeat=len(bqm)):
+            sample = dict(zip(variables, config))
+
+            bqm_en = bqm.energy(sample)
+            graph_en = savanna.agreement_energy(sample, G, offset)
+
+            self.assertEqual(bqm_en, graph_en, '{}, bqm: {}, graph: {}'.format(sample, bqm_en, graph_en))
+
+    def test_functional_one_ne_interaction(self):
+        bqm = dimod.BinaryQuadraticModel.from_ising({}, {('a', 'b'): +1})
         G, offset = savanna.bqm_to_agreement_graph(bqm)
 
         variables = list(bqm)
