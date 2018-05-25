@@ -82,11 +82,6 @@ def expanded_dual(planar_G, rotation_system):
     for u, v in planar_G.edges:
         edual.add_edge((u, v), (v, u), weight=planar_G[u][v].get('weight', 0))
 
-    # make edge weights positive
-    min_weight = min({d['weight'] for (u,v,d) in edual.edges(data=True)})
-    for u, v in edual.edges:
-        edual.add_edge(u, v, weight=edual[u][v].get('weight') - min_weight + 1)
-
     return edual
 
 

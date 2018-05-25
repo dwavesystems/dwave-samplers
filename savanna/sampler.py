@@ -14,8 +14,7 @@ def ground_state_sample(bqm, rotation_system):
     dual = expanded_dual(G, rotation_system)
 
 
-
-    matching = nx.max_weight_matching(dual)
+    matching = nx.max_weight_matching(dual, maxcardinality=True)
 
     cut = set(G.edges)
 
