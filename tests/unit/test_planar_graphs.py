@@ -108,10 +108,34 @@ class TestRotationSystemFromCoords(unittest.TestCase):
                3: (-1, 0),  # south
                4: (0, -1)}  # west
 
-        rotation_system = savanna.rotation_system_from_coordinates(G, pos)
+        r = savanna.rotation_system_from_coordinates(G, pos)
 
-        self.assertEqual(rotation_system,
-                         {0: [4, 1, 2, 3], 1: [0], 2: [0], 3: [0], 4: [0]})
+        self.assertEqual(r, {0: {1: 2, 2: 3, 3: 4, 4: 1},
+                             1: {0: 0},
+                             2: {0: 0},
+                             3: {0: 0},
+                             4: {0: 0}
+                             })
+
+    def test_single_node(self):
+        G = nx.Graph()
+        G.add_node(0)
+
+        r = savanna.rotation_system_from_coordinates(G, {0: (0, 0)})
+
+        self.assertEqual(r, {0: {}})
+
+    def test_multigraph_star(self):
+        G = nx.star_graph(4, nx.MultiGraph())
+        G.add_edge(0, 1)  # add another edge going north
+
+        pos = {0: (0, 0),
+               1: (1, 0),  # north
+               2: (0, 1),  # east
+               3: (-1, 0),  # south
+               4: (0, -1)}  # west
+
+        r = savanna.rotation_system_from_coordinates(G, pos)
 
 
 class TestIsPerfectMatching(unittest.TestCase):

@@ -2,7 +2,7 @@ import itertools
 import logging
 import math
 
-from collections import Counter
+from collections import Counter, OrderedDict
 
 import networkx as nx
 
@@ -86,7 +86,11 @@ def expanded_dual(planar_G, rotation_system):
 
 
 def rotation_system_from_coordinates(G, pos):
-    """assume G is planar"""
+    """assume G is planar
+
+    r[u][v] := the next node clockwise around u after v
+
+    """
     if callable(pos):
         pos = {v: pos(v) for v in G}
 
@@ -100,7 +104,9 @@ def rotation_system_from_coordinates(G, pos):
             x, y = pos[v]
             return math.atan2(y - y0, x - x0)
 
-        rotation_system[u] = sorted(G.adj[u], key=angle)
+        circle = sorted(G.adj[u], key=angle)
+
+        rotation_system[u] = OrderedDict((circle[i - 1], v) for i, v in enumerate(circle))
 
     return rotation_system
 
