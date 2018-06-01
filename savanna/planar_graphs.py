@@ -110,6 +110,41 @@ def plane_triangulation(G, rotation_system):
     return G, rotation_system
 
 
+def _make_odd(uv, G, visited, orientation):
+    G.remove_edge(*uv)
+
+    u, v, _ = uv
+
+    if v in visited:
+        return True
+
+    visited.add(v)
+
+    odd = False
+
+    for vw in list(Edge(*edge) for edge in G.edges(v, keys=True)):
+        if _make_odd(vw, G, visited, orientation):
+            orientation.add(Edge(vw.tail, vw.head, vw.key))
+            odd = not odd
+        else:
+            orientation.add(vw)
+    return odd
+
+
+def odd_edge_orientation(G):
+    """requires multigraph"""
+
+    G = G.copy()  # we will be modifying G in-place
+
+    visited = set()
+    rs = Edge(*next(iter(G.edges)))
+
+    orientation = {rs}
+    _make_odd(rs, G, visited, orientation)
+
+    return orientation
+
+
 # log = logging.getLogger(__name__)
 
 
