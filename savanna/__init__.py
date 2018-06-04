@@ -1,8 +1,11 @@
 # from savanna.agreement_ising import *
 # import savanna.agreement_ising
 
-from savanna.planar_graphs import *
-import savanna.planar_graphs
+# from savanna.kasteleyn import *
+# import savanna.kasteleyn
+
+from savanna.planar import *
+import savanna.planar
 
 # from savanna.sampler import *
 # import savanna.sampler

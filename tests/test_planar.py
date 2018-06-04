@@ -143,10 +143,10 @@ class TestPlaneTriangulation(unittest.TestCase):
 
         rotation_system = savanna.rotation_system_from_coordinates(G, pos)
 
-        ij = savanna.planar_graphs.Edge(0, 1, 0)
-        jk = savanna.planar_graphs.Edge(1, 2, 0)
+        ij = savanna.planar.Edge(0, 1, 0)
+        jk = savanna.planar.Edge(1, 2, 0)
 
-        savanna.planar_graphs._insert_chord(ij, jk, G, rotation_system)
+        savanna.planar._insert_chord(ij, jk, G, rotation_system)
 
         # G should now have an edge between i, k
         self.assertEqual(len(G.edges), 3)
