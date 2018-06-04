@@ -1,13 +1,13 @@
 import networkx as nx
 
 
-def bqm_to_agreement_graph(bqm):
+def bqm_to_multigraph(bqm):
     """todo"""
     if any(bqm.spin.linear.values()):
         raise NotImplementedError("not yet implemented for non-zero linear biases")
 
     offset = bqm.spin.offset
-    G = nx.Graph()
+    G = nx.MultiGraph()
     for (u, v), bias in bqm.spin.quadratic.items():
         G.add_edge(u, v, weight=-2 * bias)
 

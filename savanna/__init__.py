@@ -1,8 +1,11 @@
-# from savanna.agreement_ising import *
-# import savanna.agreement_ising
+from savanna.io import *
+import savanna.io
 
 from savanna.kasteleyn import *
 import savanna.kasteleyn
+
+from savanna.partition import *
+import savanna.partition
 
 from savanna.planar import *
 import savanna.planar
