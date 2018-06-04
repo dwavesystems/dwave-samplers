@@ -131,10 +131,10 @@ def _make_odd(uv, G, visited, orientation):
     return odd
 
 
-def odd_edge_orientation(G):
-    """requires multigraph"""
+def odd_edge_orientation(MG):
+    """requires triangular multigraph"""
 
-    G = G.copy()  # we will be modifying G in-place
+    G = MG.copy()  # we will be modifying G in-place
 
     visited = set()
     rs = Edge(*next(iter(G.edges)))
@@ -142,7 +142,12 @@ def odd_edge_orientation(G):
     orientation = {rs}
     _make_odd(rs, G, visited, orientation)
 
-    return orientation
+    # now create the oriented graph
+    oriented = nx.MultiDiGraph()
+    oriented.add_edges_from((edge.head, edge.tail, edge.key, MG[edge.head][edge.tail][edge.key])
+                            for edge in orientation)
+
+    return oriented
 
 
 # log = logging.getLogger(__name__)

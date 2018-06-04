@@ -157,12 +157,12 @@ class TestOddEdgeOrientation(unittest.TestCase):
     def test_triangle(self):
         G = nx.cycle_graph(3, create_using=nx.MultiGraph())
 
-        orientation = savanna.odd_edge_orientation(G)
+        oriented = savanna.odd_edge_orientation(G)
 
-        for u, v, key in orientation:
+        for u, v, key in oriented.edges(keys=True):
             self.assertIn(u, G.adj)
             self.assertIn(v, G.adj[u])
             self.assertIn(key, G[u][v])
-            self.assertNotIn((v, u, key), orientation)
+            self.assertNotIn((v, u, key), oriented.edges(keys=True))
 
-        self.assertEqual(len(orientation), len(G.edges))
+        self.assertEqual(len(oriented.edges), len(G.edges))
