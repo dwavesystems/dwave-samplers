@@ -98,22 +98,6 @@ class TestExpandedDual(unittest.TestCase):
         self.assertEqual(len(H), 2)
 
 
-class TestRotationSystemFromCoords(unittest.TestCase):
-    def test_simple(self):
-        G = nx.star_graph(4)
-
-        pos = {0: (0, 0),
-               1: (1, 0),  # north
-               2: (0, 1),  # east
-               3: (-1, 0),  # south
-               4: (0, -1)}  # west
-
-        rotation_system = savanna.rotation_system_from_coordinates(G, pos)
-
-        self.assertEqual(rotation_system,
-                         {0: [4, 1, 2, 3], 1: [0], 2: [0], 3: [0], 4: [0]})
-
-
 class TestIsPerfectMatching(unittest.TestCase):
     """Unit tests for the
     :func:`~networkx.algorithms.matching.is_perfect_matching` function.

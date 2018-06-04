@@ -26,13 +26,13 @@ class TestAgreementIsingEnergy(unittest.TestCase):
 class TestBQMToAgreementIsing(unittest.TestCase):
     def test_functional_empty(self):
         bqm = dimod.BinaryQuadraticModel.empty(dimod.BINARY)
-        G, offset = savanna.bqm_to_agreement_graph(bqm)
+        G, offset = savanna.bqm_to_multigraph(bqm)
         self.assertEqual(bqm.energy({}),
                          savanna.agreement_energy({}, G, offset))
 
     def test_functional_one_eq_interaction(self):
         bqm = dimod.BinaryQuadraticModel.from_ising({}, {('a', 'b'): -1})
-        G, offset = savanna.bqm_to_agreement_graph(bqm)
+        G, offset = savanna.bqm_to_multigraph(bqm)
 
         variables = list(bqm)
         for config in itertools.product((-1, 1), repeat=len(bqm)):
@@ -45,7 +45,7 @@ class TestBQMToAgreementIsing(unittest.TestCase):
 
     def test_functional_one_ne_interaction(self):
         bqm = dimod.BinaryQuadraticModel.from_ising({}, {('a', 'b'): +1})
-        G, offset = savanna.bqm_to_agreement_graph(bqm)
+        G, offset = savanna.bqm_to_multigraph(bqm)
 
         variables = list(bqm)
         for config in itertools.product((-1, 1), repeat=len(bqm)):
@@ -61,7 +61,7 @@ class TestBQMToAgreementIsing(unittest.TestCase):
         J = {(u, v): u * v for u, v in itertools.combinations(range(-3, 3), 2)}
 
         bqm = dimod.BinaryQuadraticModel.from_ising({}, J, offset=1.3)
-        G, offset = savanna.bqm_to_agreement_graph(bqm)
+        G, offset = savanna.bqm_to_multigraph(bqm)
 
         variables = list(bqm)
         for config in itertools.product((-1, 1), repeat=len(bqm)):
