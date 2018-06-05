@@ -5,21 +5,16 @@ import dimod
 import savanna
 
 
-class TestGroundStateSample(unittest.TestCase):
-    def test_one_interaction_equality(self):
-        bqm = dimod.BinaryQuadraticModel.from_ising({}, {('a', 'b'): -1})
+class TestGroundStateBQM(unittest.TestCase):
+    def test_NAE3SAT_bqm(self):
+        bqm = dimod.BinaryQuadraticModel.empty(dimod.SPIN)
 
-        rotation_system = {'a': ['b'], 'b': ['a']}
+        bqm.add_interaction('a', 'b', +1.0)
+        bqm.add_interaction('b', 'c', +1.0)
+        bqm.add_interaction('c', 'a', +1.0)
 
-        sample = savanna.ground_state_sample(bqm, rotation_system)
+        pos = {'a': (0, 0), 'b': (1, 0), 'c': (0, 1)}
 
-        self.assertIn(sample, [{'a': +1, 'b': +1}, {'a': -1, 'b': -1}])
+        sample = savanna.ground_state_bqm(bqm, pos)
 
-    def test_one_interaction_not_equality(self):
-        bqm = dimod.BinaryQuadraticModel.from_ising({}, {('a', 'b'): 1})
-
-        rotation_system = {'a': ['b'], 'b': ['a']}
-
-        sample = savanna.ground_state_sample(bqm, rotation_system)
-
-        self.assertIn(sample, [{'a': -1, 'b': +1}, {'a': +1, 'b': -1}])
+        self.assertEqual(set(sample.values()), {-1, +1})

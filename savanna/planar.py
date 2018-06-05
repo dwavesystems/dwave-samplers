@@ -1,4 +1,6 @@
+import itertools
 import math
+
 from collections import OrderedDict, Mapping, namedtuple
 
 import networkx as nx
@@ -167,3 +169,33 @@ def odd_edge_orientation(G):
         edge_attr[(u, v, key)] = v
 
     return edge_attr
+
+
+def expanded_dual(G):
+    """G should be multigraph, triangulated, oriented, edges indexed"""
+
+    dual = nx.Graph()
+
+    # first we add the edges of the dual that cross the edges of G
+    # for an edge (u, v, key) oriented towards v, we adopt the convention that the right-hand node
+    # is labelled (u, v, key) and the left-hand node is (v, u, key).
+    for edge in G.edges(keys=True):
+        u = edge
+        v = (edge[1], edge[0], edge[2])
+        dual.add_edge(u, v, weight=G.edges[edge].get('weight', 0.0))
+
+    # next we add the edges within each triangular face
+    for n in G.nodes:
+
+        # iterate through the wedges around n
+        for left in G.edges(n, keys=True):
+
+            u, v, _ = left = Edge(*left)
+            assert u == n
+            s, t, _ = right = Edge(*G.node[u]['rotation'][left])
+            assert s == u
+
+            # we want to connect the node left (from n) or right
+            dual.add_edge(tuple(left), (t, s, right.key), weight=0.0)
+
+    return dual

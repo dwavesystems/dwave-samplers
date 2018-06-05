@@ -1,14 +1,12 @@
 
 def dual_matching_to_cut(G, matching):
-
-    print(matching)
-
     cut = set(G.edges)
 
     # need to get the cut from the matching
     for u, v in matching:
-        cut.discard(u)
-        cut.discard(v)
+        if u[0] == v[1] and u[1] == v[0] and u[2] == v[2]:
+            cut.discard(u)
+            cut.discard(v)
 
     return cut
 
@@ -25,10 +23,11 @@ def cut_to_state(G, cut, node=None, val=0):
         else:
             state[v] = s
             for u in G[v]:
-                if (u, v) in cut or (v, u) in cut:
-                    _cut_to_state(u, 1 - s)
-                else:
-                    _cut_to_state(u, s)
+                for key in G[u][v]:
+                    if (u, v, key) in cut or (v, u, key) in cut:
+                        _cut_to_state(u, 1 - s)
+                    else:
+                        _cut_to_state(u, s)
 
     _cut_to_state(node, val)
 

@@ -1,28 +1,36 @@
 import dimod
 import networkx as nx
 
-from savanna.agreement_ising import bqm_to_agreement_graph
-from savanna.planar_graphs import expanded_dual
-from savanna.transforms import cut_to_state
+from savanna.io.dimod import bqm_to_multigraph
+from savanna.planar import rotation_from_coordinates, plane_triangulate, odd_edge_orientation
+from savanna.planar import expanded_dual
+from savanna.transforms import cut_to_state, dual_matching_to_cut
 
 
-def ground_state_sample(bqm, rotation_system):
+def ground_state_bqm(bqm, pos):
     """todo"""
 
-    G, offset = bqm_to_agreement_graph(bqm)
+    if len(bqm) < 3:
+        raise ValueError("bqm must have at least three variables")
 
-    dual = expanded_dual(G, rotation_system)
+    G, off = bqm_to_multigraph(bqm)
 
+    # apply the rotation system
+    r = rotation_from_coordinates(G, pos)
+    nx.set_node_attributes(G, name='rotation', values=r)
 
-    matching = nx.max_weight_matching(dual, maxcardinality=True)
+    # triangulation
+    plane_triangulate(G)
 
-    cut = set(G.edges)
+    # create an edge indexing scheme
+    indices = {edge: idx for idx, edge in enumerate(G.edges(keys=True))}
+    nx.set_edge_attributes(G, name='index', values=indices)
 
-    # need to get the cut from the matching
-    for u, v in matching:
-        if u[::-1] == v:
-            cut.discard(u)
-            cut.discard(v)
+    dual = expanded_dual(G)
+
+    matching = nx.max_weight_matching(dual, maxcardinality=True, weight='weight')
+
+    cut = dual_matching_to_cut(G, matching)
 
     state = cut_to_state(G, cut)
 

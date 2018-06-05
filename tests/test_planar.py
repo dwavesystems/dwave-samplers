@@ -143,3 +143,80 @@ class TestOddEdgeOrientation(unittest.TestCase):
             self.assertIn(key, G[u][v])
 
             self.assertNotIn((v, u, key), orientation)
+
+
+class TestExpandedDual(unittest.TestCase):
+    def test_three_cycle(self):
+        G = nx.cycle_graph(3, create_using=nx.MultiGraph())
+
+        G[0][1][0]['weight'] = 1.0
+        G[1][2][0]['weight'] = .5
+        # edge 0, 2 was added in the triangulation step
+
+        for u, v, key in [(0, 1, 0), (1, 2, 0), (2, 0, 0)]:
+            G[u][v][key]['oriented'] = v
+
+        G.node[0]['rotation'] = OrderedDict([((0, 2, 0), (0, 1, 0)),
+                                             ((0, 1, 0), (0, 2, 0))])
+        G.node[1]['rotation'] = OrderedDict([((1, 0, 0), (1, 2, 0)),
+                                             ((1, 2, 0), (1, 0, 0))])
+        G.node[2]['rotation'] = OrderedDict([((2, 1, 0), (2, 0, 0)),
+                                             ((2, 0, 0), (2, 1, 0))])
+
+        dual = savanna.expanded_dual(G)
+
+        self.assertEqual(len(dual.edges), 9)
+        self.assertEqual(len(dual.nodes), 6)
+
+        edges = [((1, 0, 0), (0, 1, 0)), ((1, 0, 0), (0, 2, 0)), ((1, 0, 0), (2, 1, 0)),
+                 ((0, 1, 0), (2, 0, 0)),
+                 ((0, 1, 0), (1, 2, 0)), ((0, 2, 0), (2, 0, 0)), ((0, 2, 0), (2, 1, 0)),
+                 ((2, 0, 0), (1, 2, 0)),
+                 ((2, 1, 0), (1, 2, 0))]
+
+        for u, v in edges:
+            self.assertIn(u, dual.adj)
+            self.assertIn(v, dual.adj[u])
+
+    def test_square(self):
+        G = nx.cycle_graph(4, create_using=nx.MultiGraph())
+        nx.set_edge_attributes(G, name='weight', values=1.0)
+        G.add_edge(0, 2)
+        G.add_edge(1, 3)
+
+        # pos = {0: (0, 0), 1: (1, 0), 2: (1, 1), 3: (0, 1)}
+
+        r = {0: OrderedDict([(Edge(head=0, tail=3, key=0), Edge(head=0, tail=2, key=0)),
+                             (Edge(head=0, tail=1, key=0), Edge(head=0, tail=3, key=0)),
+                             (Edge(head=0, tail=2, key=0), Edge(head=0, tail=1, key=0))]),
+             1: OrderedDict([(Edge(head=1, tail=0, key=0), Edge(head=1, tail=2, key=0)),
+                             (Edge(head=1, tail=2, key=0), Edge(head=1, tail=3, key=0)),
+                             (Edge(head=1, tail=3, key=0), Edge(head=1, tail=0, key=0))]),
+             2: OrderedDict([(Edge(head=2, tail=3, key=0), Edge(head=2, tail=1, key=0)),
+                             (Edge(head=2, tail=1, key=0), Edge(head=2, tail=0, key=0)),
+                             (Edge(head=2, tail=0, key=0), Edge(head=2, tail=3, key=0))]),
+             3: OrderedDict([(Edge(head=3, tail=2, key=0), Edge(head=3, tail=0, key=0)),
+                             (Edge(head=3, tail=0, key=0), Edge(head=3, tail=1, key=0)),
+                             (Edge(head=3, tail=1, key=0), Edge(head=3, tail=2, key=0))])}
+        nx.set_node_attributes(G, name='rotation', values=r)
+
+        # orientation = {(1, 2, 0): 2, (0, 3, 0): 3, (1, 3, 0): 3, (2, 3, 0): 3,
+        #                (0, 1, 0): 1, (2, 0, 0): 0}
+        # nx.set_edge_attributes(G, name='oriented', values=orientation)
+
+        dual = savanna.expanded_dual(G)
+
+        self.assertEqual(len(dual.edges), 4 * 3 + len(G.edges))
+        self.assertEqual(len(dual.nodes), 2 * len(G.edges))
+
+        edges = [((0, 1), (1, 0)), ((0, 1), (3, 0)), ((0, 1), (1, 3)), ((1, 0), (0, 2)),
+                 ((1, 0), (2, 1)), ((0, 3), (3, 0)), ((0, 3), (2, 0)), ((0, 3), (3, 2)),
+                 ((3, 0), (1, 3)), ((0, 2), (2, 0)), ((0, 2), (2, 1)), ((2, 0), (3, 2)),
+                 ((1, 2), (2, 1)), ((1, 2), (3, 1)), ((1, 2), (2, 3)), ((1, 3), (3, 1)),
+                 ((3, 1), (2, 3)), ((2, 3), (3, 2))]
+
+        for u, v in edges:
+            u = (u[0], u[1], 0)
+            v = (v[0], v[1], 0)
+            self.assertIn(u, dual.adj)
+            self.assertIn(v, dual.adj[u])
