@@ -87,7 +87,7 @@ class TestPlaneTriangulation(unittest.TestCase):
         self.assertEqual(set(nx.cycle_graph(3).nodes()), set(G.nodes()))
 
     def test_paper_example(self):
-        G = nx.cycle_graph([1, 2, 3, 4], create_using=nx.MultiGraph())  # , create_using=nx.MultiGraph())
+        G = nx.cycle_graph([1, 2, 3, 4], create_using=nx.MultiGraph())
         G.add_edge(4, 5)
         G.add_edge(4, 2)
 
@@ -98,8 +98,23 @@ class TestPlaneTriangulation(unittest.TestCase):
 
         savanna.plane_triangulate(G)
 
-        # we could test that it is planar_triangular here but we would need to write
+        # we could test that it is plane triangular here but we would need to write
         # a test. For now let's just use this as a smoke test
+        self.assertTrue(nx.is_biconnected(G))  # we do know planar triangular are biconnected
+
+    def test_four_path(self):
+        G = nx.path_graph([1, 2, 3, 4], create_using=nx.MultiGraph())
+
+        pos = {1: (-1, -1), 2: (+1, -1), 3: (+1, +1), 4: (-1, +1), 5: (-.5, -.5)}
+
+        r = savanna.rotation_from_coordinates(G, pos)
+        nx.set_node_attributes(G, name='rotation', values=r)
+
+        savanna.plane_triangulate(G)
+
+        # we could test that it is plane triangular here but we would need to write
+        # a test. For now let's just use this as a smoke test
+        self.assertTrue(nx.is_biconnected(G))  # we do know planar triangular are biconnected
 
 
 class TestOddEdgeOrientation(unittest.TestCase):

@@ -66,7 +66,7 @@ def _insert_chord(ij, jk, G, rotation_system):
     j, k, _ = jk
 
     # because G is a Multigraph, G.add_edge returns the key
-    ik = Edge(i, k, G.add_edge(i, k))  # do not add weight for added edge
+    ik = Edge(i, k, G.add_edge(i, k))
 
     rotation_system[k][(k, i, ik.key)] = rotation_system[k][(k, j, jk.key)]
     rotation_system[k][(k, j, jk.key)] = Edge(k, i, ik.key)
@@ -76,7 +76,16 @@ def _insert_chord(ij, jk, G, rotation_system):
 
 
 def plane_triangulate(G):
-    """Takes a multigraph"""
+    """Add edges to planar graph G to make it plane triangulated.
+
+    An embedded graph is plane triangulated iff it is biconnected and
+    each of its faces is a triangle.
+
+    Args:
+        G (:obj:`nx.MultiGraph`):
+            A planar graph. Must have a rotation system. Note that edges are added in-place.
+
+    """
 
     if len(G) < 3:
         raise ValueError("only defined for graphs with 3 or more nodes")
@@ -91,19 +100,28 @@ def plane_triangulate(G):
             j, k, _ = jk = rotation_system[j][(j, i, ij.key)]
             k, l, _ = kl = rotation_system[k][(k, j, jk.key)]
 
-            # assert j in G[l] and len(G[l][j]) == 1
+            assert ij.tail == jk.head
+
             while l != i:
                 m, n, _ = rotation_system[l][(l, k, kl.key)]
                 if (m, n) == (l, j):
                     break
 
                 if i == k:
-                    raise NotImplementedError
+                    # avoid self-loop
+                    i, j, _ = ij = jk
+                    j, k, _ = jk = kl
+                    k, l, _ = kl = rotation_system[k][(k, j, jk.key)]
+
+                    assert ij.tail == jk.head
+
                 _insert_chord(ij, jk, G, rotation_system)
 
                 i, j, _ = ij = kl
                 j, k, _ = jk = rotation_system[j][(j, i, ij.key)]
                 k, l, _ = kl = rotation_system[k][(k, j, jk.key)]
+
+                assert ij.tail == jk.head
 
     return
 
