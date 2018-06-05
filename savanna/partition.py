@@ -55,4 +55,4 @@ def log_partition_bqm(bqm, pos):
     # now build the Kasteleyn
     K = kasteleyn(G)
 
-    return logsqrtdet(K) - sum(G.edges[e].get('weight', 0.0) for e in G.edges(keys=True)) - off
+    return logsqrtdet(K) - sum(G.edges[e].get('weight', 0.0) for e in G.edges(keys=True)) - off + np.log(2)

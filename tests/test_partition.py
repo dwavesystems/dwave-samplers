@@ -23,10 +23,7 @@ class TestLogPartitionBQM(unittest.TestCase):
         en = list(-bqm.energy(dict(zip(range(len(bqm)), config)))
                   for config in itertools.product((-1, 1), repeat=len(bqm)))
 
-        print('savanna', logZ)
-        print('by hand', np.log(np.sum(np.exp(en))))
-
-        print('diff', logZ - np.log(np.sum(np.exp(en))))
+        self.assertAlmostEqual(np.log(np.sum(np.exp(en))), logZ)
 
     def test_four_path_bqm(self):
         bqm = dimod.BinaryQuadraticModel.empty(dimod.SPIN)
@@ -47,7 +44,4 @@ class TestLogPartitionBQM(unittest.TestCase):
         en = list(-bqm.energy(dict(zip(range(len(bqm)), config)))
                   for config in itertools.product((-1, 1), repeat=len(bqm)))
 
-        print('savanna', logZ)
-        print('by hand', np.log(np.sum(np.exp(en))))
-
-        print('diff', logZ - np.log(np.sum(np.exp(en))))
+        self.assertAlmostEqual(np.log(np.sum(np.exp(en))), logZ)
