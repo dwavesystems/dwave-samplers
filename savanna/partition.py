@@ -58,4 +58,4 @@ def log_partition_bqm(bqm, pos):
     # the ln(2) comes from there being twice as many states (in our version of a bqm) as perfect matchings
     # because the BQM has only 0 linear biases. Therefore for each sample than minimized the BQM,
     # its inverse also minimizes.
-    return logsqrtdet(K) - sum(G.edges[e].get('weight', 0.0) for e in G.edges(keys=True)) - off + np.log(2)
+    return logsqrtdet(K) - (sum(G.edges[e].get('weight', 0.0) for e in G.edges(keys=True)) + off) + np.log(2)
