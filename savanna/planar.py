@@ -128,47 +128,47 @@ def plane_triangulate(G):
     return
 
 
-def _make_odd(uv, G, visited, orientation):
-
-    G.remove_edge(*uv)
-
-    u, v, _ = uv
-
-    if v in visited:
-        return True
-
-    visited.add(v)
-
-    odd = False
-
-    while G.adj[v]:
-        vw = Edge(*next(iter(G.edges(v, keys=True))))
-        if _make_odd(vw, G, visited, orientation):
-            orientation.add(Edge(vw.tail, vw.head, vw.key))
-            odd = not odd
-        else:
-            orientation.add(vw)
-    return odd
-
-
 def odd_edge_orientation(G):
-    """requires triangular multigraph"""
+    """requires multigraph
 
+    only works for graphs where each face has an odd number of edges
+
+    An orientation for an embedded graph is clockwise odd iff the number of edges oriented clockwise
+    around each face (except possibly the external face) is odd.
+
+    """
     G = G.copy()  # we will be modifying G in-place
 
+    orientation = {}
     visited = set()
 
-    rs = Edge(*next(iter(G.edges)))
+    for r, s in reversed(list(nx.dfs_edges(G))):
 
-    orientation = {rs}
-    _make_odd(rs, G, visited, orientation)
+        rs = (r, s, min(G[s][r]))
 
-    edge_attr = {}
+        if s in visited:
+            orientation[rs] = r
+        else:
+            visited.add(s)
+            orientation[rs] = s
 
-    for u, v, key in orientation:
-        edge_attr[(u, v, key)] = v
+        G.remove_edge(*rs)
 
-    return edge_attr
+        while G.adj[s]:
+            uv = (u, v, __) = next(iter(G.edges(s, keys=True)))
+
+            if v in visited:
+                # odd
+                orientation[uv] = u
+            else:
+                # even
+                orientation[uv] = v
+
+            G.remove_edge(*uv)
+
+    assert len(G.edges) == 0
+
+    return orientation
 
 
 def expanded_dual(G):

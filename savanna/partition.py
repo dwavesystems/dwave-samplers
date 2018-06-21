@@ -24,7 +24,7 @@ def logsqrtdet(K):
     # LU decomposition
     PL, U = scipy.linalg.lu(K, permute_l=True)
 
-    # assert np.linalg.det(PL) in (-1, 1), 'The contribution to the determinent of PL should be 1'
+    # assert np.linalg.det(PL) in (-1, 1), 'The contribution of the determinent of PL should be 1'
     # assert np.all(np.triu(U) == U), 'U should be upper triangular'
 
     return .5 * np.sum(np.log(np.absolute(np.diag(U))))

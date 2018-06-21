@@ -121,28 +121,93 @@ class TestOddEdgeOrientation(unittest.TestCase):
     def test_triangle(self):
         G = nx.cycle_graph(3, create_using=nx.MultiGraph())
 
+        faces = [[(0, 1, 0), (1, 2, 0), (2, 0, 0)],
+                 [(1, 0, 0), (2, 1, 0), (0, 2, 0)]]
+
         orientation = savanna.odd_edge_orientation(G)
 
+        # check that it's an orientation
+        self.assertEqual(len(orientation), len(G.edges), "not every edge present in orientation")
         for u, v, key in orientation:
             self.assertIn(u, G.adj)
             self.assertIn(v, G.adj[u])
             self.assertIn(key, G[u][v])
 
+        # apply the orientation and check that it's odd
+        nx.set_edge_attributes(G, name='oriented', values=orientation)
+
+        # num_oriented = 0
+        # for face in faces:
+        #     num_odd = 0
+        #     for edge in face:
+        #         if G.edges[edge]['oriented'] == edge[1]:
+        #             num_odd += 1
+        #     num_oriented += num_odd % 2
+
+        # self.assertGreaterEqual(num_oriented, len(faces) - 1)
+
     def test_square(self):
         G = nx.MultiGraph()
 
-        G.add_edges_from([(0, 1, 0), (0, 3, 0), (0, 2, 0), (0, 2, 1), (1, 2, 0), (2, 3, 0)])
+        G.add_edges_from([(0, 1), (0, 3), (0, 2), (0, 2), (1, 2), (2, 3)])
+
+        faces = [[(0, 1, 0), (1, 2, 0), (2, 0, 1)],
+                 [(1, 0, 0), (0, 2, 0), (2, 1, 0)],
+                 [(0, 3, 0), (3, 2, 0), (2, 0, 0)],
+                 [(2, 3, 0), (3, 0, 0), (0, 2, 1)]]
 
         orientation = savanna.odd_edge_orientation(G)
 
-        self.assertEqual(len(orientation), len(G.edges))
-        for (u, v, key), n in orientation.items():
-            self.assertEqual(n, v)
+        # check that it's an orientation
+        self.assertEqual(len(orientation), len(G.edges), "not every edge present in orientation")
+        for u, v, key in orientation:
             self.assertIn(u, G.adj)
             self.assertIn(v, G.adj[u])
             self.assertIn(key, G[u][v])
 
-            self.assertNotIn((v, u, key), orientation)
+        # apply the orientation and check that it's odd
+        nx.set_edge_attributes(G, name='oriented', values=orientation)
+
+        # num_oriented = 0
+        # for face in faces:
+        #     num_odd = 0
+        #     for edge in face:
+        #         if G.edges[edge]['oriented'] == edge[1]:
+        #             num_odd += 1
+        #     num_oriented += num_odd % 2
+
+        # self.assertGreaterEqual(num_oriented, len(faces) - 1)
+
+    def test_grid_100x100(self):
+        G = nx.MultiGraph()
+
+        for x in range(100):
+            for y in range(100):
+                G.add_edge((x, y), (x + 1, y))
+                G.add_edge((x, y), (x + 1, y + 1))
+                G.add_edge((x, y), (x, y + 1))
+
+        orientation = savanna.odd_edge_orientation(G)
+
+        # check that it's an orientation
+        self.assertEqual(len(orientation), len(G.edges), "not every edge present in orientation")
+        for u, v, key in orientation:
+            self.assertIn(u, G.adj)
+            self.assertIn(v, G.adj[u])
+            self.assertIn(key, G[u][v])
+
+        # apply the orientation and check that it's odd
+        nx.set_edge_attributes(G, name='oriented', values=orientation)
+
+        # num_oriented = 0
+        # for face in faces:
+        #     num_odd = 0
+        #     for edge in face:
+        #         if G.edges[edge]['oriented'] == edge[1]:
+        #             num_odd += 1
+        #     num_oriented += num_odd % 2
+
+        # self.assertGreaterEqual(num_oriented, len(faces) - 1)
 
 
 class TestExpandedDual(unittest.TestCase):
@@ -151,7 +216,7 @@ class TestExpandedDual(unittest.TestCase):
 
         G[0][1][0]['weight'] = 1.0
         G[1][2][0]['weight'] = .5
-        # edge 0, 2 was added in the triangulation step
+        # edge 0, 2 was added in the triangulation step, therfore has no weight
 
         for u, v, key in [(0, 1, 0), (1, 2, 0), (2, 0, 0)]:
             G[u][v][key]['oriented'] = v

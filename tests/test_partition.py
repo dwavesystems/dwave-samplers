@@ -45,3 +45,8 @@ class TestLogPartitionBQM(unittest.TestCase):
                   for config in itertools.product((-1, 1), repeat=len(bqm)))
 
         self.assertAlmostEqual(np.log(np.sum(np.exp(en))), logZ)
+
+    def test_FrustTriangleL39(self):
+        from tests.data import bqm_L39, pos_L39
+
+        logZ = savanna.log_partition_bqm(bqm_L39, pos_L39)

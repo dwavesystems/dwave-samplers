@@ -18,3 +18,35 @@ class TestGroundStateBQM(unittest.TestCase):
         sample = savanna.ground_state_bqm(bqm, pos)
 
         self.assertEqual(set(sample.values()), {-1, +1})
+
+    def test_grid_15x15(self):
+        bqm = dimod.BinaryQuadraticModel.empty(dimod.SPIN)
+
+        for x in range(15):
+            for y in range(15):
+                bqm.add_interaction((x, y), (x + 1, y), 1)
+                bqm.add_interaction((x, y), (x + 1, y + 1), 1)
+                bqm.add_interaction((x, y), (x, y + 1), 1)
+
+        def pos(v): return v
+
+        sample = savanna.ground_state_bqm(bqm, pos)
+
+        self.assertEqual(set(sample.values()), {-1, +1})
+
+    def test_grid_15x15_ferromagnet(self):
+        bqm = dimod.BinaryQuadraticModel.empty(dimod.SPIN)
+
+        for x in range(15):
+            for y in range(15):
+                bqm.add_interaction((x, y), (x + 1, y), -1)
+                bqm.add_interaction((x, y), (x + 1, y + 1), -1)
+                bqm.add_interaction((x, y), (x, y + 1), -1)
+
+        def pos(v): return v
+
+        sample = savanna.ground_state_bqm(bqm, pos)
+
+        # should all be the same
+        self.assertEqual(len(set(sample.values())), 1)
+        self.assertTrue(set(sample.values()).issubset({-1, 1}))
