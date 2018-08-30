@@ -7,7 +7,7 @@ def bqm_to_multigraph(bqm):
         raise NotImplementedError("not yet implemented for non-zero linear biases")
 
     offset = bqm.spin.offset
-    G = nx.MultiGraph()
+    G = nx.OrderedMultiGraph()
     for (u, v), bias in bqm.spin.quadratic.items():
         G.add_edge(u, v, weight=-2 * bias)
 
