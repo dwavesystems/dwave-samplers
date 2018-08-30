@@ -128,10 +128,34 @@ def plane_triangulate(G):
 
                 assert ij.tail == jk.head
 
+    assert is_plane_triangulated(G), "Something went wrong, G is not plane triangulated"
+
     return
 
 
-def odd_edge_orientation(G):
+def is_plane_triangulated(G):
+    # biconnected and each of its faces is a triangle
+    # expects G to have the rotation system as node attributes, and is multigraph
+    if not nx.is_biconnected(G):
+        return False
+
+    # x
+    # |\
+    # | \
+    # y--z
+    for x in G.nodes:
+        for xz in G.edges(x, keys=True):
+
+            xy = x, y, xykey = G.node[x]['rotation'][xz]
+            yz = y, z, yzkey = G.node[y]['rotation'][(y, x, xykey)]
+            zx = z, x, xzkey = G.node[z]['rotation'][(z, y, yzkey)]
+
+            if xz != (x, z, xzkey):
+                return False
+    return True
+
+
+def odd_in_degree_orientation(G):
     """requires multigraph
 
     only works for graphs where each face has an odd number of edges

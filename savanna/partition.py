@@ -4,7 +4,7 @@ import scipy
 
 from savanna.io.dimod import bqm_to_multigraph
 from savanna.kasteleyn import kasteleyn
-from savanna.planar import rotation_from_coordinates, plane_triangulate, odd_edge_orientation
+from savanna.planar import rotation_from_coordinates, plane_triangulate, odd_in_degree_orientation, is_plane_triangulated
 
 
 def logsqrtdet(K):
@@ -45,8 +45,12 @@ def log_partition_bqm(bqm, pos):
     plane_triangulate(G)
 
     # get the odd edge orientation
-    orientation = odd_edge_orientation(G)
+    orientation = odd_in_degree_orientation(G)
     nx.set_edge_attributes(G, name='oriented', values=orientation)
+
+    # to establish clockwise odd orientation of the expanded dual, all vertices, except possibly 1
+    # should have an odd in-degree
+    assert sum(bool(sum(data['oriented'] == v for _, _, data in G.edges(v, data=True)) % 2) for v in G) >= len(G) - 1
 
     # create an edge indexing scheme
     indices = {edge: idx for idx, edge in enumerate(G.edges(keys=True))}
