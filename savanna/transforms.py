@@ -1,5 +1,8 @@
 
 def dual_matching_to_cut(G, matching):
+    # the for each edge u,v in G, the expanded dual has two nodes (u,v), (v,u) with an edge between
+    # them. The matching is defined on that graph. There are additional edges, but we don't care
+    # about those
     cut = set(G.edges)
 
     # need to get the cut from the matching
