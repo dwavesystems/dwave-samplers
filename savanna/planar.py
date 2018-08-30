@@ -37,7 +37,10 @@ def rotation_from_coordinates(G, pos):
         x0, y0 = pos(u)
 
         def angle(edge):
-            __, v, *__ = edge  # generic for Graph or MultiGraph
+            if len(edge) == 3:  # generic for Graph or MultiGraph
+                _, v, _ = edge
+            else:
+                _, v = edge
             x, y = pos(v)
             return math.atan2(y - y0, x - x0)
 
