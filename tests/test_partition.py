@@ -50,3 +50,33 @@ class TestLogPartitionBQM(unittest.TestCase):
         from tests.data import bqm_L39, pos_L39
 
         logZ = savanna.log_partition_bqm(bqm_L39, pos_L39)
+
+    def test_square_with_chord(self):
+        bqm = dimod.BinaryQuadraticModel.from_ising({0: -0.0, 1: -0.0, 2: -0.0, 3: -0.0},
+                                                    {(1, 2): 2, (0, 1): 1, (1, 3): 1, (2, 3): 1, (0, 2): 1})
+        pos = {0: (0, 0), 1: (0, 1), 2: (1, 0), 3: (1, 1)}
+
+        logZ = savanna.log_partition_bqm(bqm, pos)
+
+        en = []
+        for config in itertools.product((-1, 1), repeat=len(bqm)):
+            sample = dict(zip(range(len(bqm)), config))
+            en.append(bqm.energy(sample))
+
+        self.assertAlmostEqual(np.log(np.sum(np.exp(-1*np.asarray(en)))), logZ)
+
+    def test_square_with_chord_2(self):
+        bqm = dimod.BinaryQuadraticModel({0: -0.0, 1: -0.0, 2: -0.0, 3: -0.0},
+                                         {(1, 2): 200, (0, 1): 100, (1, 3): 100, (2, 3): 100, (0, 2): 100},
+                                         -0.0, dimod.SPIN)
+
+        pos = {0: (0, 0), 1: (0, 1), 2: (1, 0), 3: (1, 1)}
+
+        logZ = savanna.log_partition_bqm(bqm, pos)
+
+        en = []
+        for config in itertools.product((-1, 1), repeat=len(bqm)):
+            sample = dict(zip(range(len(bqm)), config))
+            en.append(bqm.energy(sample))
+
+        self.assertAlmostEqual(np.log(np.sum(np.exp(-1*np.asarray(en)))), logZ)
