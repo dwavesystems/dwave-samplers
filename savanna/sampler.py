@@ -30,6 +30,8 @@ def ground_state_bqm(bqm, pos):
 
     matching = nx.max_weight_matching(dual, maxcardinality=True, weight='weight')
 
+    assert is_perfect_matching(dual, matching)
+
     cut = dual_matching_to_cut(G, matching)
 
     state = cut_to_state(G, cut)
@@ -38,3 +40,18 @@ def ground_state_bqm(bqm, pos):
         return state
     else:
         return {v: 2 * b - 1 for v, b in state.items()}
+
+
+# this will be present in NetworkX 2.1, but for now use it
+def is_perfect_matching(G, matching):
+    from collections import Counter
+
+    if isinstance(matching, dict):
+        matching = matching_dict_to_set(matching)
+
+    if not nx.is_matching(G, matching):
+        return False
+
+    counts = Counter(sum(matching, ()))
+
+    return all(counts[v] == 1 for v in G)
