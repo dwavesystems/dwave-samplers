@@ -99,7 +99,6 @@ class TestLogPartitionBQM(unittest.TestCase):
             for u, v in edges:
                 bqm.add_interaction(u, v, random.uniform(-1, 1))
 
-            print(edges, nodes)
             logZ = savanna.log_partition_bqm(bqm, pos)
 
             en = list(-bqm.energy(dict(zip(range(len(bqm)), config)))
