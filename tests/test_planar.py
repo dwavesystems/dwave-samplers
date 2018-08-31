@@ -124,7 +124,7 @@ class TestOddEdgeOrientation(unittest.TestCase):
         faces = [[(0, 1, 0), (1, 2, 0), (2, 0, 0)],
                  [(1, 0, 0), (2, 1, 0), (0, 2, 0)]]
 
-        orientation = savanna.odd_edge_orientation(G)
+        orientation = savanna.odd_in_degree_orientation(G)
 
         # check that it's an orientation
         self.assertEqual(len(orientation), len(G.edges), "not every edge present in orientation")
@@ -136,27 +136,15 @@ class TestOddEdgeOrientation(unittest.TestCase):
         # apply the orientation and check that it's odd
         nx.set_edge_attributes(G, name='oriented', values=orientation)
 
-        # num_oriented = 0
-        # for face in faces:
-        #     num_odd = 0
-        #     for edge in face:
-        #         if G.edges[edge]['oriented'] == edge[1]:
-        #             num_odd += 1
-        #     num_oriented += num_odd % 2
-
-        # self.assertGreaterEqual(num_oriented, len(faces) - 1)
+        self.assertTrue(sum(bool(sum(data['oriented'] == v for _, _, data in G.edges(v, data=True)) % 2)
+                        for v in G) >= len(G) - 1)
 
     def test_square(self):
         G = nx.MultiGraph()
 
         G.add_edges_from([(0, 1), (0, 3), (0, 2), (0, 2), (1, 2), (2, 3)])
 
-        faces = [[(0, 1, 0), (1, 2, 0), (2, 0, 1)],
-                 [(1, 0, 0), (0, 2, 0), (2, 1, 0)],
-                 [(0, 3, 0), (3, 2, 0), (2, 0, 0)],
-                 [(2, 3, 0), (3, 0, 0), (0, 2, 1)]]
-
-        orientation = savanna.odd_edge_orientation(G)
+        orientation = savanna.odd_in_degree_orientation(G)
 
         # check that it's an orientation
         self.assertEqual(len(orientation), len(G.edges), "not every edge present in orientation")
@@ -168,15 +156,8 @@ class TestOddEdgeOrientation(unittest.TestCase):
         # apply the orientation and check that it's odd
         nx.set_edge_attributes(G, name='oriented', values=orientation)
 
-        # num_oriented = 0
-        # for face in faces:
-        #     num_odd = 0
-        #     for edge in face:
-        #         if G.edges[edge]['oriented'] == edge[1]:
-        #             num_odd += 1
-        #     num_oriented += num_odd % 2
-
-        # self.assertGreaterEqual(num_oriented, len(faces) - 1)
+        self.assertTrue(sum(bool(sum(data['oriented'] == v for _, _, data in G.edges(v, data=True)) % 2)
+                        for v in G) >= len(G) - 1)
 
     def test_grid_100x100(self):
         G = nx.MultiGraph()
@@ -187,7 +168,7 @@ class TestOddEdgeOrientation(unittest.TestCase):
                 G.add_edge((x, y), (x + 1, y + 1))
                 G.add_edge((x, y), (x, y + 1))
 
-        orientation = savanna.odd_edge_orientation(G)
+        orientation = savanna.odd_in_degree_orientation(G)
 
         # check that it's an orientation
         self.assertEqual(len(orientation), len(G.edges), "not every edge present in orientation")
@@ -199,15 +180,8 @@ class TestOddEdgeOrientation(unittest.TestCase):
         # apply the orientation and check that it's odd
         nx.set_edge_attributes(G, name='oriented', values=orientation)
 
-        # num_oriented = 0
-        # for face in faces:
-        #     num_odd = 0
-        #     for edge in face:
-        #         if G.edges[edge]['oriented'] == edge[1]:
-        #             num_odd += 1
-        #     num_oriented += num_odd % 2
-
-        # self.assertGreaterEqual(num_oriented, len(faces) - 1)
+        self.assertTrue(sum(bool(sum(data['oriented'] == v for _, _, data in G.edges(v, data=True)) % 2)
+                        for v in G) >= len(G) - 1)
 
 
 class TestExpandedDual(unittest.TestCase):

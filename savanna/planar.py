@@ -128,50 +128,67 @@ def plane_triangulate(G):
 
                 assert ij.tail == jk.head
 
+    assert is_plane_triangulated(G), "Something went wrong, G is not plane triangulated"
+
     return
 
 
-def odd_edge_orientation(G):
-    """requires multigraph
+def is_plane_triangulated(G):
+    # biconnected and each of its faces is a triangle
+    # expects G to have the rotation system as node attributes, and is multigraph
+    if not nx.is_biconnected(G):
+        return False
 
-    only works for graphs where each face has an odd number of edges
+    # x
+    # |\
+    # | \
+    # y--z
+    for x in G.nodes:
+        for xz in G.edges(x, keys=True):
 
-    An orientation for an embedded graph is clockwise odd iff the number of edges oriented clockwise
-    around each face (except possibly the external face) is odd.
+            xy = x, y, xykey = G.node[x]['rotation'][xz]
+            yz = y, z, yzkey = G.node[y]['rotation'][(y, x, xykey)]
+            zx = z, x, xzkey = G.node[z]['rotation'][(z, y, yzkey)]
 
-    """
-    G = G.copy()  # we will be modifying G in-place
+            if xz != (x, z, xzkey):
+                return False
+    return True
 
-    orientation = {}
+
+def odd_in_degree_orientation(H):
+    G = H.copy()
+
     visited = set()
+    orientation = set()
 
-    for r, s in reversed(list(nx.dfs_edges(G))):
+    for (u, v) in reversed(list(nx.dfs_edges(H))):
+        uv = u, v, uvkey = u, v, min(G[u][v])
 
-        rs = (r, s, min(G[s][r]))
+        uv_odd = True  # for now assume that we'll mark uv as odd
 
-        if s in visited:
-            orientation[rs] = r
-        else:
-            visited.add(s)
-            orientation[rs] = s
+        for vw in G.edges(v, keys=True):
+            v, w, vwkey = vw
 
-        G.remove_edge(*rs)
-
-        while G.adj[s]:
-            uv = (u, v, __) = next(iter(G.edges(s, keys=True)))
-
-            if v in visited:
-                # odd
-                orientation[uv] = u
+            if vw == (v, u, uvkey):
+                # we'll do this one last
+                pass
+            elif (w, v, vwkey) in orientation:
+                # we've already done this one and it's heading in, so we need to toggle the edge
+                # we walked in on
+                uv_odd = not uv_odd
+                continue
             else:
-                # even
-                orientation[uv] = v
+                # ok, it's not the edge we came in on, and it's not already been marked or it's already
+                # going out, so let's just set it going out so it doesn't change our degree
+                orientation.add(vw)
 
-            G.remove_edge(*uv)
+        if uv_odd:
+            # we want uv oriented towards v
+            orientation.add(uv)
+        else:
+            orientation.add((v, u, uvkey))
 
-    assert len(G.edges) == 0
-
-    return orientation
+    return {(u, v, key): v for (u, v, key) in orientation}
 
 
 def expanded_dual(G):

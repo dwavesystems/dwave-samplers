@@ -1,5 +1,6 @@
 import itertools
 import unittest
+import random
 
 import dimod
 import numpy as np
@@ -81,29 +82,26 @@ class TestLogPartitionBQM(unittest.TestCase):
 
         self.assertAlmostEqual(np.log(np.sum(np.exp(-1*np.asarray(en)))), logZ)
 
-    def test_orderings(self):
-        bqm = dimod.BinaryQuadraticModel({0: -0.0, 1: -0.0, 2: -0.0, 3: -0.0},
-                                         {(1, 2): 200, (0, 1): 100, (1, 3): 100, (2, 3): 100, (0, 2): 100},
-                                         -0.0, dimod.SPIN)
-
+    def test_functional_square_with_chord_random(self):
+        nodes = list(range(4))
+        edges = [[1, 2], [0, 1], [1, 3], [2, 3], [0, 2]]
         pos = {0: (0, 0), 1: (0, 1), 2: (1, 0), 3: (1, 1)}
+        for __ in range(10):
+            bqm = dimod.BinaryQuadraticModel.empty(dimod.SPIN)
 
-        en = []
-        for config in itertools.product((-1, 1), repeat=len(bqm)):
-            sample = dict(zip(range(len(bqm)), config))
-            en.append(bqm.energy(sample))
-        true_logZ = np.log(np.sum(np.exp(-1*np.asarray(en))))
+            random.shuffle(nodes)
+            for v in nodes:
+                bqm.add_variable(v, 0)
 
-        for order in itertools.permutations(bqm, 4):
-            new_bqm = dimod.BinaryQuadraticModel.empty(dimod.SPIN)
-            for v in order:
-                new_bqm.add_variable(v, bqm.linear[v])
-            for u, v in bqm.quadratic:
-                new_bqm.add_interaction(u, v, bqm.quadratic[(u, v)])
+            random.shuffle(edges)
+            for edge in edges:
+                random.shuffle(edge)
+            for u, v in edges:
+                bqm.add_interaction(u, v, random.uniform(-1, 1))
 
-            assert bqm == new_bqm
+            logZ = savanna.log_partition_bqm(bqm, pos)
 
-            new_pos = {v: pos[v] for v in order}
+            en = list(-bqm.energy(dict(zip(range(len(bqm)), config)))
+                      for config in itertools.product((-1, 1), repeat=len(bqm)))
 
-            # print(savanna.log_partition_bqm(bqm, new_pos), true_logZ)
-            self.assertAlmostEqual(savanna.log_partition_bqm(new_bqm, new_pos), true_logZ)
+            self.assertAlmostEqual(np.log(np.sum(np.exp(en))), logZ)

@@ -2,7 +2,7 @@ import dimod
 import networkx as nx
 
 from savanna.io.dimod import bqm_to_multigraph
-from savanna.planar import rotation_from_coordinates, plane_triangulate, odd_edge_orientation
+from savanna.planar import rotation_from_coordinates, plane_triangulate
 from savanna.planar import expanded_dual
 from savanna.transforms import cut_to_state, dual_matching_to_cut
 
