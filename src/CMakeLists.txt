@@ -1,1 +1,0 @@
-install(DIRECTORY orang DESTINATION include PATTERN ".*" EXCLUDE)
