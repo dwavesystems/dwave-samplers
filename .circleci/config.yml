@@ -58,13 +58,13 @@ jobs:
 #            . env/bin/activate
 #            codecov
 
-      - run:
-          name: doctest
-          command: |
-            . env/bin/activate
-            pip install .
-            pip install -r docs/requirements.txt
-            make -C docs/ doctest
+      # - run:
+      #     name: doctest
+      #     command: |
+      #       . env/bin/activate
+      #       pip install .
+      #       pip install -r docs/requirements.txt
+      #       make -C docs/ doctest
 
       - run: &sdist-build-template
           name: build sdist
