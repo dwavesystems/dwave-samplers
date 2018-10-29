@@ -1,9 +1,5 @@
 find_package(Boost 1.42 COMPONENTS unit_test_framework REQUIRED)
 
-if(MSVC_VERSION GREATER 1299)
-  add_definitions("/wd4244")
-endif()
-
 add_executable(run_tests EXCLUDE_FROM_ALL 
                test-main.cpp
                test-table.cpp
@@ -17,7 +13,7 @@ add_executable(run_tests EXCLUDE_FROM_ALL
                test-buckettree.cpp
                test-varorder.cpp
                util.cpp)
-include_directories(${CMAKE_SOURCE_DIR}/src ${Boost_INCLUDE_DIRS})
+include_directories(${CMAKE_SOURCE_DIR}/orang/src/include ${Boost_INCLUDE_DIRS})
 add_definitions(-DBOOST_TEST_DYN_LINK -DBOOST_ALL_NO_LIB)
 target_link_libraries(run_tests ${Boost_LIBRARIES})
 

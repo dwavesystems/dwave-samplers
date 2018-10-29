@@ -4,11 +4,11 @@
 
 #include <boost/assign/list_of.hpp>
 
-#include <orang/table.h>
-#include <orang/task.h>
-#include <orang/combine.h>
-#include <orang/operations/min.h>
-#include <orang/merger.h>
+#include <table.h>
+#include <task.h>
+#include <combine.h>
+#include <operations/min.h>
+#include <merger.h>
 
 #include "test.h"
 

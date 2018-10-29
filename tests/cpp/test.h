@@ -6,10 +6,10 @@
 #include <ostream>
 #include <vector>
 #include <functional>
-#include <orang/base.h>
-#include <orang/table.h>
-#include <orang/graph.h>
-#include <orang/operations/min.h>
+#include <base.h>
+#include <table.h>
+#include <graph.h>
+#include <operations/min.h>
 
 class FixedNumberGenerator {
 private:

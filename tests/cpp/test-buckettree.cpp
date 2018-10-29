@@ -10,14 +10,14 @@
 #include <boost/assign/list_of.hpp>
 #include <boost/iterator/indirect_iterator.hpp>
 
-#include <orang/base.h>
-#include <orang/exception.h>
-#include <orang/table.h>
-#include <orang/treedecomp.h>
-#include <orang/combine.h>
-#include <orang/operations/min.h>
-#include <orang/task.h>
-#include <orang/buckettree.h>
+#include <base.h>
+#include <exception.h>
+#include <table.h>
+#include <treedecomp.h>
+#include <combine.h>
+#include <operations/min.h>
+#include <task.h>
+#include <buckettree.h>
 
 #include "test.h"
 

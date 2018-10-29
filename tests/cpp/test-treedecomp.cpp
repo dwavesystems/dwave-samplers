@@ -18,10 +18,10 @@ using boost::make_transform_iterator;
 using boost::lambda::bind;
 using boost::lambda::_1;
 
-#include <orang/base.h>
-#include <orang/exception.h>
-#include <orang/graph.h>
-#include <orang/treedecomp.h>
+#include <base.h>
+#include <exception.h>
+#include <graph.h>
+#include <treedecomp.h>
 using orang::Var;
 using orang::VarVector;
 using orang::DomIndexVector;

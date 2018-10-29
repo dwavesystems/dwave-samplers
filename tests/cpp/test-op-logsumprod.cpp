@@ -8,10 +8,10 @@
 #include <boost/assign/list_of.hpp>
 #include <boost/foreach.hpp>
 
-#include <orang/base.h>
-#include <orang/table.h>
-#include <orang/marginalizer.h>
-#include <orang/operations/logsumprod.h>
+#include <base.h>
+#include <table.h>
+#include <marginalizer.h>
+#include <operations/logsumprod.h>
 
 #include "test.h"
 
