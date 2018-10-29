@@ -1,8 +1,8 @@
 #include <algorithm>
 #include <ostream>
 #include <boost/foreach.hpp>
-#include <orang/table.h>
-#include <orang/graph.h>
+#include <table.h>
+#include <graph.h>
 
 #include "test.h"
 

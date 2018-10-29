@@ -22,8 +22,8 @@ using boost::lambda::bind;
 using boost::lambda::_1;
 using boost::assign::list_of;
 
-#include <orang/base.h>
-#include <orang/graph.h>
+#include <base.h>
+#include <graph.h>
 using orang::Var;
 using orang::VarVector;
 using orang::Graph;

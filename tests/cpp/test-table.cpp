@@ -20,9 +20,9 @@ using boost::lambda::_1;
 using boost::assign::list_of;
 using boost::shared_ptr;
 
-#include <orang/base.h>
-#include <orang/table.h>
-#include <orang/exception.h>
+#include <base.h>
+#include <table.h>
+#include <exception.h>
 using orang::Var;
 using orang::DomIndex;
 using orang::VarVector;

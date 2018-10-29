@@ -5,10 +5,10 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/assign/list_of.hpp>
 
-#include <orang/base.h>
-#include <orang/table.h>
-#include <orang/marginalizer.h>
-#include <orang/operations/count.h>
+#include <base.h>
+#include <table.h>
+#include <marginalizer.h>
+#include <operations/count.h>
 
 using std::less;
 using std::ostream;

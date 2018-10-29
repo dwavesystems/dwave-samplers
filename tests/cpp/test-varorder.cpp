@@ -8,11 +8,11 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/assign/list_of.hpp>
 
-#include <orang/base.h>
-#include <orang/table.h>
-#include <orang/operations/dummy.h>
-#include <orang/task.h>
-#include <orang/varorder.h>
+#include <base.h>
+#include <table.h>
+#include <operations/dummy.h>
+#include <task.h>
+#include <varorder.h>
 
 #include "test.h"
 
