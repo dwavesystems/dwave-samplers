@@ -24,17 +24,12 @@ jobs:
           command: |
             . env/bin/activate
             python --version
-            pip install -r tests/requirements.txt
+            pip install -r requirements.txt
 
       - save_cache:
           paths:
             - ./env
           key: v1-dependencies-{{ checksum "requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
-
-      - run:
-          name: install swig
-          command: |
-            sudo apt-get install swig
 
       - run: &install-package-template
           name: install package
@@ -127,11 +122,6 @@ jobs:
           key: pyenv-{{ .Environment.CIRCLE_JOB }}
 
       - run:
-          name: install swig
-          command: |
-            brew install swig
-
-      - run:
           name: create virtualenv
           command: |
             eval "$(pyenv init -)"
@@ -148,7 +138,7 @@ jobs:
           command: |
             . env/bin/activate
             python --version
-            pip install -r tests/requirements.txt
+            pip install -r requirements.txt
 
       - save_cache:
           paths:
@@ -199,8 +189,8 @@ jobs:
       - checkout
 
       - run:
-          name: Installing gcc and cmake
-          command: sudo apt-get install -y gcc g++ cmake
+          name: Installing gcc, cmake and boost
+          command: sudo apt-get install -y gcc g++ cmake libboost-all-dev
 
       - run:
           name: run c++ tests
