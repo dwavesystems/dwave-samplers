@@ -1,3 +1,7 @@
-cython
-dimod
-dwave_networkx
+cython==0.29
+dimod==0.7.9
+dwave_networkx==0.6.6
+numpy==1.15.3
+
+coverage
+codecov

@@ -4,8 +4,8 @@ import sys
 import os
 
 from setuptools import setup
+from setuptools.command.build_ext import build_ext
 from distutils.extension import Extension
-from distutils.command.build_ext import build_ext
 from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatformError
 
 # # add __version__, __author__, __authoremail__, __description__ to this namespace
@@ -17,9 +17,13 @@ from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatfo
 # else:
 #     exec(open(os.path.join(".", "orang", "package_info.py")).read())
 
-install_requires = []
+install_requires = ['numpy>=1.15.0,<2.0.0',
+                    'dimod>=0.7.9,<0.8.0',
+                    'dwave_networkx>=0.6.6,<0.7.0',
+                    ]
 
-packages = []
+packages = ['orang',
+            ]
 
 try:
     from Cython.Build import cythonize
@@ -36,12 +40,21 @@ extensions = [Extension("orang._orang",
                          "orang/src/solve.cpp",
                          "orang/src/sample.cpp"],
                         include_dirs=['orang/src/include',
-                                      # 'orang/src/include/operations'
                                       ])]
 
 if USE_CYTHON:
     from Cython.Build import cythonize
     extensions = cythonize(extensions)
+
+
+class build_ext_compiler_check(build_ext):
+    def run(self):
+        import numpy
+
+        self.include_dirs.append(numpy.get_include())
+
+        build_ext.run(self)
+
 
 setup(
     name='orang',
@@ -55,6 +68,7 @@ setup(
     # license='Apache 2.0',
     packages=packages,
     install_requires=install_requires,
+    cmdclass={'build_ext': build_ext_compiler_check},
     # extras_require=extras_require,
     # include_package_data=True,
     # classifiers=classifiers,

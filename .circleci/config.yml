@@ -10,6 +10,11 @@ jobs:
 
       - checkout
 
+      - run: &install-boost-linux-template
+          name: install boost
+          command: |
+            sudo apt-get install libboost-dev
+
       - restore_cache:
           keys:
           - v1-dependencies-{{ checksum "requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
@@ -24,17 +29,12 @@ jobs:
           command: |
             . env/bin/activate
             python --version
-            pip install -r tests/requirements.txt
+            pip install -r requirements.txt
 
       - save_cache:
           paths:
             - ./env
           key: v1-dependencies-{{ checksum "requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
-
-      - run:
-          name: install swig
-          command: |
-            sudo apt-get install swig
 
       - run: &install-package-template
           name: install package
@@ -58,13 +58,13 @@ jobs:
 #            . env/bin/activate
 #            codecov
 
-      - run:
-          name: doctest
-          command: |
-            . env/bin/activate
-            pip install .
-            pip install -r docs/requirements.txt
-            make -C docs/ doctest
+      # - run:
+      #     name: doctest
+      #     command: |
+      #       . env/bin/activate
+      #       pip install .
+      #       pip install -r docs/requirements.txt
+      #       make -C docs/ doctest
 
       - run: &sdist-build-template
           name: build sdist
@@ -107,6 +107,11 @@ jobs:
     steps: 
       - checkout
 
+      - run: &install-boost-osx-template
+          name: install boost
+          command: |
+            brew install boost
+
       - run: 
           name: install pyenv
           command: |
@@ -127,11 +132,6 @@ jobs:
           key: pyenv-{{ .Environment.CIRCLE_JOB }}
 
       - run:
-          name: install swig
-          command: |
-            brew install swig
-
-      - run:
           name: create virtualenv
           command: |
             eval "$(pyenv init -)"
@@ -148,7 +148,7 @@ jobs:
           command: |
             . env/bin/activate
             python --version
-            pip install -r tests/requirements.txt
+            pip install -r requirements.txt
 
       - save_cache:
           paths:
@@ -199,8 +199,8 @@ jobs:
       - checkout
 
       - run:
-          name: Installing gcc and cmake
-          command: sudo apt-get install -y gcc g++ cmake
+          name: Installing gcc, cmake and boost
+          command: sudo apt-get install -y gcc g++ cmake libboost-all-dev
 
       - run:
           name: run c++ tests
@@ -222,6 +222,11 @@ jobs:
 
     steps:
       - checkout
+
+      - run:
+          name: install boost
+          command: |
+            yum install -y boost-devel
 
       - run:
           name: build wheels
@@ -280,6 +285,8 @@ jobs:
 
     steps: 
       - checkout
+
+      - run: *install-boost-osx-template
 
       - run: 
           name: install pyenv
