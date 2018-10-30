@@ -103,3 +103,5 @@ ENV/
 
 # cython intermediate files
 orang/orang.cpp
+
+scratch.py
