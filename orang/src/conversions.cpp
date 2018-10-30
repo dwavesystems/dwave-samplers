@@ -20,8 +20,8 @@ vector<Table<double>::smartptr> isingTables(
   double beta
 ) {
 
-  static const DomIndexVector ds1(1, 2);
-  static const DomIndexVector ds2(2, 2);
+  static const DomIndexVector ds1(1, 2);  // [2]  index-linked to vars, specifies the domain size for each variable
+  static const DomIndexVector ds2(2, 2);  // [2, 2]
 
   VarVector vars1(1);
   VarVector vars2(2);
