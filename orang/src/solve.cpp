@@ -35,6 +35,7 @@ using orang::MinSolution;
 using orang::MinSolutionSet;
 
 typedef orang::Task<orang::MinOperations<double, orang::Plus<double> > > SolveTask;
+typedef std::vector<orang::Table<double>::smartptr> Tables;
 
 namespace {
 
@@ -110,7 +111,7 @@ void solve_ising(
   int** solsData, int* solsRows, int* solsCols) {
 
   int minVars = max(hLen, max(jRows, jCols));
-  vector<Table<double>::smartptr> tables = isingTables(hLen, hData, jRows, jCols, jData, -1.0);
+  Tables tables = isingTables(hLen, hData, jRows, jCols, jData, -1.0);
   SolveTask task(make_indirect_iterator(tables.begin()), make_indirect_iterator(tables.end()), 1, minVars);
 
   solve(task, voData, voLen, maxComplexity, maxSolutions, -1,
@@ -125,8 +126,21 @@ void solve_qubo(
   int** solsData, int* solsRows, int* solsCols) {
 
   int minVars = max(qRows, qCols);
-  vector<Table<double>::smartptr> tables = quboTables(qRows, qCols, qData, -1.0);
+  Tables tables = quboTables(qRows, qCols, qData, -1.0);
   SolveTask task(make_indirect_iterator(tables.begin()), make_indirect_iterator(tables.end()), 1, minVars);
+
+  solve(task, voData, voLen, maxComplexity, maxSolutions, 0,
+    energiesData, energiesLen, solsData, solsRows, solsCols);
+}
+
+void solve_tables(
+  Tables tables, int num_vars,
+  int* voData, int voLen,
+  double maxComplexity, int maxSolutions,
+  double** energiesData, int* energiesLen,
+  int** solsData, int* solsRows, int* solsCols) {
+
+  SolveTask task(make_indirect_iterator(tables.begin()), make_indirect_iterator(tables.end()), 1, num_vars);
 
   solve(task, voData, voLen, maxComplexity, maxSolutions, 0,
     energiesData, energiesLen, solsData, solsRows, solsCols);
