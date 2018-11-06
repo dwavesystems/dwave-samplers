@@ -7,6 +7,8 @@ from setuptools import setup
 from setuptools.command.build_ext import build_ext
 from distutils.extension import Extension
 from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatformError
+import Cython.Compiler.Options
+Cython.Compiler.Options.annotate = True
 
 # # add __version__, __author__, __authoremail__, __description__ to this namespace
 # _PY2 = sys.version_info.major == 2
@@ -38,9 +40,17 @@ extensions = [Extension("orang._orang",
                         ["orang/orang"+ext,
                          "orang/src/conversions.cpp",
                          "orang/src/solve.cpp",
-                         "orang/src/sample.cpp"],
-                        include_dirs=['orang/src/include',
-                                      ])]
+                         "orang/src/sample.cpp",
+                         ],
+                        include_dirs=['orang/src/include']),
+              Extension("orang._poly",
+                        ["orang/poly"+ext,
+                         "orang/src/conversions.cpp",
+                         "orang/src/solve.cpp",
+                         "orang/src/sample.cpp",
+                         ],
+                        include_dirs=['orang/src/include']),
+              ]
 
 if USE_CYTHON:
     from Cython.Build import cythonize

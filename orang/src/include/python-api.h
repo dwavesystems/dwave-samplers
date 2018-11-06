@@ -1,6 +1,12 @@
 #ifndef ORANG_PYTHON_API_H_INCLUDED
 #define ORANG_PYTHON_API_H_INCLUDED
 
+#include <vector>
+
+#include <table.h>
+
+typedef std::vector<orang::Table<double>::smartptr> Tables;
+
 void sample_ising(
   double* hData, int hLen,
   double* jData, int jRows, int jCols,
@@ -32,6 +38,13 @@ void solve_ising(
 
 void solve_qubo(
   double* qData, int qRows, int qCols,
+  int* voData, int voLen,
+  double maxComplexity, int maxSolutions,
+  double** energiesData, int* energiesLen,
+  int** solsData, int* solsRows, int* solsCols);
+
+void solve_tables(
+  Tables tables, int num_vars,
   int* voData, int voLen,
   double maxComplexity, int maxSolutions,
   double** energiesData, int* energiesLen,
