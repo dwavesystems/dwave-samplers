@@ -78,7 +78,7 @@ setup(
     install_requires=install_requires,
     cmdclass={'build_ext': build_ext_compiler_check},
     # extras_require=extras_require,
-    # include_package_data=True,
+    include_package_data=True,
     # classifiers=classifiers,
     zip_safe=False,
     # python_requires=python_requires,
