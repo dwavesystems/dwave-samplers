@@ -74,8 +74,16 @@ def solve_polynomial(poly, vartype, num_reads=1, elimination_order=None):
 
 def _ordered_binary_polynomial(poly, label_to_idx):
     """In Binary space v^n == v so just make them unique"""
-    return {tuple(sorted({label_to_idx[v] for v in interaction})): bias
-            for interaction, bias in poly.items()}
+    ordered_poly = {}
+    for interaction, bias in poly.items():
+        key = tuple(sorted({label_to_idx[v] for v in interaction}))
+
+        if key in ordered_poly:
+            ordered_poly[key] += bias
+        else:
+            ordered_poly[key] = bias
+
+    return ordered_poly
 
 
 def _ordered_spin_polynomial(poly, label_to_idx):
