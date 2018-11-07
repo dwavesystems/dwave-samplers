@@ -9,7 +9,9 @@ import dimod
 import dwave_networkx as dnx
 import networkx as nx
 
-from orang._poly import solve
+from orang.poly import solve
+
+__all__ = 'solve_polynomial',
 
 
 @dimod.decorators.vartype_argument('vartype')

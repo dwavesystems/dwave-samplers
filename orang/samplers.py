@@ -4,7 +4,7 @@ import dimod
 import dwave_networkx as dnx
 import numpy as np
 
-from orang._orang import solve, sample
+from orang.orang import solve, sample
 
 __all__ = 'OrangSolver', 'OrangSampler'
 
