@@ -56,7 +56,7 @@ cdef Table[double].smartptr make_table(VarVector interaction, double bias, varty
 
     cdef Table[double].smartptr t = Table[double].smartptr(new Table[double](interaction, domain))
 
-    cdef int table_size = 2 ** num_interactions
+    cdef size_t table_size = 2 ** num_interactions
     cdef size_t idx
 
     if vartype is dimod.SPIN:
