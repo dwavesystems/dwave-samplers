@@ -36,7 +36,7 @@ Using the polynomial interface
 
 >>> import orang
 >>> poly = {('a'): -1, ('a', 'b', 'c'): 1}
->>> samples = orang.solve_polynomial(polynomial, 'SPIN', num_reads=3)
+>>> samples = orang.solve_polynomial(poly, 'SPIN', num_reads=3)
 
 .. index-end-marker2
 
