@@ -16,16 +16,16 @@
 orang
 =====
 
-.. index-start-marker1
+.. index-start-marker
 
 Generic tree decomposition-based solver.
 
-.. index-end-marker1
+.. index-end-marker
 
 Example Usage
 -------------
 
-.. index-start-marker2
+.. example-start-marker
 
 
 >>> import orang
@@ -38,7 +38,7 @@ Using the polynomial interface
 >>> poly = {('a'): -1, ('a', 'b', 'c'): 1}
 >>> samples = orang.solve_polynomial(poly, 'SPIN', num_reads=3)
 
-.. index-end-marker2
+.. example-end-marker
 
 See the documentation for more examples.
 
