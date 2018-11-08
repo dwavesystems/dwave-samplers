@@ -88,6 +88,12 @@ todo_include_todos = True
 
 modindex_common_prefix = ['dwave-orang.']
 
+doctest_global_setup = """
+from __future__ import print_function, division
+
+import orang
+"""
+
 # -- Options for HTML output ----------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for

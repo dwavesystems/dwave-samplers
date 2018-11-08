@@ -12,6 +12,13 @@ __all__ = 'OrangSolver', 'OrangSampler'
 
 
 class OrangSolver(dimod.Sampler):
+    """Generic tree decomposition-based solver.
+
+    Examples:
+        >>> sampler = orang.OrangSolver()
+        >>> samples = sampler.sample_ising({}, {(0, 1): -1})
+
+    """
     parameters = None
     properties = None
 
@@ -21,6 +28,28 @@ class OrangSolver(dimod.Sampler):
         self.properties = {}
 
     def sample(self, bqm, num_reads=1, elimination_order=None):
+        """Find ground states of a binary quadratic model.
+
+        Args:
+            bqm (:obj:`dimod.BinaryQuadraticModel`):
+                A binary quadratic model.
+
+            num_reads (int, optional, default=1):
+                The maximum number of solutions to return.
+
+            elimination_order (list, optional):
+                The variable elimination order. If None is provided, the min-fill heuristic is
+                used to generate one.
+
+        Returns:
+            :obj:`dimod.SampleSet`
+
+        Raises:
+            ValueError: The treewidth_ of the given bqm and elimination order cannot exceed 25.
+
+        .. _treewidth: https://en.wikipedia.org/wiki/Treewidth
+
+        """
 
         if not bqm:
             return dimod.SampleSet.from_samples([], bqm.vartype, energy=[])
@@ -60,6 +89,13 @@ class OrangSolver(dimod.Sampler):
 
 
 class OrangSampler(dimod.Sampler):
+    """Generic tree decomposition-based sampler.
+
+    Examples:
+        >>> sampler = orang.OrangSampler()
+        >>> samples = sampler.sample_ising({}, {(0, 1): -1})
+
+    """
     parameters = None
     properties = None
 
@@ -71,7 +107,40 @@ class OrangSampler(dimod.Sampler):
                            'seed': []}
         self.properties = {}
 
-    def sample(self, bqm, num_reads=1, elimination_order=None, beta=3, marginals=True, seed=None):
+    def sample(self, bqm, num_reads=1, elimination_order=None, beta=3.0, marginals=True, seed=None):
+        """Draw samples and compute marginals of a binary quadratic model.
+
+        Args:
+            bqm (:obj:`dimod.BinaryQuadraticModel`):
+                A binary quadratic model.
+
+            num_reads (int, optional, default=1):
+                The maximum number of solutions to return.
+
+            elimination_order (list, optional):
+                The variable elimination order. If None is provided, the min-fill heuristic is
+                used to generate one.
+
+            beta (float, optional, default=3.0):
+                Boltzmann distribution inverse temperature parameter.
+
+            marginals (bool, optional, default=True):
+                Whether or not to compute the marginals. If True, they will be included in the
+                return :obj:`~dimod.SampleSet`'s `info` field.
+
+            seed (int, optional):
+                random number generator seed.  Negative values will cause a time-based seed to be
+                used.
+
+        Returns:
+            :obj:`dimod.SampleSet`
+
+        Raises:
+            ValueError: The treewidth_ of the given bqm and elimination order cannot exceed 25.
+
+        .. _treewidth: https://en.wikipedia.org/wiki/Treewidth
+
+        """
 
         if not bqm:
             info = {'log_partition_function': 0.0}
