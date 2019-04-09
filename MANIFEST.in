@@ -1,1 +1,1 @@
-recursive-include orang/src *.h *.cpp
+recursive-include orang/ *.h *.cpp *.pyx

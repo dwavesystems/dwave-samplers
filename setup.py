@@ -61,6 +61,13 @@ extensions = [Extension("orang.orang",
                          "orang/src/sample.cpp",
                          ],
                         include_dirs=['orang/src/include']),
+              Extension("orang.tables",
+                        ["orang/tables"+ext,
+                         "orang/src/conversions.cpp",
+                         "orang/src/solve.cpp",
+                         "orang/src/sample.cpp",
+                         ],
+                        include_dirs=['orang/src/include']),
               ]
 
 if USE_CYTHON:

@@ -102,9 +102,7 @@ ENV/
 .mypy_cache/
 
 # cython intermediate files
-orang/orang.cpp
-orang/poly.cpp
-orang/poly.html
-orang/orang.html
+orang/*.cpp
+orang/*.html
 
 scratch.py
