@@ -135,12 +135,15 @@ void solve_qubo(
 
 void solve_tables(
   Tables tables, int num_vars,
-  int* voData, int voLen,
+  int* voData, int voLen,  // elimination order
   double maxComplexity, int maxSolutions,
   double** energiesData, int* energiesLen,
   int** solsData, int* solsRows, int* solsCols) {
 
-  SolveTask task(make_indirect_iterator(tables.begin()), make_indirect_iterator(tables.end()), 1, num_vars);
+  SolveTask task(make_indirect_iterator(tables.begin()),
+                 make_indirect_iterator(tables.end()),
+                 1,
+                 num_vars);
 
   solve(task, voData, voLen, maxComplexity, maxSolutions, 0,
     energiesData, energiesLen, solsData, solsRows, solsCols);

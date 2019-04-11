@@ -6,8 +6,7 @@ import dimod
 import dwave_networkx as dnx
 import numpy as np
 
-# from orang.orang import solve, sample
-from orang.tables import Tables, solve
+from orang.orang import solve_coo
 
 __all__ = ['OrangSolver', 'OrangSampler']
 
@@ -72,16 +71,13 @@ class OrangSolver(dimod.Sampler):
 
         num_variables = len(bqm)
 
-        ldata, (irow, icol, qdata), offset = bqm.to_numpy_vectors(variable_order=elimination_order,
-                                                                  sort_indices=True)  # note this is required
-
-        tables = Tables.from_coo(ldata, irow, icol, qdata, bqm.vartype)
+        linear, quadratic, offset = bqm.to_numpy_vectors(variable_order=elimination_order)
 
         # we used the elimination order as the variable order from the bqm, so 
-        # the elimination order passed to the solver is just arange
-        order = np.arange(num_variables, dtype=np.intc)
-
-        samples, energies = solve(tables, order, tw+1., num_reads)
+        # don't need to pass in an elimination order
+        samples, energies = solve_coo(linear, quadratic, offset, bqm.vartype,
+                                      complexity=tw+1.,
+                                      max_solutions=num_reads)
 
         return dimod.SampleSet.from_samples((samples, elimination_order), bqm.vartype,
                                             energy=energies + bqm.offset)

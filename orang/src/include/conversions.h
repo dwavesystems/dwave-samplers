@@ -48,6 +48,15 @@ std::vector<orang::Table<double>::smartptr> quboTables(
   double beta
 );
 
+std::vector<orang::Table<double>::smartptr> cooTables(
+    size_t numLinear,
+    const double* lVals,
+    size_t numQuadratic,
+    const unsigned int* iRow, const unsigned int* iCol, const double* qVals,
+    double low,
+    double beta
+);
+
 orang::VarVector varOrderVec(int voLen, const int* voData, int numVars);
 
 #endif

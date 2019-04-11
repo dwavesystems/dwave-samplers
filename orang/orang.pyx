@@ -1,226 +1,153 @@
 # distutils: language = c++
 # cython: language_level = 3
 
-cimport cython
-
-from libc.stdlib cimport free
-from libcpp cimport bool
-
+import dimod
 import numpy as np
 cimport numpy as np
 
+from libcpp.vector cimport vector
+
+
+cdef extern from "boost/shared_ptr.hpp" namespace "boost":
+    cdef cppclass shared_ptr[T]:
+        pass
+        # shared_ptr() except +
+        # shared_ptr(T) except +
+        # shared_ptr(T*) except +
+        # T operator*()  except + # boost::detail::sp_dereference< T >::type operator*()
+
+cdef extern from "numpy/arrayobject.h":
+    void PyArray_ENABLEFLAGS(np.ndarray arr, int flags)
+
+cdef extern from "table.h" namespace "orang":
+    cdef cppclass Table[Y]:
+        pass
+        # Table() except +
+        # Table(const VarVector& scope, const DomIndexVector& domSizes) except +
+        # Y& operator[](size_t)
+        # size_t size()
+        ctypedef shared_ptr[Table[Y]] smartptr
+        # void set_value(size_t, Y)
+
+cdef extern from "conversions.h":
+    vector[Table[double].smartptr] cooTables(
+        size_t numLinear,
+        const double* lVals,
+        size_t numQuadratic,
+        const unsigned int* iRow, const unsigned int* iCol, const double* qVals,
+        double low,
+        double beta) except +
 
 cdef extern from "python-api.h":
-    void solve_qubo(
-        double* qData, int qRows, int qCols,
+    void solve_tables(
+        vector[Table[double].smartptr] tables, int num_vars,
         int* voData, int voLen,
         double maxComplexity, int maxSolutions,
         double** energiesData, int* energiesLen,
-        int** solsData, int* solsRows, int* solsCols)
-
-    void sample_qubo(
-        double* qData, int qRows, int qCols,
-        int* voData, int voLen,
-        double maxComplexity,
-        int numSamples,
-        bool marginals,
-        double beta,
-        int rngSeed,
-        double* logPf,
-        int** samplesData, int* samplesRows, int* samplesCols,
-        double** singleMrgData, int* singleMrgLen,
-        double** pairMrgData, int* pairMrgRows, int* pairMrgCols,
-        int** pairData, int* pairRows, int* pairCols);
+        int** solsData, int* solsRows, int* solsCols) except +
 
 
-def sample(double[:] qdata, int num_variables, int low,
-           int num_reads,
-           int[:] variable_order, double complexity,
-           bool marginals,
-           double beta,
-           int seed):
-    """
+def solve_coo(linear, quadratic, offset, vartype, complexity, order=None, max_solutions=1):
 
-    Args:
+    ldata = np.asarray(linear, dtype=np.double)
+    irow = np.asarray(quadratic[0], dtype=np.uintc)
+    icol = np.asarray(quadratic[1], dtype=np.uintc)
+    qdata = np.asarray(quadratic[2], dtype=np.double)
 
-        offset
+    num_variables = ldata.shape[0]
+    if not num_variables:
+        raise ValueError('coo bqm must contain at least one variable')
 
-        qdata (double[:]): The qubo matrix flattened.
+    num_interactions = qdata.shape[0]
+    if icol.shape[0] != num_interactions or irow.shape[0] != num_interactions:
+        raise ValueError('inconsistent quadratic vectors')
 
-        num_variables (int): The size of the dimension of the unflattend qubo matrix.
+    if order is None:
+        order = np.arange(len(linear), dtype=np.intc)
+    else:
+        order = np.asarray(order, dtype=np.intc)
 
-        variable_order (int[:]): The order in which the variables should be eliminated.
+    samples, energies =  _solve_coo(
+        ldata,
+        irow, icol, qdata,
+        -1 if vartype is dimod.SPIN else 0,
+        order,
+        complexity,
+        max_solutions)
 
-        complexity (double): The maximum complexity, should be greater than or equal to
-            the treewidth + 1.
+    energies += offset
 
-        marginals: whether or not to compute marginals (boolean).
-            Marginals are always returned but will be empty if this
-            parameter is False.
-
-        beta: Boltzmann distribution inverse temperature parameter
-
-        seed: random number generator seed.  Negative values will cause
-            a time-based seed to be used.
-
-    Returns:
-        (log_pf, samples, single_mrg, pair_mrg)
-        log_pf: natural log of the partition function
-        samples: numpy array of samples (each row is a sample)
-        single_mrg: 1D numpy array of single-variable marginals.  Each
-            value is the probability that the corresponding variable is 1.
-        pair_mrg: numpy array of pairwise marginals.  Corresponding
-            indices are in pairs return value.  Each row contains four
-            values: [m_i0_j0, m_i1_j0, m_i0_j1, m_i1_j1] where m_ix_jy
-            is the probability that variables i and j have respective
-            values x and y, where [i, j] is the corresponding row of the
-            pairs return value.
-        pairs: numpy array of pairwise marginal indices.  These are
-            precisely the pairs with nonzero Q coefficient."
-
-    """
-    if num_variables == 0:
-        raise NotImplementedError
-        return np.empty((0, 0), dtype=np.intc), np.empty(0, np.double)
-
-    cdef double* qdata_pointer = &qdata[0]
-
-    cdef int variable_order_length = variable_order.shape[0]
-    cdef int* variable_order_pointer = &variable_order[0]
-
-    # return values
-
-    cdef double logPf
-
-    cdef int* samples
-    cdef int srows, scols
-
-    cdef double* single_marginals_data
-    cdef int smlen
-
-    cdef double* pair_marginals_data
-    cdef int pmrows, pmcols
-
-    cdef int* pair_data
-    cdef int prows, pcols
-
-    sample_qubo(qdata_pointer, num_variables, num_variables,
-                variable_order_pointer, variable_order_length,
-                complexity,
-                num_reads,
-                marginals,
-                beta,
-                seed,
-                &logPf,
-                &samples, &srows, &scols,
-                &single_marginals_data, &smlen,
-                &pair_marginals_data, &pmrows, &pmcols,
-                &pair_data, &prows, &pcols
-                )
+    return samples, energies
 
 
-    np_samples = np.full((srows, scols), low, dtype=np.intc)
-    cdef int idx = 0
-    cdef int row, col
-    for row in range(srows):
-        for col in range(scols):
-            if samples[idx] > 0:
-                np_samples[row, col] = 1
-            idx = idx + 1
+cdef _solve_coo(double[:] ldata,
+               unsigned int[:] irow,
+               unsigned int[:] icol,
+               double[:] qdata,
+               double low,
+               int[:] elimination_order, double complexity,
+               int max_solutions):
 
-    free(samples)
+    cdef size_t num_variables = ldata.shape[0]
+    cdef size_t num_interactions = qdata.shape[0]
 
-    cdef int i
-    variable_marginals = np.empty(smlen, dtype=np.double)
-    for i in range(smlen):
-        variable_marginals[i] = single_marginals_data[i]
+    cdef double beta = -1  # solving
 
-    free(single_marginals_data)
+    cdef double* ldata_pointer = &ldata[0]
 
-    interaction_marginals = np.empty((pmrows, pmcols), dtype=np.double)
-    idx = 0
-    for row in range(pmrows):
-        for col in range(pmcols):
-            interaction_marginals[row, col] = pair_marginals_data[idx]
-            idx = idx + 1
+    cdef double* qdata_pointer = &qdata[0] if num_interactions else NULL
+    cdef unsigned int* irow_pointer = &irow[0] if num_interactions else NULL
+    cdef unsigned int* icol_pointer = &icol[0] if num_interactions else NULL
 
-    free(pair_marginals_data)
+    # convert the problem to a form that orang can understand
+    cdef vector[Table[double].smartptr] tables = cooTables(
+                           num_variables,
+                           ldata_pointer,
+                           num_interactions,
+                           irow_pointer, icol_pointer, qdata_pointer,
+                           low, beta)
 
-    pairs = np.empty((prows, pcols), dtype=np.intc)
-    idx = 0
-    for row in range(prows):
-        for col in range(pcols):
-            pairs[row, col] = pair_data[idx]
-            idx = idx + 1
+    return _solve(tables, num_variables, low,
+                  elimination_order, complexity,
+                  max_solutions)
 
-    free(pair_data)
 
-    return np_samples, float(logPf), variable_marginals, interaction_marginals, pairs
+cdef _solve(vector[Table[double].smartptr] tables, int num_variables, double low,
+               int[:] elimination_order, double complexity,
+               int max_solutions):
 
-@cython.wraparound(False)
-def solve(double offset, double[:] qdata, int num_variables, int low,
-          int num_reads,
-          int[:] variable_order, double complexity):
-    """
+    cdef int elimination_order_length = elimination_order.shape[0]
+    cdef int* elimination_order_pointer = &elimination_order[0]
 
-    Args:
-        offset (double): The constant energy offset
-
-        qdata (double[:]): The qubo matrix flattened.
-
-        num_variables (int): The size of the dimension of the unflattend qubo matrix.
-
-        low (int): -1 for SPIN, 0 for BINARY
-
-        variable_order (int[:]): The order in which the variables should be eliminated.
-
-        complexity (double): The maximum complexity, should be greater than or equal to
-            the treewidth + 1.
-
-    Returns:
-        samples, energies as numpy arrays.
-
-    Notes:
-        not a lot of checking is done
-
-    """
-
-    if num_variables == 0:
-        return np.empty((0, 0), dtype=np.intc), np.empty(0, np.double)
-
-    cdef double* qdata_pointer = &qdata[0]
-
-    cdef int variable_order_length = variable_order.shape[0]
-    cdef int* variable_order_pointer = &variable_order[0]
-
-    # return values
+    # Pass in a pointer so that solve_tables can fill it in. Note that this is
+    # a design choice inherited from orang's c++ implementation. In the future
+    # we may want to change it.
     cdef int num_energies, srows, scols
-    cdef double* energies
-    cdef int* samples
+    cdef double* energies_pointer
+    cdef int* samples_pointer
 
-    solve_qubo(qdata_pointer, num_variables, num_variables,
-               variable_order_pointer, variable_order_length,
-               complexity, num_reads,
-               &energies, &num_energies,
-               &samples, &srows, &scols
-               )
+    solve_tables(tables, num_variables,
+                 elimination_order_pointer, elimination_order_length,
+                 complexity, max_solutions,
+                 &energies_pointer, &num_energies,
+                 &samples_pointer, &srows, &scols
+                 )
 
-    np_energies = np.empty(num_energies, dtype=np.double)
-    cdef int i
-    for i in range(num_energies):
-        np_energies[i] = energies[i] + offset
+    # create a numpy array without making a copy
+    energies = np.asarray(<double[:num_energies]> energies_pointer)
+    samples = np.asarray(<int[:srows, :scols]> samples_pointer)
 
-    free(energies)
+    # tell numpy that it needs to free the memory when the array is garbage
+    # collected
+    PyArray_ENABLEFLAGS(energies, np.NPY_OWNDATA)
+    PyArray_ENABLEFLAGS(samples, np.NPY_OWNDATA)
 
-    np_samples = np.full((srows, scols), low, dtype=np.intc)
-    cdef int idx = 0
-    cdef int row, col
-    for row in range(srows):
-        for col in range(scols):
-            if samples[idx] > 0:
-                np_samples[row, col] = 1
-            idx = idx + 1
+    # convert the samples to spin if necessary
+    cdef size_t i, j
+    if low == -1:
+        for i in range(srows):
+            for j in range(scols):
+                if samples[i, j] == 0:
+                    samples[i, j] = -1
 
-    free(samples)
-
-    return np_samples, np_energies
+    return samples, energies
