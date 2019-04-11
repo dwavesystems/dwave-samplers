@@ -7,6 +7,7 @@ import numpy as np
 cimport numpy as np
 
 from libc.stdint cimport uint32_t, uint16_t
+from libc.stdlib cimport free
 from libcpp.vector cimport vector
 
 from cython cimport view
@@ -20,7 +21,7 @@ cdef extern from "boost/shared_ptr.hpp" namespace "boost":
         shared_ptr() except +
         shared_ptr(T) except +
         shared_ptr(T*) except +
-        T operator*()  # boost::detail::sp_dereference< T >::type operator*()
+        T operator*()  except + # boost::detail::sp_dereference< T >::type operator*()
 
 cdef extern from "base.h" namespace "orang":
     ctypedef uint32_t Var
@@ -29,6 +30,10 @@ cdef extern from "base.h" namespace "orang":
     ctypedef uint16_t DomIndex
     ctypedef vector[DomIndex] DomIndexVector
 
+cdef extern from "numpy/arrayobject.h":
+    # we need this to give numpy ownership of arrays generated in the C code
+    void PyArray_ENABLEFLAGS(np.ndarray arr, int flags)
+
 cdef extern from "table.h" namespace "orang":
     cdef cppclass Table[Y]:
         Table() except +
@@ -36,6 +41,8 @@ cdef extern from "table.h" namespace "orang":
         Y& operator[](size_t)
         size_t size()
         ctypedef shared_ptr[Table[Y]] smartptr
+        void set_value(size_t, Y)
+
 
 cdef extern from "python-api.h":
     void solve_tables(
@@ -47,7 +54,10 @@ cdef extern from "python-api.h":
 
 
 cdef Table[double].smartptr make_table(VarVector interaction, double bias, int low):
-    """Return the shared pointer to a table representing an interaction."""
+    """Return the shared pointer to a table representing an interaction.
+
+    Note: interaction must be sorted
+    """
 
     # dev note: should this be size_t?
     cdef int num_interactions = len(interaction)
@@ -60,14 +70,27 @@ cdef Table[double].smartptr make_table(VarVector interaction, double bias, int l
     cdef Table[double].smartptr t = Table[double].smartptr(new Table[double](interaction, domain))
 
     cdef size_t table_size = 2 ** num_interactions
-    cdef unsigned int idx
+    cdef size_t idx
+    cdef double energy
+
+    table = deref(t)
 
     # specify the energy for all possible combinations of the interaction
     # variables. We take the configuration of the variables and convert it
     # to an integer to get the index. We treat -1 as 0.
     # So (-1, 1, -1) => idx == 2
     for idx in range(table_size):
-        deref(t)[idx] = bias * low ** (num_interactions - __builtin_popcount(idx))
+        energy = bias * low ** (num_interactions - __builtin_popcount(idx))
+        print('in', idx, energy)
+        deref(t)[idx] = energy
+        print('right after', deref(t)[idx])
+        table[idx] = energy
+        print('after after', deref(t)[idx], table[idx])
+
+    print(num_interactions)
+    print(table_size)
+    for idx in range(table_size):
+        print('out', idx, deref(t)[idx])
 
     return t
 
@@ -76,6 +99,7 @@ cdef class cyTables:
     cdef vector[Table[double].smartptr] tables
     cdef int low  # 0 for binary, -1 for spin
     cdef int num_variables
+    cdef double offset
 
     def __init__(self, int num_variables, vartype):
         if vartype is dimod.SPIN:
@@ -85,11 +109,18 @@ cdef class cyTables:
 
         self.num_variables = num_variables
 
-    def _add_variable(self, int variable, double bias):
-        self.tables.push_back(make_table([variable], bias, self.low))
+        self.offset = 0
 
-    def _add_interaction(self, interaction, double bias):
+    def add_interaction(self, VarVector interaction, double bias):
+        # interaction must be sorted
         self.tables.push_back(make_table(interaction, bias, self.low))
+
+    def add_offset(self, double offset):
+        self.offset += offset
+
+    def __len__(self):
+        # number of interactions in the table
+        return self.tables.size()
 
 
 class Tables(cyTables, object):
@@ -100,42 +131,45 @@ class Tables(cyTables, object):
 
         self.vartype = vartype
 
-    # @classmethod
-    # def from_ising(cls, h, J):
-    #     bqm = dimod.BQM.from_ising(h, J)
-
-    #     variables = dimod.variables.Variables(bqm.variables)
-
-    #     ldata, (irow, icol, qdata), off = bqm.to_numpy_vectors(variable_order=variables)
-
-    #     return cls.from_coo(ldata, irow, icol, qdata, off, dimod.SPIN, variables)
-
     @classmethod
-    def from_coo(cls, double[:] ldata, long[:] irow, long[:] icol, double[:] qdata,
-                 double offset, vartype):
+    def from_coo(cls, linear, quadratic, offset, vartype):
 
-        cdef int idx
+        # We could do this stuff as an argument type but we expect this object to
+        # be used from python so doing it this way gets us much more flexibility
+        cdef double[:] ldata = np.asarray(linear, np.double)
+        cdef double[:] qdata = np.asarray(quadratic[2], np.double)
+        cdef unsigned int[:] irow = np.asarray(quadratic[0], np.uint32)
+        cdef unsigned int[:] icol = np.asarray(quadratic[1], np.uint32)
 
         cdef int num_variables = ldata.shape[0]
         cdef int num_interactions = qdata.shape[0]
 
         tables = cls(num_variables, vartype)
 
+        cdef unsigned int idx, u, v
         for idx in range(num_variables):
-            tables._add_interaction([idx], ldata[idx])
+            tables.add_interaction([idx], ldata[idx])
 
         for idx in range(num_interactions):
-            interaction = [irow[idx], icol[idx]]
-            tables._add_interaction(interaction, qdata[idx])
+            u = irow[idx]
+            v = icol[idx]
+            if u < v:
+                tables.add_interaction([u, v], qdata[idx])
+            else:
+                tables.add_interaction([v, u], qdata[idx])
+
+        tables.add_offset(offset)
 
         return tables
 
-def solve(cyTables tables, int[:] elimination_order, double complexity, int num_reads):
+def solve(cyTables tables, elimination_order, double complexity, int num_reads):
 
-    cdef int elimination_order_length = elimination_order.shape[0]
-    cdef int* elimination_order_pointer = &elimination_order[0]
+
+    cdef int[:] order = np.asarray(elimination_order, np.intc) 
+    cdef int elimination_order_length = order.shape[0]
+    cdef int* elimination_order_pointer = &order[0]
  
-    # Need to create values that solve_tables can fill in. Note that this is
+    # Pass in a pointer so that solve_tables can fill it in. Note that this is
     # a design choice inherited from orang's c++ implementation. In the future
     # we may want to change it.
     cdef int num_energies, srows, scols
@@ -149,9 +183,13 @@ def solve(cyTables tables, int[:] elimination_order, double complexity, int num_
                  &samples_pointer, &srows, &scols
                  )
 
-    # create a numpy array without making a copy. Numpy manages memory and
-    # cleanup
+    # create a numpy array without making a copy
     energies = np.asarray(<double[:num_energies]> energies_pointer)
     samples = np.asarray(<int[:srows, :scols]> samples_pointer)
+
+    # tell numpy that it needs to free the memory when the array is garbage
+    # collected
+    PyArray_ENABLEFLAGS(energies, np.NPY_OWNDATA)
+    PyArray_ENABLEFLAGS(samples, np.NPY_OWNDATA)
 
     return samples, energies

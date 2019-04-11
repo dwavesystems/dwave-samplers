@@ -6,9 +6,10 @@ import dimod
 import dwave_networkx as dnx
 import numpy as np
 
-from orang.orang import solve, sample
+# from orang.orang import solve, sample
+from orang.tables import Tables, solve
 
-__all__ = 'OrangSolver', 'OrangSampler'
+__all__ = ['OrangSolver', 'OrangSampler']
 
 
 class OrangSolver(dimod.Sampler):
@@ -38,14 +39,15 @@ class OrangSolver(dimod.Sampler):
                 The maximum number of solutions to return.
 
             elimination_order (list, optional):
-                The variable elimination order. If None is provided, the min-fill heuristic is
-                used to generate one.
+                The variable elimination order. If None is provided, the
+                min-fill heuristic is used to generate one.
 
         Returns:
             :obj:`dimod.SampleSet`
 
         Raises:
-            ValueError: The treewidth_ of the given bqm and elimination order cannot exceed 25.
+            ValueError: The treewidth_ of the given bqm and elimination order
+            cannot exceed 25.
 
         .. _treewidth: https://en.wikipedia.org/wiki/Treewidth
 
@@ -60,8 +62,8 @@ class OrangSolver(dimod.Sampler):
             # this also checks the order against the bqm
             tw = dnx.elimination_order_width(bqm.adj, elimination_order)
 
-        # developer note: we start getting bad_alloc errors above tw 25, this should be fixed in the
-        # future
+        # developer note: we start getting bad_alloc errors above tw 25, this
+        # should be fixed in the future
         if tw > 25:
             msg = ("maximum treewidth of 25 exceeded. To see your bqm's treewidth run\n"
                    ">>> import dwave_networkx as dnx\n"
@@ -70,22 +72,19 @@ class OrangSolver(dimod.Sampler):
 
         num_variables = len(bqm)
 
-        Q = bqm.binary.to_numpy_matrix(variable_order=elimination_order)
-        qdata = np.asarray(Q.flatten(order='C'), dtype=np.double)  # make sure C ordered an correct dtype
+        ldata, (irow, icol, qdata), offset = bqm.to_numpy_vectors(variable_order=elimination_order,
+                                                                  sort_indices=True)  # note this is required
 
-        variable_order = np.arange(num_variables, dtype=np.intc)  # to match the given elimination_order
+        tables = Tables.from_coo(ldata, irow, icol, qdata, bqm.vartype)
 
-        if bqm.vartype is dimod.SPIN:
-            low = -1
-        else:
-            low = 0
+        # we used the elimination order as the variable order from the bqm, so 
+        # the elimination order passed to the solver is just arange
+        order = np.arange(num_variables, dtype=np.intc)
 
-        samples, energies = solve(bqm.binary.offset, qdata, num_variables, low,
-                                  num_reads,
-                                  variable_order, tw+1.)
+        samples, energies = solve(tables, order, tw+1., num_reads)
 
         return dimod.SampleSet.from_samples((samples, elimination_order), bqm.vartype,
-                                            energy=energies)
+                                            energy=energies + bqm.offset)
 
 
 class OrangSampler(dimod.Sampler):

@@ -19,7 +19,7 @@ class TestOrangSolver(unittest.TestCase):
         self.assertEqual(len(samples), 0)
         dimod.testing.assert_response_energies(samples, bqm)
 
-    def test_single_variable(self):
+    def test_single_variable_spin(self):
         sampler = OrangSolver()
 
         dimod.testing.assert_sampler_api(sampler)
@@ -31,6 +31,13 @@ class TestOrangSolver(unittest.TestCase):
         self.assertEqual(len(samples), 1)
         self.assertEqual(list(samples), [{'a': 1}])
         dimod.testing.assert_response_energies(samples, bqm)
+
+    def test_single_variable_binary(self):
+        sampler = OrangSolver()
+
+        sampleset = sampler.sample_qubo({(0, 0): 1}, num_reads=1)
+
+        self.assertEqual(sampleset.first.sample, {0: 0})
 
     def test_single_interaction(self):
         sampler = OrangSolver()

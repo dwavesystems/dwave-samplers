@@ -6,12 +6,15 @@
 
 #include "conversions.h"
 
+using std::size_t;
+
 using std::max;
 using std::min;
 using std::vector;
 
 using orang::Table;
 using orang::DomIndexVector;
+using orang::Var;
 using orang::VarVector;
 
 vector<Table<double>::smartptr> isingTables(
@@ -92,6 +95,38 @@ vector<Table<double>::smartptr> quboTables(
   }
 
   return tables;
+}
+
+vector<Table<double>::smartptr> cooTables(
+    size_t numLinear,
+    const double* lVals,
+    size_t numQuadratic,
+    const unsigned int* iRow, const unsigned int* iCol, const double* qVals,
+    double beta,
+    double low
+){
+    // Size of the domain for each variable. In this case we assume them to be
+    // {0, 1} or {-1, +1}
+    static const DomIndexVector lin_dom(1, 2); // [2]
+    static const DomIndexVector quad_dom(2, 2); // [2, 2]
+
+    VarVector vars1(1);
+    VarVector vars2(2);
+    vector<Table<double>::smartptr> tables;
+
+    for (sizt_t i = 0; i < numLinear; ++i, ++lVals){
+        if (*lVals != 0.0){
+            vars1[0] = i;
+            Table<double>::smartptr t(new Table<double>(vars1, lin_dom));
+            // dev note: I am not sure why -beta, but to keep it consistent...
+            (*t) = -beta * lVals * low;
+            (*t) = -beta * lVals;
+        }
+    }
+
+    // todo: quadratic, linear is enough for testing...
+
+    return tables;
 }
 
 VarVector varOrderVec(int voLen, const int* voData, int numVars) {
