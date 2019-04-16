@@ -1,3 +1,4 @@
+import inspect
 import itertools
 import unittest
 
@@ -6,31 +7,59 @@ import dimod
 from orang import OrangSolver
 
 
-class TestOrangSolver(unittest.TestCase):
-    def test_empty(self):
+class TestConstruction(unittest.TestCase):
+    def test_construction(self):
         sampler = OrangSolver()
-
         dimod.testing.assert_sampler_api(sampler)
 
+        # check that the args exposed by parameters is consistent with the
+        # sampler inputs
+        # getargspec is deprecated in python3, but for backwards compatibility
+        args = {arg for arg in inspect.getargspec(sampler.sample).args
+                if arg != 'self' and arg != 'bqm'}
+        self.assertEqual(set(sampler.parameters), args)
+
+        self.assertEqual(sampler.properties, {'max_treewidth': 25})
+
+
+class TestSample(unittest.TestCase):
+    def test_empty(self):
         bqm = dimod.BinaryQuadraticModel.empty(dimod.SPIN)
 
-        samples = sampler.sample(bqm)
+        sampleset = OrangSolver().sample(bqm)
+        dimod.testing.assert_response_energies(sampleset, bqm)
 
-        self.assertEqual(len(samples), 0)
-        dimod.testing.assert_response_energies(samples, bqm)
+    def test_empty_num_reads(self):
+        bqm = dimod.BinaryQuadraticModel.empty(dimod.SPIN)
 
-    def test_single_variable(self):
-        sampler = OrangSolver()
+        sampleset = OrangSolver().sample(bqm, num_reads=10)
+        self.assertEqual(len(sampleset), 10)
+        dimod.testing.assert_response_energies(sampleset, bqm)
 
-        dimod.testing.assert_sampler_api(sampler)
+    def test_consistent_dtype(self):
+        bqm_empty = dimod.BinaryQuadraticModel.empty(dimod.BINARY)
+        bqm = dimod.BinaryQuadraticModel.from_qubo({(0, 0): -1, (0, 1): 1})
 
+        sampleset_empty = OrangSolver().sample(bqm_empty)
+        sampleset = OrangSolver().sample(bqm)
+
+        self.assertEqual(sampleset_empty.record.sample.dtype,
+                         sampleset.record.sample.dtype)
+        self.assertEqual(sampleset_empty.record.energy.dtype,
+                         sampleset.record.energy.dtype)
+
+    def test_single_variable_spin(self):
         bqm = dimod.BinaryQuadraticModel.from_ising({'a': -1}, {})
 
-        samples = sampler.sample(bqm, num_reads=1)
+        samples = OrangSolver().sample(bqm, num_reads=1)
 
         self.assertEqual(len(samples), 1)
         self.assertEqual(list(samples), [{'a': 1}])
         dimod.testing.assert_response_energies(samples, bqm)
+
+    def test_single_variable_binary(self):
+        sampleset = OrangSolver().sample_qubo({(0, 0): 1}, num_reads=1)
+        self.assertEqual(sampleset.first.sample, {0: 0})
 
     def test_single_interaction(self):
         sampler = OrangSolver()
@@ -74,3 +103,11 @@ class TestOrangSolver(unittest.TestCase):
 
         self.assertEqual(set(ground.values()), {1})
         self.assertEqual(sum(excited.values()), len(excited) - 1)
+
+    def test_num_reads_gt_max_samples(self):
+        bqm = dimod.BinaryQuadraticModel.from_qubo({(0, 0): -1, (0, 1): 1})
+
+        # there are only 4 possible samples for the bqm, say we want 101 reads
+        sampleset = OrangSolver().sample(bqm, num_reads=101)
+
+        self.assertEqual(sum(sampleset.record.num_occurrences), 101)

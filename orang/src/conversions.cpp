@@ -6,12 +6,15 @@
 
 #include "conversions.h"
 
+using std::size_t;
+
 using std::max;
 using std::min;
 using std::vector;
 
 using orang::Table;
 using orang::DomIndexVector;
+using orang::Var;
 using orang::VarVector;
 
 vector<Table<double>::smartptr> isingTables(
@@ -92,6 +95,50 @@ vector<Table<double>::smartptr> quboTables(
   }
 
   return tables;
+}
+
+vector<Table<double>::smartptr> cooTables(
+    size_t numLinear,
+    const double* lVals,
+    size_t numQuadratic,
+    const unsigned int* iRow, const unsigned int* iCol, const double* qVals,
+    double low,  // -1 for SPIN, 0 for BINARY
+    double beta
+){
+    // Size of the domain for each variable. In this case we assume them to be
+    // {0, 1} or {-1, +1}
+    static const DomIndexVector lin_dom(1, 2); // [2]
+    static const DomIndexVector quad_dom(2, 2); // [2, 2]
+
+    VarVector vars1(1);
+    VarVector vars2(2);
+    vector<Table<double>::smartptr> tables;
+
+    for (size_t i = 0; i < numLinear; ++i, ++lVals){
+        if (*lVals != 0.0){
+            vars1[0] = i;
+            Table<double>::smartptr t(new Table<double>(vars1, lin_dom));
+            (*t)[0] = -beta * *lVals * low;
+            (*t)[1] = -beta * *lVals;
+            tables.push_back(t);
+        }
+    }
+
+    for (size_t i = 0; i < numQuadratic; ++i, ++iRow, ++iCol, ++qVals){
+        if (*qVals != 0.0){
+            if (*iRow == *iCol) throw std::invalid_argument("nonzero quadratic entry");
+            vars2[0] = min(*iRow, *iCol);
+            vars2[1] = max(*iRow, *iCol);
+            Table<double>::smartptr t(new Table<double>(vars2, quad_dom));
+            (*t)[0] = -beta * *qVals * low * low;
+            (*t)[1] = -beta * *qVals * low;
+            (*t)[2] = -beta * *qVals * low;
+            (*t)[3] = -beta * *qVals;
+            tables.push_back(t);
+        }
+    }
+
+    return tables;
 }
 
 VarVector varOrderVec(int voLen, const int* voData, int numVars) {
