@@ -14,50 +14,108 @@ __all__ = ['OrangSolver', 'OrangSampler']
 
 
 class OrangSolver(dimod.Sampler):
-    """Generic tree decomposition-based solver.
+    """Tree decomposition-based solver for binary quadratic models.
+
+    The Orang solver uses `tree decomposition`_ to find ground states of the
+    given binary quadratic model.
 
     Examples:
-        >>> samples = orang.OrangSolver().sample_ising({0: 1}, {(0, 1): -1})
-        >>> samples.first.sample
-        {0: -1, 1: -1}
+
+        Create a solver
+
+        >>> solver = orang.OrangSolver()
+
+        Create a simple Ising problem
+
+        >>> h = {'a': .1, 'b': 0}
+        >>> J = {('a', 'b') : -1}
+
+        We can use Orang to find the ground state
+
+        >>> sampleset = solver.sample_ising(h, J)
+        >>> sampleset.first.sample
+        {'a': -1, 'b': -1}
+
+        We can also take multiple reads to find states of increasing energy
+
+        >>> sampleset = solver.sample_ising(h, J, num_reads=3)
+        >>> print(sampleset)
+           a  b energy num_oc.
+        0 -1 -1   -1.1       1
+        1 +1 +1   -0.9       1
+        2 -1 +1    0.9       1
+        ['SPIN', 3 rows, 3 samples, 2 variables]
+
+    .. _tree decomposition: https://en.wikipedia.org/wiki/Tree_decomposition
 
     """
-    parameters = None
-    properties = None
+    parameters = {'num_reads': [],
+                  'elimination_order': ['max_treewidth']}
+    """Keyword arguments accepted by the sampling methods.
+
+    Accepted kwargs:
+
+        * `num_reads`
+        * `elimination_order`
+
+    See :meth:`.sample` for descriptions.
+
+    """
+
+    properties = {'max_treewidth': 25}
+    """Information about the solver.
+
+    Properties:
+
+        * `max_treewidth`: 25. The maximum treewidth_ allowed by the solver.
+
+    .. _treewidth: https://en.wikipedia.org/wiki/Treewidth
+
+    """
 
     def __init__(self):
-        self.parameters = {'max_samples': [],
-                           'elimination_order': []}
-        self.properties = {'max_treewidth': 25}
+        # make these object properties rathar than class properties
+        self.parameters = dict(OrangSolver.parameters)
+        self.properties = dict(OrangSolver.properties)
 
-    def sample(self, bqm, max_samples=1, elimination_order=None):
+    def sample(self, bqm, num_reads=1, elimination_order=None):
         """Find ground states of a binary quadratic model.
 
         Args:
             bqm (:obj:`dimod.BinaryQuadraticModel`):
                 A binary quadratic model.
 
-            max_samples (int, optional, default=1):
-                The maximum number of solutions to return.
+            num_reads (int, optional, default=1):
+                The total number of samples to draw. The samples are drawn in
+                order of energy so if `num_reads=1` only the ground state will
+                be returned. If `num_reads=2` the ground state and the first
+                excited state. If `num_reads >= len(bqm)**2` then samples
+                are duplicated.
 
             elimination_order (list, optional):
-                The variable elimination order. If None is provided, the
-                min-fill heuristic is used to generate one.
+                The variable elimination order. Should be a list of the
+                variables in the binary quadratic model. If None is provided,
+                the min-fill heuristic [#gd]_ is used to generate one.
 
         Returns:
             :obj:`dimod.SampleSet`
 
         Raises:
-            ValueError: The treewidth_ of the given bqm and elimination order
-            cannot exceed 25.
+            ValueError:
+                The treewidth_ of the given bqm and elimination order cannot
+                exceed the value provided in :attr:`.properties`.
 
         .. _treewidth: https://en.wikipedia.org/wiki/Treewidth
 
+        .. [#gd] Gogate & Dechter, "A Complete Anytime Algorithm for Treewidth",
+           https://arxiv.org/abs/1207.4109
+
         """
+        max_samples = min(num_reads, 2**len(bqm))
 
         if not bqm:
-            samples = np.empty((max_samples, 0), dtype=samples_dtype)
-            energies = np.zeros((max_samples), dtype=energies_dtype)
+            samples = np.empty((num_reads, 0), dtype=samples_dtype)
+            energies = np.zeros((num_reads), dtype=energies_dtype)
             return dimod.SampleSet.from_samples(samples, bqm.vartype, energy=energies)
 
         if elimination_order is None:
@@ -83,12 +141,24 @@ class OrangSolver(dimod.Sampler):
                                       max_complexity=tw+1,
                                       max_solutions=max_samples)
 
+        # if we asked for more than the total number of distinct samples, we
+        # just resample again starting from the beginning
+        num_occurrences = np.ones(max_samples, dtype=np.intc)
+        if num_reads > max_samples:
+            q, r = divmod(num_reads, max_samples)
+            num_occurrences *= q
+            num_occurrences[:r] += 1
+
         return dimod.SampleSet.from_samples((samples, elimination_order), bqm.vartype,
-                                            energy=energies + bqm.offset)
+                                            energy=energies + bqm.offset,
+                                            num_occurrences=num_occurrences)
 
 
 class OrangSampler(dimod.Sampler):
-    """Generic tree decomposition-based sampler.
+    """Tree decomposition-based sampler for binary quadratic models.
+
+    The orang sampler uses tree-decomposition to sample from a boltzmann
+    distribution defined by the given binary quadratic model.
 
     Examples:
         >>> sampler = orang.OrangSampler()
