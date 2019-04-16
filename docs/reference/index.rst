@@ -10,4 +10,3 @@ Reference Documentation
    :maxdepth: 2
 
    sampler
-   higherorder
