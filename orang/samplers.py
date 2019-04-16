@@ -1,7 +1,5 @@
 from __future__ import absolute_import
 
-import random
-
 import dimod
 import dwave_networkx as dnx
 import numpy as np
@@ -74,7 +72,7 @@ class OrangSolver(dimod.Sampler):
     """
 
     def __init__(self):
-        # make these object properties rathar than class properties
+        # make these object properties rather than class properties
         self.parameters = dict(OrangSolver.parameters)
         self.properties = dict(OrangSolver.properties)
 
@@ -155,30 +153,84 @@ class OrangSolver(dimod.Sampler):
 
 
 class OrangSampler(dimod.Sampler):
-    """Tree decomposition-based sampler for binary quadratic models.
+    """Tree decomposition-based solver for binary quadratic models.
 
-    The orang sampler uses tree-decomposition to sample from a boltzmann
-    distribution defined by the given binary quadratic model.
+    The orang sampler uses `tree decomposition`_ to sample from a
+    `Boltzmann distribution`_ defined by the given binary quadratic model.
 
     Examples:
+
+        Create a sampler
+
         >>> sampler = orang.OrangSampler()
-        >>> samples = sampler.sample_ising({}, {(0, 1): -1})
+
+        Create a simple Ising problem
+
+        >>> h = {'a': .1, 'b': 0}
+        >>> J = {('a', 'b') : -1}
+
+        Sample from the given problem.
+
+        >>> sampleset = sampler.sample_ising(h, J, num_reads=100,
+        ...                                  elimination_order=['a', 'b'])
+        >>> sampleset.first.sample
+        {'a': -1, 'b': -1}
+
+        We can also see information about the distribution
+
+        >>> variable_marginals = sampleset.info['variable_marginals']
+        >>> round(variable_marginals['a'], 3)  # prob(a == 1)
+        0.354
+        >>> round(1 - variable_marginals['b'], 3)  # prob(b == -1)
+        0.645
+
+        >>> pair_marg = sampleset.info['interaction_marginals']
+        >>> round(pair_marg[('a', 'b')][(1, -1)], 3)  # prob(a == 1 & b == -1)
+        0.001
+
+    .. _tree decomposition: https://en.wikipedia.org/wiki/Tree_decomposition
+
+    .. _Boltzmann distribution: https://en.wikipedia.org/wiki/Boltzmann_distribution
 
     """
-    parameters = None
-    properties = None
+    parameters = {'num_reads': [],
+                  'elimination_order': ['max_treewidth'],
+                  'beta': [],
+                  'marginals': [],
+                  'seed': []}
+    """Keyword arguments accepted by the sampling methods.
+
+    Accepted kwargs:
+
+        * `num_reads`
+        * `elimination_order`
+        * `beta`
+        * `marginals`
+        * `seed`
+
+    See :meth:`.sample` for descriptions.
+
+    """
+
+    properties = {'max_treewidth': 25}
+    """Information about the solver.
+
+    Properties:
+
+        * `max_treewidth`: 25. The maximum treewidth_ allowed by the solver.
+
+    .. _treewidth: https://en.wikipedia.org/wiki/Treewidth
+
+    """
 
     def __init__(self):
-        self.parameters = {'num_reads': [],
-                           'elimination_order': [],
-                           'beta': [],
-                           'marginals': [],
-                           'seed': []}
-        self.properties = {'max_treewidth': 25}
+        # make these object properties rather than class properties
+        self.parameters = dict(OrangSolver.parameters)
+        self.properties = dict(OrangSolver.properties)
 
     def sample(self, bqm, num_reads=1, elimination_order=None,
                beta=3,
-               marginals=False,
+               marginals=True,
                seed=None):
         """Draw samples and compute marginals of a binary quadratic model.
 
@@ -187,30 +239,48 @@ class OrangSampler(dimod.Sampler):
                 A binary quadratic model.
 
             num_reads (int, optional, default=1):
-                The maximum number of solutions to return.
+                The number of samples to draw.
 
             elimination_order (list, optional):
-                The variable elimination order. If None is provided, the min-fill heuristic is
-                used to generate one.
+                The variable elimination order. Should be a list of the
+                variables in the binary quadratic model. If None is provided,
+                the min-fill heuristic [#gd]_ is used to generate one.
 
             beta (float, optional, default=3.0):
-                Boltzmann distribution inverse temperature parameter.
+                `Boltzmann distribution`_ inverse temperature parameter.
 
-            marginals (bool, optional, default=False):
-                Whether or not to compute the marginals. If True, they will be included in the
-                return :obj:`~dimod.SampleSet`'s `info` field.
+            marginals (bool, optional, default=True):
+                Whether or not to compute the marginals. If True, they will be
+                included in the return :obj:`~dimod.SampleSet`'s `info` field.
+                See example in :class:`.OrangSampler`.
 
             seed (int, optional):
-                random number generator seed.  Negative values will cause a time-based seed to be
-                used.
+                Random number generator seed. Negative values will cause a
+                time-based seed to be used.
 
         Returns:
-            :obj:`dimod.SampleSet`
+            :obj:`dimod.SampleSet`: :attr:`dimod.SampleSet.info` will contain:
+
+                * `'log_partition_function'`: The log partition function.
+
+
+            If `marginals=True`, it will also contain:
+
+                * `'variable_marginals'`: A dict of the form `{v: p, ...}` where
+                  `v` is a variable in the binary quadratic model and
+                  `p = prob(v == 1)`.
+                * `'interaction_marginals'`: A dict of the form
+                  `{(u, v): {(s, t): p, ...}, ...}` where `(u, v)` is an
+                  interaction in the binary quadratic model and
+                  `p = prob(u == s & v == t)`.
 
         Raises:
-            ValueError: The treewidth_ of the given bqm and elimination order cannot exceed 25.
+            ValueError:
+                The treewidth_ of the given bqm and elimination order cannot
+                exceed the value provided in :attr:`.properties`.
 
         .. _treewidth: https://en.wikipedia.org/wiki/Treewidth
+        .. _Boltzmann distribution: https://en.wikipedia.org/wiki/Boltzmann_distribution
 
         """
 
@@ -225,6 +295,7 @@ class OrangSampler(dimod.Sampler):
                                                 energy=energies, info=info)
 
         if elimination_order is None:
+            # note that this does not respect the given seed
             tw, elimination_order = dnx.min_fill_heuristic(bqm.adj)
         else:
             # this also checks the order against the bqm
@@ -240,7 +311,7 @@ class OrangSampler(dimod.Sampler):
 
         linear, quadratic, offset = bqm.to_numpy_vectors(
             variable_order=elimination_order,
-            dtype=np.double, index_dtype=np.uintc)  # to avoid copies
+            dtype=bias_dtype, index_dtype=index_dtype)  # to avoid copies
 
         samples, data = sample_coo(linear, quadratic, offset, bqm.vartype,
                                    beta,
