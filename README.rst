@@ -29,7 +29,7 @@ Example Usage
 
 >>> import orang
 >>> sampler = orang.OrangSolver()
->>> sampleset = sampler.sample_ising({}, {(0, 1): -1})
+>>> sampleset = sampler.sample_ising({0: .1}, {(0, 1): -1})
 >>> sampleset.first.sample
 {0: -1, 1: -1}
 

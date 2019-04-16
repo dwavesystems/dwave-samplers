@@ -1,6 +1,7 @@
 .. _sampler:
 
 .. automodule:: orang.samplers
+.. currentmodule:: orang
 
 ===================
 D-Wave Orang Solver
@@ -10,6 +11,15 @@ Class
 =====
 
 .. autoclass:: orang.OrangSolver
+
+Attributes
+==========
+
+.. autosummary::
+   :toctree: generated/
+
+   OrangSolver.parameters
+   OrangSolver.properties
 
 Methods
 =======
@@ -27,12 +37,19 @@ Methods
 D-Wave Orang Sampler
 ====================
 
-.. automodule:: orang.samplers
-
 Class
 =====
 
 .. autoclass:: orang.OrangSampler
+
+Attributes
+==========
+
+.. autosummary::
+   :toctree: generated/
+
+   OrangSampler.parameters
+   OrangSampler.properties
 
 Methods
 =======
