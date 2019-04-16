@@ -28,6 +28,20 @@ void sample_qubo(
   double** pairMrgData, int* pairMrgRows, int* pairMrgCols,
   int** pairData, int* pairRows, int* pairCols);
 
+void sample_tables(
+    Tables tables, int numVars,
+    int low,
+    int* voData, int voLen, double maxComplexity,
+    int numSamples,
+    bool marginals,
+    int rngSeed,
+    double* logPf,
+    int** samplesData, int* samplesRows, int* samplesCols,
+    double** singleMrgData, int* singleMrgLen,
+    double** pairMrgData, int* pairMrgRows, int* pairMrgCols,
+    int** pairData, int* pairRows, int* pairCols
+    );
+
 void solve_ising(
   double* hData, int hLen,
   double* jData, int jRows, int jCols,
@@ -43,11 +57,24 @@ void solve_qubo(
   double** energiesData, int* energiesLen,
   int** solsData, int* solsRows, int* solsCols);
 
-void solve_tables(
+void solveTables(
   Tables tables, int num_vars,
-  int* voData, int voLen,
-  double maxComplexity, int maxSolutions,
+  int* voData, int voLen, double maxComplexity,
+  int maxSolutions,
   double** energiesData, int* energiesLen,
   int** solsData, int* solsRows, int* solsCols);
+
+void sampleTables(
+  Tables tables, int numVars,
+  int low,
+  int* voData, int voLen, double maxComplexity,
+  int numSamples,
+  bool marginals,
+  int rngSeed,
+  double* logPf,
+  int** samplesData, int* samplesRows, int* samplesCols,
+  double** singleMrgData, int* singleMrgLen,
+  double** pairMrgData, int* pairMrgRows, int* pairMrgCols,
+  int** pairData, int* pairRows, int* pairCols);
 
 #endif

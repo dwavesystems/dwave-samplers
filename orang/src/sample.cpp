@@ -49,6 +49,7 @@ namespace {
 
 typedef boost::variate_generator<boost::mt19937&, boost::uniform_01<> > Rng;
 typedef orang::Task<orang::LogSumProductOperations<Rng> > SampleTask;
+typedef std::vector<orang::Table<double>::smartptr> Tables;
 
 typedef pair<Var, Var> VarPair;
 
@@ -263,3 +264,38 @@ void sample_qubo(
     pairMrgData, pairMrgRows, pairMrgCols, pairData, pairRows, pairCols);
 }
 
+void sampleTables(
+    Tables tables, int numVars,
+    int low,  // -1 for SPIN, 0 for BINARY
+    int* voData, int voLen, double maxComplexity,  // elimination order
+    int numSamples,
+    bool marginals, // whether to compute the marginals or not
+    int rngSeed,
+
+    double* logPf,
+    int** samplesData, int* samplesRows, int* samplesCols,
+    double** singleMrgData, int* singleMrgLen,
+    double** pairMrgData, int* pairMrgRows, int* pairMrgCols,
+    int** pairData, int* pairRows, int* pairCols
+    ) {
+
+    boost::mt19937 rngEngine(randomSeed(rngSeed));
+    Rng rng(rngEngine, boost::uniform_01<>());
+
+    SampleTask task(make_indirect_iterator(tables.begin()),
+                    make_indirect_iterator(tables.end()),
+                    rng,
+                    numVars);
+
+    sample(
+        task,
+        low,  // -1 for SPIN, 0 for BINARY
+        voData, voLen, maxComplexity,
+        numSamples,
+        marginals,
+        logPf,
+        samplesData, samplesRows, samplesCols,
+        singleMrgData, singleMrgLen,
+        pairMrgData, pairMrgRows, pairMrgCols,
+        pairData, pairRows, pairCols);
+}

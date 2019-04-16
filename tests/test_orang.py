@@ -3,7 +3,7 @@ import unittest
 import dimod
 import numpy as np
 
-from orang.orang import solve_coo
+from orang.solve import solve_coo
 
 
 class TestSolveCoo(unittest.TestCase):

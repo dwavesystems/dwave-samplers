@@ -133,7 +133,7 @@ void solve_qubo(
     energiesData, energiesLen, solsData, solsRows, solsCols);
 }
 
-void solve_tables(
+void solveTables(
   Tables tables, int num_vars,
   int* voData, int voLen,  // elimination order
   double maxComplexity, int maxSolutions,
