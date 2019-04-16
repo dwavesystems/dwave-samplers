@@ -10,6 +10,30 @@ index_dtype = np.uintc  # needs to be consistent with index_type
 bias_dtype = np.double  # needs to be consistent with bias_type
 
 cdef tables_type coo_tables(linear, quadratic, double low, double beta):
+    """Create the tables for a coo-formatted binary quadratic model.
+
+    Args:
+        linear (array_like):
+            A 1D array-like iterable of linear biases.
+
+        quadratic (tuple[array_like, array_like, array_like]):
+            A 3-tuple of 1D array_like vectors of the form (row, col, bias).
+
+        low (double):
+            The low value for the binary values. -1 for SPIN, 0 for BINARY.
+
+        beta (double):
+            The inverse temperature.
+
+    Returns:
+        tables_type
+
+    Notes:
+        To avoid copies, biases should be passed in as NumPy arrays with dtype
+        :class:`numpy.double` and the indices should be passed in as NumPy
+        arrays with dtype :class:`numpy.intc`.
+
+    """
 
     cdef bias_type[:] ldata = np.asarray(linear, dtype=bias_dtype)
     cdef bias_type* ldata_pointer = &ldata[0]

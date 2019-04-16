@@ -17,8 +17,9 @@ class OrangSolver(dimod.Sampler):
     """Generic tree decomposition-based solver.
 
     Examples:
-        >>> sampler = orang.OrangSolver()
-        >>> samples = sampler.sample_ising({}, {(0, 1): -1})
+        >>> samples = orang.OrangSolver().sample_ising({0: 1}, {(0, 1): -1})
+        >>> samples.first.sample
+        {0: -1, 1: -1}
 
     """
     parameters = None

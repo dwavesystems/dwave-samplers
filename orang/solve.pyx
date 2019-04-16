@@ -16,6 +16,38 @@ energies_dtype = np.double  # needs to be consistent with energies_type
 
 def solve_coo(linear, quadratic, offset, vartype, max_complexity, order=None,
               max_solutions=1):
+    """Find ground states of a binary quadratic model in coo format.
+
+    Args:
+        linear (array_like):
+            A 1D array-like iterable of linear biases.
+
+        quadratic (tuple[array_like, array_like, array_like]):
+            A 3-tuple of 1D array_like vectors of the form (row, col, bias).
+
+        offset (numeric, optional):
+            Constant offset for the binary quadratic model.
+
+        vartype (:class:`.Vartype`):
+            Variable type for the binary quadratic model. Accepted input values:
+            * :class:`.Vartype.SPIN`
+            * :class:`.Vartype.BINARY`
+
+        max_complexity (int): Upper bound on the exponent of space requirements
+            at each step of the algorithm. Should be larger than the treewidth.
+
+        order (array-like, optional):
+            The elimination order of the variables. If not provided the
+            variables are eliminated in range-order.
+
+        max_solutions (int, optional, default=1):
+            The maximum number of solutions to return.
+
+    Returns:
+        tuple: A 2-tuple containing the samples and energies as numpy arrays.
+
+
+    """
 
     cdef int num_variables = len(linear)
     cdef double low = -1 if vartype is dimod.SPIN else 0
@@ -45,6 +77,7 @@ def solve_coo(linear, quadratic, offset, vartype, max_complexity, order=None,
 cdef solve_tables(tables_type tables, int num_variables, double low,
                int[:] elimination_order, double max_complexity,
                int max_solutions):
+    """Find ground states from the given tables."""
 
     cdef int elimination_order_length = elimination_order.shape[0]
     cdef int* elimination_order_pointer = &elimination_order[0]
