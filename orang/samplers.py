@@ -225,8 +225,8 @@ class OrangSampler(dimod.Sampler):
 
     def __init__(self):
         # make these object properties rather than class properties
-        self.parameters = dict(OrangSolver.parameters)
-        self.properties = dict(OrangSolver.properties)
+        self.parameters = dict(OrangSampler.parameters)
+        self.properties = dict(OrangSampler.properties)
 
     def sample(self, bqm, num_reads=1, elimination_order=None,
                beta=3,
