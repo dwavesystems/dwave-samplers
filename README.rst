@@ -27,16 +27,11 @@ Example Usage
 
 .. example-start-marker
 
-
 >>> import orang
 >>> sampler = orang.OrangSolver()
->>> samples = sampler.sample_ising({}, {(0, 1): -1})
-
-Using the polynomial interface
-
->>> import orang
->>> poly = {('a'): -1, ('a', 'b', 'c'): 1}
->>> samples = orang.solve_polynomial(poly, 'SPIN', num_reads=3)
+>>> sampleset = sampler.sample_ising({}, {(0, 1): -1})
+>>> sampleset.first.sample
+{0: -1, 1: -1}
 
 .. example-end-marker
 
