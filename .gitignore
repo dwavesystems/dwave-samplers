@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+.coverage
+htmlcov/
+
+env/
+build/
+dist/
+wheels/
+docs/**/generated/
