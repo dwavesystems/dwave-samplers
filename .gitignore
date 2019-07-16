@@ -1,5 +1,7 @@
 __pycache__/
 *.py[cod]
+*.so
+
 .coverage
 htmlcov/
 
@@ -8,3 +10,5 @@ build/
 dist/
 wheels/
 docs/**/generated/
+
+greedy/descent.cpp
