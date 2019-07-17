@@ -53,5 +53,7 @@ int main() {
         assert(energies[i] == min_energies[i]);
     }
 
+    cout << "OK" << endl;
+
     return 0;
 }
