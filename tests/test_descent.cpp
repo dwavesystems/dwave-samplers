@@ -1,0 +1,57 @@
+// Copyright 2019 D-Wave Systems Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// g++ tests/test_descent.cpp greedy/src/descent.cpp -std=c++11 -I greedy/src/
+
+#include <vector>
+#include <cassert>
+#include <iostream>
+#include "../greedy/src/descent.h"
+
+#define len(arr) (sizeof(arr) / sizeof((arr)[0]))
+
+using namespace std;
+
+int main() {
+    int num_samples = 1;
+
+    char states[3] = {1, 1, 1}, min_states[3] = {-1, 1, 1};
+    double energies[1] = {0}, min_energies[1] = {-1};
+
+    // bqm ~ {(0, 1): 1, (1, 2): 1, (2, 0): 1})
+    vector<double> linear_biases {0, 0, 0};
+    vector<int> coupler_starts {0, 1, 2};
+    vector<int> coupler_ends {1, 2, 0};
+    vector<double> coupler_weights {1.0, 1.0, 1.0};
+
+    steepest_gradient_descent(
+        states, energies, num_samples,
+        linear_biases, coupler_starts, coupler_ends, coupler_weights
+    );
+
+    // debug output
+    cerr << "Local minimum state: "
+         << (int)states[0] << ", " << (int)states[1] << ", " << (int)states[2]
+         << "; Energy: " << energies[0] << endl;
+
+    // assert correct solution
+    for (auto i = 0; i < len(states); i++) {
+        assert(states[i] == min_states[i]);
+    }
+    for (auto i = 0; i < len(energies); i++) {
+        assert(energies[i] == min_energies[i]);
+    }
+
+    return 0;
+}
