@@ -189,18 +189,14 @@ class SteepestDescentSolver(dimod.Sampler):
         init_label_map = dict(map(reversed, enumerate(initial_states.variables)))
         init_vartype = initial_states.vartype
 
-        if initial_states_array.size:
-            if init_label_map and set(init_label_map) ^ bqm.variables:
-                raise ValueError("mismatch between variables in 'initial_states' and 'bqm'")
-            elif initial_states_array.shape[1] != num_variables:
-                raise ValueError("mismatch in number of variables in 'initial_states' and 'bqm'")
+        if set(init_label_map) ^ bqm.variables:
+            raise ValueError("mismatch between variables in 'initial_states' and 'bqm'")
 
         # reorder initial states array according to label map
-        if init_label_map is not None:
-            identity = lambda i: i
-            get_label = inverse_mapping.get if use_label_map else identity
-            ordered_labels = [init_label_map[get_label(i)] for i in range(num_variables)]
-            initial_states_array = initial_states_array[:, ordered_labels]
+        identity = lambda i: i
+        get_label = inverse_mapping.get if use_label_map else identity
+        ordered_labels = [init_label_map[get_label(i)] for i in range(num_variables)]
+        initial_states_array = initial_states_array[:, ordered_labels]
 
         numpy_initial_states = np.ascontiguousarray(initial_states_array, dtype=np.int8)
 
@@ -208,7 +204,7 @@ class SteepestDescentSolver(dimod.Sampler):
         if init_vartype == dimod.BINARY:
             numpy_initial_states = 2 * numpy_initial_states - 1
         elif init_vartype != dimod.SPIN:
-            raise TypeError("unsupported vartype")
+            raise TypeError("unsupported vartype")  # pragma: no cover
 
         # extrapolate and/or truncate initial states, if necessary
         extrapolate = _generators[initial_states_generator]
