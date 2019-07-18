@@ -13,3 +13,7 @@ wheels/
 docs/**/generated/
 
 greedy/descent.cpp
+
+# benchmarking
+.asv
+.eggs
