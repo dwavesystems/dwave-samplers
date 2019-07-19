@@ -16,7 +16,7 @@ import dimod
 import greedy
 
 
-class SteepestDescentSampler(object):
+class SteepestDescentSimple(object):
 
     def setup(self):
         self.sampler = greedy.SteepestDescentSampler()
@@ -29,3 +29,23 @@ class SteepestDescentSampler(object):
 
     def time_single_flip_1M_reads(self):
         self.sampler.sample_ising({0: 2, 1: 2}, {(0, 1): -1}, num_reads=1000000)
+
+
+class SteepestDescentComplete(object):
+
+    def setup(self):
+        self.sampler = greedy.SteepestDescentSampler()
+        self.ran1_n100 = dimod.generators.random.ran_r(r=1, graph=100, seed=0)
+        self.ran1_n1k = dimod.generators.random.ran_r(r=1, graph=1000, seed=0)
+
+    def time_ran1_n100_1_read(self):
+        self.sampler.sample(self.ran1_n100, num_reads=1)
+
+    def time_ran1_n100_10_reads(self):
+        self.sampler.sample(self.ran1_n100, num_reads=10)
+
+    def time_ran1_n1k_1_read(self):
+        self.sampler.sample(self.ran1_n1k, num_reads=1)
+
+    def time_ran1_n1k_10_reads(self):
+        self.sampler.sample(self.ran1_n1k, num_reads=10)
