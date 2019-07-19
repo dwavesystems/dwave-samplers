@@ -22,7 +22,7 @@ class SteepestGradientDescentCython(object):
         num_samples = 1
         linear_biases = [2, 2]
         coupler_starts, coupler_ends, coupler_weights = [0], [1], [-1]
-        initial_states = np.tile([1, 1], (num_samples, 1), dtype=np.int8)
+        initial_states = np.tile(np.array([1, 1], dtype=np.int8), (num_samples, 1))
 
         samples, energies = greedy.descent.steepest_gradient_descent(
             num_samples, linear_biases, coupler_starts, coupler_ends,
@@ -32,7 +32,7 @@ class SteepestGradientDescentCython(object):
         num_samples = 1000
         linear_biases = [2, 2]
         coupler_starts, coupler_ends, coupler_weights = [0], [1], [-1]
-        initial_states = np.tile([1, 1], (num_samples, 1), dtype=np.int8)
+        initial_states = np.tile(np.array([1, 1], dtype=np.int8), (num_samples, 1))
 
         samples, energies = greedy.descent.steepest_gradient_descent(
             num_samples, linear_biases, coupler_starts, coupler_ends,
@@ -42,7 +42,7 @@ class SteepestGradientDescentCython(object):
         num_samples = 1000000
         linear_biases = [2, 2]
         coupler_starts, coupler_ends, coupler_weights = [0], [1], [-1]
-        initial_states = np.tile([1, 1], (num_samples, 1), dtype=np.int8)
+        initial_states = np.tile(np.array([1, 1], dtype=np.int8), (num_samples, 1))
 
         samples, energies = greedy.descent.steepest_gradient_descent(
             num_samples, linear_biases, coupler_starts, coupler_ends,
