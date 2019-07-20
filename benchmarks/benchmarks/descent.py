@@ -17,33 +17,17 @@ import greedy
 
 
 class SteepestGradientDescentCython(object):
+    params = [1, 1000, 1000000]
+    param_names = ['num_samples']
 
-    def time_single_flip_1_read(self):
-        num_samples = 1
-        linear_biases = [2, 2]
-        coupler_starts, coupler_ends, coupler_weights = [0], [1], [-1]
-        initial_states = np.tile(np.array([1, 1], dtype=np.int8), (num_samples, 1))
+    def setup(self, num_samples):
+        self.linear_biases = [2, 2]
+        self.coupler_starts = [0]
+        self.coupler_ends = [1]
+        self.coupler_weights = [-1]
+        self.initial_states = np.tile(np.array([1, 1], dtype=np.int8), (num_samples, 1))
 
+    def time_single_flip(self, num_samples):
         samples, energies = greedy.descent.steepest_gradient_descent(
-            num_samples, linear_biases, coupler_starts, coupler_ends,
-            coupler_weights, initial_states)
-
-    def time_single_flip_1k_reads(self):
-        num_samples = 1000
-        linear_biases = [2, 2]
-        coupler_starts, coupler_ends, coupler_weights = [0], [1], [-1]
-        initial_states = np.tile(np.array([1, 1], dtype=np.int8), (num_samples, 1))
-
-        samples, energies = greedy.descent.steepest_gradient_descent(
-            num_samples, linear_biases, coupler_starts, coupler_ends,
-            coupler_weights, initial_states)
-
-    def time_single_flip_1M_reads(self):
-        num_samples = 1000000
-        linear_biases = [2, 2]
-        coupler_starts, coupler_ends, coupler_weights = [0], [1], [-1]
-        initial_states = np.tile(np.array([1, 1], dtype=np.int8), (num_samples, 1))
-
-        samples, energies = greedy.descent.steepest_gradient_descent(
-            num_samples, linear_biases, coupler_starts, coupler_ends,
-            coupler_weights, initial_states)
+            num_samples, self.linear_biases, self.coupler_starts,
+            self.coupler_ends, self.coupler_weights, self.initial_states)

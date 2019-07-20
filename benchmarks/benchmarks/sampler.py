@@ -17,35 +17,26 @@ import greedy
 
 
 class SteepestDescentSimple(object):
+    params = [1, 1000, 1000000]
+    param_names = ['num_reads']
 
-    def setup(self):
+    def setup(self, num_reads):
         self.sampler = greedy.SteepestDescentSampler()
+        self.h = {0: 2, 1: 2}
+        self.J = {(0, 1): -1}
 
-    def time_single_flip_1_read(self):
-        self.sampler.sample_ising({0: 2, 1: 2}, {(0, 1): -1})
-
-    def time_single_flip_1k_reads(self):
-        self.sampler.sample_ising({0: 2, 1: 2}, {(0, 1): -1}, num_reads=1000)
-
-    def time_single_flip_1M_reads(self):
-        self.sampler.sample_ising({0: 2, 1: 2}, {(0, 1): -1}, num_reads=1000000)
+    def time_single_flip(self, num_reads):
+        self.sampler.sample_ising(self.h, self.J, num_reads=num_reads)
 
 
 class SteepestDescentComplete(object):
+    params = ([100, 1000, 2000], [1, 10])
+    param_names = ['graph_size', 'num_reads']
+    timeout = 300
 
-    def setup(self):
+    def setup(self, graph_size, num_reads):
         self.sampler = greedy.SteepestDescentSampler()
-        self.ran1_n100 = dimod.generators.random.ran_r(r=1, graph=100, seed=0)
-        self.ran1_n1k = dimod.generators.random.ran_r(r=1, graph=1000, seed=0)
+        self.bqm = dimod.generators.random.ran_r(r=1, graph=graph_size, seed=0)
 
-    def time_ran1_n100_1_read(self):
-        self.sampler.sample(self.ran1_n100, num_reads=1)
-
-    def time_ran1_n100_10_reads(self):
-        self.sampler.sample(self.ran1_n100, num_reads=10)
-
-    def time_ran1_n1k_1_read(self):
-        self.sampler.sample(self.ran1_n1k, num_reads=1)
-
-    def time_ran1_n1k_10_reads(self):
-        self.sampler.sample(self.ran1_n1k, num_reads=10)
+    def time_ran1(self, graph_size, num_reads):
+        self.sampler.sample(self.bqm, num_reads=num_reads)
