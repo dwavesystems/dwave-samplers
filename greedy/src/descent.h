@@ -24,7 +24,6 @@ double get_flip_energy(
     int var,
     char *state,
     const vector<double>& linear_biases,
-    const vector<int>& degrees,
     const vector<vector<int>>& neighbors,
     const vector<vector<double>>& neighbour_couplings
 );
@@ -40,7 +39,6 @@ double get_state_energy(
 void steepest_gradient_descent_solver(
     char* state,
     const vector<double>& linear_biases,
-    const vector<int>& degrees,
     const vector<vector<int>>& neighbors,
     const vector<vector<double>>& neighbour_couplings
 );

@@ -25,7 +25,6 @@ using std::runtime_error;
 // @param var the index of the variable to flip
 // @param state the current state of all variables
 // @param linear_biases vector of h or field value on each variable
-// @param degrees the degree of each variable
 // @param neighbors lists of the neighbors of each variable, such that
 //     neighbors[i][j] is the jth neighbor of variable i.
 // @param neighbour_couplings same as neighbors, but instead has the J value.
@@ -37,7 +36,6 @@ double get_flip_energy(
     int var,
     char *state,
     const vector<double>& linear_biases,
-    const vector<int>& degrees,
     const vector<vector<int>>& neighbors,
     const vector<vector<double>>& neighbour_couplings
 ) {
@@ -48,7 +46,7 @@ double get_flip_energy(
     // flip energy = delta * h[var]
     //             + sum_over_var_neighbors(delta * J[var][neigh] * state[neigh]))
     double contrib = linear_biases[var];
-    for (int idx = 0; idx < degrees[var]; idx++) {
+    for (int idx = 0; idx < neighbors[var].size(); idx++) {
         contrib += state[neighbors[var][idx]] * neighbour_couplings[var][idx];
     }
 
@@ -98,7 +96,6 @@ double get_state_energy(
 //        variable. Note that this will be used as the initial state of the
 //        run.
 // @param linear_biases vector of h or field value on each variable
-// @param degrees the degree of each variable
 // @param neighbors lists of the neighbors of each variable, such that 
 //        neighbors[i][j] is the jth neighbor of variable i. Note
 // @param neighbour_couplings same as neighbors, but instead has the J value.
@@ -111,7 +108,6 @@ double get_state_energy(
 void steepest_gradient_descent_solver(
     char* state,
     const vector<double>& linear_biases,
-    const vector<int>& degrees,
     const vector<vector<int>>& neighbors,
     const vector<vector<double>>& neighbour_couplings,
     vector<double>& flip_energies
@@ -127,7 +123,7 @@ void steepest_gradient_descent_solver(
     for (int var = 0; var < num_vars; var++) {
         flip_energies[var] = get_flip_energy(
             var, state,
-            linear_biases, degrees, neighbors, neighbour_couplings
+            linear_biases, neighbors, neighbour_couplings
         );
     }
 
@@ -212,8 +208,6 @@ void steepest_gradient_descent(
         throw runtime_error("coupler vectors have mismatched lengths");
     }
     
-    // degrees will be a vector of the degrees of each variable
-    vector<int> degrees(num_vars, 0);
     // neighbors is a vector of vectors, such that neighbors[i][j] is the jth
     // neighbor of variable i
     vector<vector<int>> neighbors(num_vars);
@@ -222,8 +216,8 @@ void steepest_gradient_descent(
     // and its jth neighbor
     vector<vector<double>> neighbour_couplings(num_vars);
 
-    // build the degrees, neighbors, and neighbour_couplings vectors by
-    // iterating over the input coupler vectors
+    // build the neighbors, and neighbour_couplings vectors by iterating over
+    // the input coupler vectors
     for (unsigned coupler = 0; coupler < coupler_starts.size(); coupler++) {
         int u = coupler_starts[coupler];
         int v = coupler_ends[coupler];
@@ -238,10 +232,6 @@ void steepest_gradient_descent(
         // add the weights
         neighbour_couplings[u].push_back(coupler_weights[coupler]);
         neighbour_couplings[v].push_back(coupler_weights[coupler]);
-
-        // increase the degrees of both variables
-        degrees[u]++;
-        degrees[v]++;
     }
 
     // run the steepest descent for `num_samples` times, each time seeded with
@@ -253,11 +243,12 @@ void steepest_gradient_descent(
         char *state = states + sample * num_vars;
 
         steepest_gradient_descent_solver(
-            state, linear_biases, degrees, neighbors, neighbour_couplings, flip_energies
+            state, linear_biases, neighbors, neighbour_couplings, flip_energies
         );
 
         // compute the energy of the sample
-        energies[sample] = get_state_energy(state, linear_biases, coupler_starts,
-                                            coupler_ends, coupler_weights);
+        energies[sample] = get_state_energy(
+            state, linear_biases, coupler_starts, coupler_ends, coupler_weights
+        );
     }
 }
