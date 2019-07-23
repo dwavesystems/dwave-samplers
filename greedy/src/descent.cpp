@@ -104,6 +104,8 @@ double get_state_energy(
 // @param neighbour_couplings same as neighbors, but instead has the J value.
 //        neighbour_couplings[i][j] is the J value or weight on the coupling
 //        between variables i and neighbors[i][j]. 
+// @param flip_energies vector/buffer used for caching of variable flip delta
+//        energies
 //
 // @return Nothing, but `state` now contains the result of the run.
 void steepest_gradient_descent_solver(
@@ -111,7 +113,8 @@ void steepest_gradient_descent_solver(
     const vector<double>& linear_biases,
     const vector<int>& degrees,
     const vector<vector<int>>& neighbors,
-    const vector<vector<double>>& neighbour_couplings
+    const vector<vector<double>>& neighbour_couplings,
+    vector<double>& flip_energies
 ) {
     const int num_vars = linear_biases.size();
 
@@ -121,7 +124,6 @@ void steepest_gradient_descent_solver(
     }
 
     // flip energies for all variables, based on the current state (invariant)
-    vector<double> flip_energies(num_vars);
     for (int var = 0; var < num_vars; var++) {
         flip_energies[var] = get_flip_energy(
             var, state,
@@ -241,12 +243,14 @@ void steepest_gradient_descent(
 
     // run the steepest descent for `num_samples` times, each time seeded with
     // the initial state from `states`
+    vector<double> flip_energies(num_vars);
+
     for (int sample = 0; sample < num_samples; sample++) {
         // get initial state from states buffer; the solution overwrites the same buffer
         char *state = states + sample * num_vars;
 
         steepest_gradient_descent_solver(
-            state, linear_biases, degrees, neighbors, neighbour_couplings
+            state, linear_biases, degrees, neighbors, neighbour_couplings, flip_energies
         );
 
         // compute the energy of the sample
