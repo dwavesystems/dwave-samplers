@@ -26,7 +26,7 @@ class SteepestDescentSimple(object):
         self.J = {(0, 1): -1}
 
     def time_single_flip(self, num_reads):
-        self.sampler.sample_ising(self.h, self.J, num_reads=num_reads)
+        self.sampler.sample_ising(self.h, self.J, num_reads=num_reads, seed=0)
 
 
 class SteepestDescentComplete(object):
@@ -39,4 +39,4 @@ class SteepestDescentComplete(object):
         self.bqm = dimod.generators.random.ran_r(r=1, graph=graph_size, seed=0)
 
     def time_ran1(self, graph_size, num_reads):
-        self.sampler.sample(self.bqm, num_reads=num_reads)
+        self.sampler.sample(self.bqm, num_reads=num_reads, seed=0)
