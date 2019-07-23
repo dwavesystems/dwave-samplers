@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import networkx as nx
+
 import dimod
 import greedy
 
@@ -30,6 +32,8 @@ class SteepestDescentSimple(object):
 
 
 class SteepestDescentComplete(object):
+    """Test steepest descent on complete graphs."""
+
     params = ([100, 1000, 2000], [1, 10])
     param_names = ['graph_size', 'num_reads']
     timeout = 300
@@ -39,4 +43,20 @@ class SteepestDescentComplete(object):
         self.bqm = dimod.generators.random.ran_r(r=1, graph=graph_size, seed=0)
 
     def time_ran1(self, graph_size, num_reads):
+        self.sampler.sample(self.bqm, num_reads=num_reads, seed=0)
+
+
+class SteepestDescentSparse(object):
+    """Test steepest descent on Erdős-Rényi sparse graphs with varying density."""
+
+    params = ([100, 1000, 2000], [0.05, 0.1, 0.25, 0.5], [1, 10])
+    param_names = ['graph_size', 'graph_density', 'num_reads']
+    timeout = 300
+
+    def setup(self, graph_size, graph_density, num_reads):
+        self.sampler = greedy.SteepestDescentSampler()
+        self.graph = nx.fast_gnp_random_graph(n=graph_size, p=graph_density, seed=0)
+        self.bqm = dimod.generators.random.ran_r(r=1, graph=self.graph, seed=0)
+
+    def time_ran1(self, graph_size, graph_density, num_reads):
         self.sampler.sample(self.bqm, num_reads=num_reads, seed=0)
