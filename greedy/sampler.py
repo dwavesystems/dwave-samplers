@@ -17,7 +17,6 @@
 from __future__ import division, absolute_import
 
 from numbers import Integral
-from random import randint
 
 import dimod
 import numpy as np
@@ -155,13 +154,9 @@ class SteepestDescentSolver(dimod.Sampler):
 
         # validate/generate seed
         if not (seed is None or isinstance(seed, Integral)):
-            raise TypeError("'seed' should be None or a positive integer")
+            raise TypeError("'seed' should be None or a positive 32-bit integer")
         if isinstance(seed, Integral) and not 0 <= seed <= 2**32 - 1:
             raise ValueError("'seed' should be an integer between 0 and 2**32 - 1 inclusive")
-
-        if seed is None:
-            # pick a random seed
-            seed = randint(0, 2**32 - 1)
 
         # get the Ising linear biases
         linear = _bqm.spin.linear
@@ -252,10 +247,10 @@ class SteepestDescentSolver(dimod.Sampler):
         return initial_states
 
     @staticmethod
-    def _random_generator(initial_states, num_reads, num_variables, seed):
+    def _random_generator(initial_states, num_reads, num_variables, seed=None):
         rem = max(0, num_reads - len(initial_states))
 
-        np_rand = np.random.RandomState(seed % 2**32)
+        np_rand = np.random.RandomState(seed)
         random_states = 2 * np_rand.randint(2, size=(rem, num_variables)).astype(np.int8) - 1
 
         # handle zero-length array of input states
