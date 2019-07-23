@@ -120,6 +120,15 @@ void steepest_gradient_descent_solver(
         return;
     }
 
+    // flip energies for all variables, based on the current state (invariant)
+    vector<double> flip_energies(num_vars);
+    for (int var = 0; var < num_vars; var++) {
+        flip_energies[var] = get_flip_energy(
+            var, state,
+            linear_biases, degrees, neighbors, neighbour_couplings
+        );
+    }
+
     bool minimum_reached = false;
     while (!minimum_reached) {
 
@@ -128,11 +137,10 @@ void steepest_gradient_descent_solver(
         int best_var = -1;
         double best_flip_energy = 0;
 
+        // find the variable flipping of which results with the steepest
+        // descent in energy landscape
         for (int var = 0; var < num_vars; var++) {
-            double flip_energy = get_flip_energy(
-                var, state,
-                linear_biases, degrees, neighbors, neighbour_couplings
-            );
+            double flip_energy = flip_energies[var];
 
             if (flip_energy < best_flip_energy) {
                 best_flip_energy = flip_energy;
@@ -148,6 +156,18 @@ void steepest_gradient_descent_solver(
 
         // otherwise, we can improve the solution by descending the `var` dim
         state[best_var] *= -1;
+
+        // to maintain the `flip_energies` invariant, we need to update
+        // flip energies for the flipped var and all neighbors of the flipped var
+        flip_energies[best_var] *= -1;
+
+        for (int n_idx = 0; n_idx < neighbors[best_var].size(); n_idx++) {
+            int n_var = neighbors[best_var][n_idx];
+            flip_energies[n_var] = get_flip_energy(
+                n_var, state,
+                linear_biases, degrees, neighbors, neighbour_couplings
+            );
+        }
     }
 }
 
