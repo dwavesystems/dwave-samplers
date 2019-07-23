@@ -165,11 +165,14 @@ void steepest_gradient_descent_solver(
 
         for (int n_idx = 0; n_idx < neighbors[best_var].size(); n_idx++) {
             int n_var = neighbors[best_var][n_idx];
-            flip_energies[n_var] = get_flip_energy(
-                n_var, state,
-                linear_biases, degrees, neighbors, neighbour_couplings
-            );
+            double w = neighbour_couplings[best_var][n_idx];
+            // flip energy for each `neighbor` includes the
+            // `2 * state[neighbor] * coupling weight * state[best_var]` term.
+            // the change of the flip energy due to flipping `best_var` is
+            // twice that, hence the factor 4 below
+            flip_energies[n_var] -= 4 * state[best_var] * w * state[n_var];
         }
+
     }
 }
 
