@@ -96,7 +96,7 @@ class SteepestDescentSolver(dimod.Sampler):
                     Expands the specified initial states with randomly generated
                     states if fewer than `num_reads` or truncates if greater.
 
-            seed (int, optional):
+            seed (int (32-bit unsigned integer), optional):
                 Seed to use for the PRNG. Specifying a particular seed with a
                 constant set of parameters produces identical results. If not
                 provided, a random seed is chosen.
@@ -156,12 +156,12 @@ class SteepestDescentSolver(dimod.Sampler):
         # validate/generate seed
         if not (seed is None or isinstance(seed, Integral)):
             raise TypeError("'seed' should be None or a positive integer")
-        if isinstance(seed, Integral) and not 0 < seed < 2**64 - 1:
-            raise ValueError("'seed' should be an integer between 0 and 2^64 - 1")
+        if isinstance(seed, Integral) and not 0 <= seed <= 2**32 - 1:
+            raise ValueError("'seed' should be an integer between 0 and 2**32 - 1 inclusive")
 
         if seed is None:
             # pick a random seed
-            seed = randint(0, 1 << 64 - 1)
+            seed = randint(0, 2**32 - 1)
 
         # get the Ising linear biases
         linear = _bqm.spin.linear
