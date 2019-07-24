@@ -13,10 +13,13 @@
 // limitations under the License.
 
 #include <vector>
+#include <set>
+#include <cassert>
 #include <stdexcept>
 #include "descent.h"
 
 using std::vector;
+using std::set;
 using std::runtime_error;
 
 
@@ -90,6 +93,18 @@ double get_state_energy(
 }
 
 
+struct EnergyVar {
+    double energy;
+    int var;
+};
+
+struct EnergyVarCmp {
+    bool operator()(const EnergyVar& lhs, const EnergyVar& rhs) const {
+        return lhs.energy < rhs.energy || (lhs.energy <= rhs.energy && lhs.var < rhs.var);
+    }
+};
+
+
 // One run of the steepest gradient descent on the input Ising model.
 //
 // @param state a signed char array where each char holds the state of a
@@ -101,7 +116,7 @@ double get_state_energy(
 // @param neighbour_couplings same as neighbors, but instead has the J value.
 //        neighbour_couplings[i][j] is the J value or weight on the coupling
 //        between variables i and neighbors[i][j]. 
-// @param flip_energies vector/buffer used for caching of variable flip delta
+// @param flip_energies_vector vector used for caching of variable flip delta
 //        energies
 //
 // @return Nothing, but `state` now contains the result of the run.
@@ -110,7 +125,7 @@ void steepest_gradient_descent_solver(
     const vector<double>& linear_biases,
     const vector<vector<int>>& neighbors,
     const vector<vector<double>>& neighbour_couplings,
-    vector<double>& flip_energies
+    vector<double>& flip_energies_vector
 ) {
     const int num_vars = linear_biases.size();
 
@@ -119,46 +134,44 @@ void steepest_gradient_descent_solver(
         return;
     }
 
-    // flip energies for all variables, based on the current state (invariant)
+    // calculate flip energies for all variables, based on the current
+    // state (loop invariant); store them in:
+    // (1) vector for fast var-to-energy look-up
+    // (2) ordered set (rb-tree) for fast best var energy look-up
+    // ~ O(N * (max_degree + 1 + logN))
+    // => ~ O(N^2) for dense graphs, ~ O(N*logN) for sparse
+    set<EnergyVar, EnergyVarCmp> flip_energies_set;
+
     for (int var = 0; var < num_vars; var++) {
-        flip_energies[var] = get_flip_energy(
-            var, state,
-            linear_biases, neighbors, neighbour_couplings
+        double energy = get_flip_energy(
+            var, state, linear_biases, neighbors, neighbour_couplings
         );
+        flip_energies_vector[var] = energy;
+        flip_energies_set.insert({energy, var});
     }
 
-    bool minimum_reached = false;
-    while (!minimum_reached) {
-
-        // calculate the gradient: on binary models this translates to finding
-        // a dimension with the greatest flip energy
-        int best_var = -1;
-        double best_flip_energy = 0;
-
+    // descend ~ O(downhill_steps * max_degree * logN)
+    while (true) {
         // find the variable flipping of which results with the steepest
-        // descent in energy landscape
-        for (int var = 0; var < num_vars; var++) {
-            double flip_energy = flip_energies[var];
-
-            if (flip_energy < best_flip_energy) {
-                best_flip_energy = flip_energy;
-                best_var = var;
-            }
-        }
+        // descent in energy landscape ~ O(1)
+        auto best_energy_var_iter = flip_energies_set.begin();
+        int best_var = best_energy_var_iter->var;
+        double best_energy = best_energy_var_iter->energy;
 
         // are we in a minimum already?
-        if (best_var == -1) {
-            minimum_reached = true;
+        if (best_energy >= 0) {
             break;
         }
 
-        // otherwise, we can improve the solution by descending the `var` dim
-        state[best_var] *= -1;
+        // otherwise, we can improve the solution by descending down the
+        // `best_var` dimension
 
-        // to maintain the `flip_energies` invariant, we need to update
-        // flip energies for the flipped var and all neighbors of the flipped var
-        flip_energies[best_var] *= -1;
+        // but to maintain the `flip_energies` invariant (after flipping
+        // `best_var`), we need to update flip energies for the flipped var and
+        // all neighbors of the flipped var
 
+        // update flip energies (and their ordered set) of all `best_var`'s
+        // neighbors ~ O(max_degree * logN)
         for (int n_idx = 0; n_idx < neighbors[best_var].size(); n_idx++) {
             int n_var = neighbors[best_var][n_idx];
             double w = neighbour_couplings[best_var][n_idx];
@@ -166,9 +179,31 @@ void steepest_gradient_descent_solver(
             // `2 * state[neighbor] * coupling weight * state[best_var]` term.
             // the change of the flip energy due to flipping `best_var` is
             // twice that, hence the factor 4 below
-            flip_energies[n_var] -= 4 * state[best_var] * w * state[n_var];
+            double n_energy_inc = 4 * state[best_var] * w * state[n_var];
+
+            // to update the neighbor in our ordered set:
+            // 1) remove the neighbor from the set
+            double n_energy = flip_energies_vector[n_var];
+            auto search = flip_energies_set.find({n_energy, n_var});
+            assert(search != flip_energies_set.end());
+            flip_energies_set.erase(search);
+
+            // 2) insert new (energy, var) element to reflect changed flip energy
+            n_energy += n_energy_inc;
+            flip_energies_set.insert({n_energy, n_var});
+
+            // also update energy in the vector
+            flip_energies_vector[n_var] = n_energy;
         }
 
+        // finally, descend down the `var` dim (flip it)
+        state[best_var] *= -1;
+
+        // and update flip energy for the flipped best_var, in both vector and set
+        best_energy *= -1;
+        flip_energies_vector[best_var] = best_energy;
+        flip_energies_set.erase(best_energy_var_iter);
+        flip_energies_set.insert({best_energy, best_var});
     }
 }
 
@@ -234,16 +269,17 @@ void steepest_gradient_descent(
         neighbour_couplings[v].push_back(coupler_weights[coupler]);
     }
 
-    // run the steepest descent for `num_samples` times, each time seeded with
-    // the initial state from `states`
-    vector<double> flip_energies(num_vars);
+    // variable flip energies cache
+    vector<double> flip_energies_vector(num_vars);
 
+    // run the steepest descent for `num_samples` times,
+    // each time seeded with the initial state from `states`
     for (int sample = 0; sample < num_samples; sample++) {
         // get initial state from states buffer; the solution overwrites the same buffer
         char *state = states + sample * num_vars;
 
         steepest_gradient_descent_solver(
-            state, linear_biases, neighbors, neighbour_couplings, flip_energies
+            state, linear_biases, neighbors, neighbour_couplings, flip_energies_vector
         );
 
         // compute the energy of the sample
