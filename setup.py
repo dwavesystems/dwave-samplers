@@ -73,7 +73,7 @@ except SyntaxError:
 packages = ['greedy']
 
 # Package requirements, minimal pinning
-install_requires = ['six>=1.10', 'numpy>=1.15.0,<1.16.0', 'dimod>=0.8.11,<0.9.0']
+install_requires = ['six>=1.10', 'numpy>=1.15.0,<1.16.0', 'dimod>=0.8.14,<0.9.0']
 
 # Package extras requirements
 extras_require = {
