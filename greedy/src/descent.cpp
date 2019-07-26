@@ -119,8 +119,8 @@ struct EnergyVarCmp {
 // @param flip_energies_vector vector used for caching of variable flip delta
 //        energies
 //
-// @return Nothing, but `state` now contains the result of the run.
-void steepest_gradient_descent_solver(
+// @return number of downhill steps; `state` contains the result of the run.
+unsigned int steepest_gradient_descent_solver(
     char* state,
     const vector<double>& linear_biases,
     const vector<vector<int>>& neighbors,
@@ -131,7 +131,7 @@ void steepest_gradient_descent_solver(
 
     // short-circuit on empty models
     if (num_vars < 1) {
-        return;
+        return 0;
     }
 
     // calculate flip energies for all variables, based on the current
@@ -151,6 +151,7 @@ void steepest_gradient_descent_solver(
     }
 
     // descend ~ O(downhill_steps * max_degree * logN)
+    unsigned int steps = 0;
     while (true) {
         // find the variable flipping of which results with the steepest
         // descent in energy landscape ~ O(1)
@@ -204,7 +205,11 @@ void steepest_gradient_descent_solver(
         flip_energies_vector[best_var] = best_energy;
         flip_energies_set.erase(best_energy_var_iter);
         flip_energies_set.insert({best_energy, best_var});
+
+        steps++;
     }
+
+    return steps;
 }
 
 
@@ -226,7 +231,7 @@ void steepest_gradient_descent_solver(
 //        in the same order as coupler_starts and coupler_ends
 //
 // @return Nothing. Results are in `states` buffer.
-void steepest_gradient_descent(
+unsigned int steepest_gradient_descent(
     char* states,
     double* energies,
     const int num_samples,
@@ -272,13 +277,16 @@ void steepest_gradient_descent(
     // variable flip energies cache
     vector<double> flip_energies_vector(num_vars);
 
+    // number of descents/flips
+    unsigned int downhill_steps = 0;
+
     // run the steepest descent for `num_samples` times,
     // each time seeded with the initial state from `states`
     for (int sample = 0; sample < num_samples; sample++) {
         // get initial state from states buffer; the solution overwrites the same buffer
         char *state = states + sample * num_vars;
 
-        steepest_gradient_descent_solver(
+        downhill_steps = steepest_gradient_descent_solver(
             state, linear_biases, neighbors, neighbour_couplings, flip_energies_vector
         );
 
@@ -287,4 +295,6 @@ void steepest_gradient_descent(
             state, linear_biases, coupler_starts, coupler_ends, coupler_weights
         );
     }
+
+    return downhill_steps;
 }

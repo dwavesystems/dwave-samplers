@@ -207,7 +207,7 @@ class SteepestDescentSolver(dimod.Sampler):
         numpy_initial_states = self._truncate_filter(numpy_initial_states, num_reads)
 
         # run the steepest descent
-        samples, energies = steepest_gradient_descent(
+        samples, energies, info = steepest_gradient_descent(
             num_reads,
             linear_biases, coupler_starts, coupler_ends, coupler_weights,
             numpy_initial_states)
@@ -216,7 +216,8 @@ class SteepestDescentSolver(dimod.Sampler):
         result = dimod.SampleSet.from_samples(
             samples,
             energy=energies+off,
-            vartype=dimod.SPIN
+            vartype=dimod.SPIN,
+            info=info
         )
 
         result.change_vartype(_bqm.vartype, inplace=True)

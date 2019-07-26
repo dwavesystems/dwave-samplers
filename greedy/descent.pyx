@@ -67,6 +67,8 @@ def steepest_gradient_descent(num_samples,
     energies: np.ndarray
         The energies.
 
+    info: dict
+        Solution and procedure metadata.
     """
     num_vars = len(linear_biases)
 
@@ -89,8 +91,10 @@ def steepest_gradient_descent(num_samples,
     cdef vector[double] _coupler_weights = coupler_weights
 
     with nogil:
-        decl.steepest_gradient_descent(
+        steps = decl.steepest_gradient_descent(
             _states, _energies, _num_samples,
             _linear_biases, _coupler_starts, _coupler_ends, _coupler_weights)
 
-    return states_numpy, energies_numpy
+    info = dict(downhill_steps=steps)
+
+    return states_numpy, energies_numpy, info

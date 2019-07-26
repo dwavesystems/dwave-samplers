@@ -16,7 +16,7 @@ from libcpp.vector cimport vector
 
 cdef extern from "descent.h":
 
-    void steepest_gradient_descent(
+    unsigned int steepest_gradient_descent(
         char* states,
         double* energies,
         const int num_samples,
