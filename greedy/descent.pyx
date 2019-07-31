@@ -28,6 +28,7 @@ def steepest_gradient_descent(num_samples,
                               linear_biases,
                               coupler_starts, coupler_ends, coupler_weights,
                               np.ndarray[char, ndim=2, mode="c"] states_numpy):
+
     """Wraps `steepest_gradient_descent` from `descent.cpp`. Accepts
     an Ising problem defined on a general graph and returns samples
     using steepest gradient descent seeded with initial states from
@@ -72,10 +73,12 @@ def steepest_gradient_descent(num_samples,
     """
     num_vars = len(linear_biases)
 
+    info = dict(downhill_steps=0)
+
     # short-circuit null edge cases
     if num_samples == 0 or num_vars == 0:
         states = np.empty((num_samples, num_vars), dtype=np.int8)
-        return states, np.zeros(num_samples, dtype=np.double)
+        return states, np.zeros(num_samples, dtype=np.double), info
 
     # allocate ndarray for energies
     energies_numpy = np.empty(num_samples, dtype=np.float64)
@@ -95,6 +98,6 @@ def steepest_gradient_descent(num_samples,
             _states, _energies, _num_samples,
             _linear_biases, _coupler_starts, _coupler_ends, _coupler_weights)
 
-    info = dict(downhill_steps=steps)
+    info.update(downhill_steps=steps)
 
     return states_numpy, energies_numpy, info

@@ -28,6 +28,6 @@ class SteepestGradientDescentCython(object):
         self.initial_states = np.tile(np.array([1, 1], dtype=np.int8), (num_samples, 1))
 
     def time_single_flip(self, num_samples):
-        samples, energies = greedy.descent.steepest_gradient_descent(
+        samples, energies, info = greedy.descent.steepest_gradient_descent(
             num_samples, self.linear_biases, self.coupler_starts,
             self.coupler_ends, self.coupler_weights, self.initial_states)

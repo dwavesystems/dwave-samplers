@@ -36,7 +36,7 @@ class SteepestGradientDescentCython(unittest.TestCase):
         coupler_starts, coupler_ends, coupler_weights = [0], [1], [-1]
         initial_states = np.array([[1, 1]], dtype=np.int8)
 
-        samples, energies = steepest_gradient_descent(
+        samples, energies, info = steepest_gradient_descent(
             num_samples, linear_biases, coupler_starts, coupler_ends,
             coupler_weights, initial_states)
 

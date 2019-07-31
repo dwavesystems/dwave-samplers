@@ -212,10 +212,10 @@ class SteepestDescentSolver(dimod.Sampler):
             linear_biases, coupler_starts, coupler_ends, coupler_weights,
             numpy_initial_states)
 
-        off = _bqm.spin.offset
+        offset = _bqm.spin.offset
         result = dimod.SampleSet.from_samples(
             samples,
-            energy=energies+off,
+            energy=energies+offset,
             vartype=dimod.SPIN,
             info=info
         )
