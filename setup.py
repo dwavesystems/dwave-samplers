@@ -39,10 +39,6 @@ class cythonizing_build_ext(build_ext):
             for ext in self.extensions:
                 ext.sources = [source.replace(".pyx", ".cpp") for source in ext.sources]
 
-        # add numpy include files
-        import numpy
-        self.include_dirs.append(numpy.get_include())
-
         # add compiler/linker flags
         compiler = self.compiler.compiler_type
 
@@ -55,6 +51,13 @@ class cythonizing_build_ext(build_ext):
             ext.extra_compile_args = link_args
 
         build_ext.build_extensions(self)
+
+    def finalize_options(self):
+        build_ext.finalize_options(self)
+
+        # add numpy include files
+        import numpy
+        self.include_dirs.append(numpy.get_include())
 
 
 # Load package info, without importing the package
