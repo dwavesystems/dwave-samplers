@@ -65,28 +65,33 @@ def steepest_gradient_descent(num_samples,
     samples : numpy.ndarray
         A 2D numpy array where each row is a sample.
 
-    energies: np.ndarray
-        The energies.
+    energies: numpy.ndarray
+        Sample energies.
 
-    info: dict
-        Solution and procedure metadata.
+    num_steps: numpy.ndarray
+        Number of downhill steps per sample.
     """
     num_vars = len(linear_biases)
-
-    info = dict(downhill_steps=0)
 
     # short-circuit null edge cases
     if num_samples == 0 or num_vars == 0:
         states = np.empty((num_samples, num_vars), dtype=np.int8)
-        return states, np.zeros(num_samples, dtype=np.double), info
+        return (states,
+                np.zeros(num_samples, dtype=np.double),
+                np.zeros(num_samples, dtype=np.uint32))
 
     # allocate ndarray for energies
     energies_numpy = np.empty(num_samples, dtype=np.float64)
     cdef double[:] energies = energies_numpy
 
+    # allocate ndarray for steps
+    num_steps_numpy = np.empty(num_samples, dtype=np.uint32)
+    cdef unsigned[:] num_steps = num_steps_numpy
+
     # explicitly convert all Python types to C while we have the GIL
     cdef char* _states = &states_numpy[0, 0]
     cdef double* _energies = &energies[0]
+    cdef unsigned* _num_steps = &num_steps[0]
     cdef int _num_samples = num_samples
     cdef vector[double] _linear_biases = linear_biases
     cdef vector[int] _coupler_starts = coupler_starts
@@ -94,10 +99,8 @@ def steepest_gradient_descent(num_samples,
     cdef vector[double] _coupler_weights = coupler_weights
 
     with nogil:
-        steps = decl.steepest_gradient_descent(
-            _states, _energies, _num_samples,
+        decl.steepest_gradient_descent(
+            _states, _energies, _num_steps, _num_samples,
             _linear_biases, _coupler_starts, _coupler_ends, _coupler_weights)
 
-    info.update(downhill_steps=steps)
-
-    return states_numpy, energies_numpy, info
+    return states_numpy, energies_numpy, num_steps_numpy

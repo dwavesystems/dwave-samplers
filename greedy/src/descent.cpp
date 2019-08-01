@@ -221,6 +221,8 @@ unsigned int steepest_gradient_descent_solver(
 //        descent runs.
 // @param energies a double array of size num_samples. Will be overwritten by
 //        this function as energies are filled in.
+// @param steps an unsigned int array of size num_samples. Will be overwritten
+//        by this function as number of downhill steps per sample are received.
 // @param num_samples the number of samples to get
 // @param linear_biases vector of linear bias or field value on each variable
 // @param coupler_starts an int vector containing the variables of one side of
@@ -231,9 +233,10 @@ unsigned int steepest_gradient_descent_solver(
 //        in the same order as coupler_starts and coupler_ends
 //
 // @return Nothing. Results are in `states` buffer.
-unsigned int steepest_gradient_descent(
+void steepest_gradient_descent(
     char* states,
     double* energies,
+    unsigned* num_steps,
     const int num_samples,
     const vector<double>& linear_biases,
     const vector<int>& coupler_starts,
@@ -277,16 +280,13 @@ unsigned int steepest_gradient_descent(
     // variable flip energies cache
     vector<double> flip_energies_vector(num_vars);
 
-    // number of descents/flips
-    unsigned int downhill_steps = 0;
-
     // run the steepest descent for `num_samples` times,
     // each time seeded with the initial state from `states`
     for (int sample = 0; sample < num_samples; sample++) {
         // get initial state from states buffer; the solution overwrites the same buffer
         char *state = states + sample * num_vars;
 
-        downhill_steps = steepest_gradient_descent_solver(
+        num_steps[sample] = steepest_gradient_descent_solver(
             state, linear_biases, neighbors, neighbour_couplings, flip_energies_vector
         );
 
@@ -295,6 +295,4 @@ unsigned int steepest_gradient_descent(
             state, linear_biases, coupler_starts, coupler_ends, coupler_weights
         );
     }
-
-    return downhill_steps;
 }

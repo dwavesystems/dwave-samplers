@@ -36,16 +36,17 @@ double get_state_energy(
     const vector<double>& coupler_weights
 );
 
-unsigned int steepest_gradient_descent_solver(
+unsigned steepest_gradient_descent_solver(
     char* state,
     const vector<double>& linear_biases,
     const vector<vector<int>>& neighbors,
     const vector<vector<double>>& neighbour_couplings
 );
 
-unsigned int steepest_gradient_descent(
+void steepest_gradient_descent(
     char* states,
     double* energies,
+    unsigned* num_steps,
     const int num_samples,
     const vector<double>& linear_biases,
     const vector<int>& coupler_starts,

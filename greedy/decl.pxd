@@ -19,6 +19,7 @@ cdef extern from "descent.h":
     unsigned int steepest_gradient_descent(
         char* states,
         double* energies,
+        unsigned* num_steps,
         const int num_samples,
         const vector[double]& linear_biases,
         const vector[int]& coupler_starts,
