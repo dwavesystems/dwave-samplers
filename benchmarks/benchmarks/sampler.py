@@ -21,6 +21,7 @@ import greedy
 class SteepestDescentSimple(object):
     params = [1, 1000, 1000000]
     param_names = ['num_reads']
+    repeat = (3, 10, 60)
 
     def setup(self, num_reads):
         self.sampler = greedy.SteepestDescentSampler()
@@ -36,6 +37,7 @@ class SteepestDescentComplete(object):
 
     params = ([100, 1000, 2000], [1, 10])
     param_names = ['graph_size', 'num_reads']
+    repeat = (3, 10, 60)
     timeout = 300
 
     def setup(self, graph_size, num_reads):
@@ -51,6 +53,7 @@ class SteepestDescentSparse(object):
 
     params = ([100, 1000, 2000], [0.05, 0.1, 0.25, 0.5], [1, 10])
     param_names = ['graph_size', 'graph_density', 'num_reads']
+    repeat = (3, 10, 60)
     timeout = 300
 
     def setup(self, graph_size, graph_density, num_reads):

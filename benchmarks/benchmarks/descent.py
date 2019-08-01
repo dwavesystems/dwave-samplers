@@ -19,6 +19,7 @@ import greedy
 class SteepestGradientDescentCython(object):
     params = [1, 1000, 1000000]
     param_names = ['num_samples']
+    repeat = (3, 10, 60)
 
     def setup(self, num_samples):
         self.linear_biases = [2, 2]
