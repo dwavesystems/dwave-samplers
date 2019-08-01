@@ -16,6 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from libcpp cimport bool
 from libcpp.vector cimport vector
 
 import numpy as np
@@ -27,7 +28,8 @@ cimport decl
 def steepest_gradient_descent(num_samples,
                               linear_biases,
                               coupler_starts, coupler_ends, coupler_weights,
-                              np.ndarray[char, ndim=2, mode="c"] states_numpy):
+                              np.ndarray[char, ndim=2, mode="c"] states_numpy,
+                              large_sparse_opt=False):
 
     """Wraps `steepest_gradient_descent` from `descent.cpp`. Accepts
     an Ising problem defined on a general graph and returns samples
@@ -59,6 +61,9 @@ def steepest_gradient_descent(num_samples,
     states_numpy : np.ndarray[char, ndim=2, mode="c"], values in (-1, 1)
         The initial seeded states of the gradient descent runs. Should be of
         a contiguous numpy.ndarray of shape (num_samples, num_variables).
+
+    large_sparse_opt : bool
+        When set to True, large-and-sparse problem graph optimizations are used.
 
     Returns
     -------
@@ -93,6 +98,7 @@ def steepest_gradient_descent(num_samples,
     cdef double* _energies = &energies[0]
     cdef unsigned* _num_steps = &num_steps[0]
     cdef int _num_samples = num_samples
+    cdef bool _large_sparse_opt = large_sparse_opt
     cdef vector[double] _linear_biases = linear_biases
     cdef vector[int] _coupler_starts = coupler_starts
     cdef vector[int] _coupler_ends = coupler_ends
@@ -101,6 +107,7 @@ def steepest_gradient_descent(num_samples,
     with nogil:
         decl.steepest_gradient_descent(
             _states, _energies, _num_steps, _num_samples,
-            _linear_biases, _coupler_starts, _coupler_ends, _coupler_weights)
+            _linear_biases, _coupler_starts, _coupler_ends, _coupler_weights,
+            _large_sparse_opt)
 
     return states_numpy, energies_numpy, num_steps_numpy

@@ -60,7 +60,8 @@ class SteepestDescentSolver(dimod.Sampler):
         }
 
     def sample(self, bqm, num_reads=None, initial_states=None,
-               initial_states_generator="random", seed=None, **kwargs):
+               initial_states_generator="random", seed=None,
+               large_sparse_opt=False, **kwargs):
         """Sample from a binary quadratic model using an implemented sample method.
 
         Args:
@@ -99,6 +100,10 @@ class SteepestDescentSolver(dimod.Sampler):
                 Seed to use for the PRNG. Specifying a particular seed with a
                 constant set of parameters produces identical results. If not
                 provided, a random seed is chosen.
+
+            large_sparse_opt (bool, optional, default=False):
+                Use optimizations for large and sparse problems (search tree for
+                next descent variable instead of linear array).
 
         Returns:
             :class:`dimod.SampleSet`: A `dimod` :class:`~dimod.SampleSet` object.
@@ -210,7 +215,7 @@ class SteepestDescentSolver(dimod.Sampler):
         samples, energies, num_steps = steepest_gradient_descent(
             num_reads,
             linear_biases, coupler_starts, coupler_ends, coupler_weights,
-            numpy_initial_states)
+            numpy_initial_states, large_sparse_opt)
 
         offset = _bqm.spin.offset
         result = dimod.SampleSet.from_samples(

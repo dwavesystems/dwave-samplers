@@ -93,6 +93,97 @@ double get_state_energy(
 }
 
 
+// One run of the steepest gradient descent on the input Ising model.
+//
+// Linear search for the steepest descent variable. Fastest approach for
+// complete and/or dense problem graphs.
+//
+// @param state a signed char array where each char holds the state of a
+//        variable. Note that this will be used as the initial state of the
+//        run.
+// @param linear_biases vector of h or field value on each variable
+// @param neighbors lists of the neighbors of each variable, such that
+//        neighbors[i][j] is the jth neighbor of variable i. Note
+// @param neighbour_couplings same as neighbors, but instead has the J value.
+//        neighbour_couplings[i][j] is the J value or weight on the coupling
+//        between variables i and neighbors[i][j].
+// @param flip_energies vector used for caching of variable flip delta
+//        energies
+//
+// @return number of downhill steps; `state` contains the result of the run.
+unsigned int steepest_gradient_descent_solver(
+    char* state,
+    const vector<double>& linear_biases,
+    const vector<vector<int>>& neighbors,
+    const vector<vector<double>>& neighbour_couplings,
+    vector<double>& flip_energies
+) {
+    const int num_vars = linear_biases.size();
+
+    // short-circuit on empty models
+    if (num_vars < 1) {
+        return 0;
+    }
+
+    // calculate flip energies for all variables, based on the current
+    // state (loop invariant)
+    for (int var = 0; var < num_vars; var++) {
+        flip_energies[var] = get_flip_energy(
+            var, state, linear_biases, neighbors, neighbour_couplings
+        );
+    }
+
+    // descend ~ O(downhill_steps * max_degree * logN)
+    unsigned int steps = 0;
+    while (true) {
+
+        // calculate the gradient: on binary models this translates to finding
+        // a dimension with the greatest flip energy
+        int best_var = -1;
+        double best_flip_energy = 0;
+
+        // find the variable flipping of which results with the steepest
+        // descent in energy landscape
+        for (int var = 0; var < num_vars; var++) {
+            double flip_energy = flip_energies[var];
+
+            if (flip_energy < best_flip_energy) {
+                best_flip_energy = flip_energy;
+                best_var = var;
+            }
+        }
+
+        // are we in a minimum already?
+        if (best_var == -1) {
+            break;
+        }
+
+        // otherwise, we can improve the solution by descending down the
+        // `best_var` dimension
+        state[best_var] *= -1;
+
+        // but to maintain the `flip_energies` invariant (after flipping
+        // `best_var`), we need to update flip energies for the flipped var and
+        // all neighbors of the flipped var
+        flip_energies[best_var] *= -1;
+
+        for (int n_idx = 0; n_idx < neighbors[best_var].size(); n_idx++) {
+            int n_var = neighbors[best_var][n_idx];
+            double w = neighbour_couplings[best_var][n_idx];
+            // flip energy for each `neighbor` includes the
+            // `2 * state[neighbor] * coupling weight * state[best_var]` term.
+            // the change of the flip energy due to flipping `best_var` is
+            // twice that, hence the factor 4 below
+            flip_energies[n_var] -= 4 * state[best_var] * w * state[n_var];
+        }
+
+        steps++;
+    }
+
+    return steps;
+}
+
+
 struct EnergyVar {
     double energy;
     int var;
@@ -107,20 +198,25 @@ struct EnergyVarCmp {
 
 // One run of the steepest gradient descent on the input Ising model.
 //
+// Flip energies are kept in an ordered set (balanced binary tree) resulting in
+// faster steepest descent variable lookup, but higher constant overhead of
+// maintaining the order. Scaling advantage only for very *large* (and *sparse*)
+// problem graphs.
+//
 // @param state a signed char array where each char holds the state of a
 //        variable. Note that this will be used as the initial state of the
 //        run.
 // @param linear_biases vector of h or field value on each variable
-// @param neighbors lists of the neighbors of each variable, such that 
+// @param neighbors lists of the neighbors of each variable, such that
 //        neighbors[i][j] is the jth neighbor of variable i. Note
 // @param neighbour_couplings same as neighbors, but instead has the J value.
 //        neighbour_couplings[i][j] is the J value or weight on the coupling
-//        between variables i and neighbors[i][j]. 
+//        between variables i and neighbors[i][j].
 // @param flip_energies_vector vector used for caching of variable flip delta
 //        energies
 //
 // @return number of downhill steps; `state` contains the result of the run.
-unsigned int steepest_gradient_descent_solver(
+unsigned int steepest_gradient_descent_ls_solver(
     char* state,
     const vector<double>& linear_biases,
     const vector<vector<int>>& neighbors,
@@ -231,6 +327,8 @@ unsigned int steepest_gradient_descent_solver(
 //        of each coupler in the problem
 // @param coupler_weights a double vector containing the weights of the couplers
 //        in the same order as coupler_starts and coupler_ends
+// @param large_sparse_opt boolean that determines
+//        if linear search or balanced tree search should be used for descent.
 //
 // @return Nothing. Results are in `states` buffer.
 void steepest_gradient_descent(
@@ -241,7 +339,8 @@ void steepest_gradient_descent(
     const vector<double>& linear_biases,
     const vector<int>& coupler_starts,
     const vector<int>& coupler_ends,
-    const vector<double>& coupler_weights
+    const vector<double>& coupler_weights,
+    bool large_sparse_opt
 ) {
     // the number of variables in the problem
     const int num_vars = linear_biases.size();
@@ -286,9 +385,15 @@ void steepest_gradient_descent(
         // get initial state from states buffer; the solution overwrites the same buffer
         char *state = states + sample * num_vars;
 
-        num_steps[sample] = steepest_gradient_descent_solver(
-            state, linear_biases, neighbors, neighbour_couplings, flip_energies_vector
-        );
+        if (large_sparse_opt) {
+            num_steps[sample] = steepest_gradient_descent_ls_solver(
+                state, linear_biases, neighbors, neighbour_couplings, flip_energies_vector
+            );
+        } else {
+            num_steps[sample] = steepest_gradient_descent_solver(
+                state, linear_biases, neighbors, neighbour_couplings, flip_energies_vector
+            );
+        }
 
         // compute the energy of the sample
         energies[sample] = get_state_energy(

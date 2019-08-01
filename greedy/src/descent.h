@@ -43,6 +43,13 @@ unsigned steepest_gradient_descent_solver(
     const vector<vector<double>>& neighbour_couplings
 );
 
+unsigned steepest_gradient_descent_ls_solver(
+    char* state,
+    const vector<double>& linear_biases,
+    const vector<vector<int>>& neighbors,
+    const vector<vector<double>>& neighbour_couplings
+);
+
 void steepest_gradient_descent(
     char* states,
     double* energies,
@@ -51,7 +58,8 @@ void steepest_gradient_descent(
     const vector<double>& linear_biases,
     const vector<int>& coupler_starts,
     const vector<int>& coupler_ends,
-    const vector<double>& coupler_weights
+    const vector<double>& coupler_weights,
+    bool large_sparse_opt=false
 );
 
 #endif
