@@ -21,6 +21,7 @@ from greedy.descent import steepest_gradient_descent
 
 
 class SteepestGradientDescentCython(unittest.TestCase):
+    large_sparse_opt = False
 
     def test_steepest_gradient_descent_on_small_convex_ising(self):
         """The sampler must converge to a global minimum of a convex Ising problem."""
@@ -36,10 +37,14 @@ class SteepestGradientDescentCython(unittest.TestCase):
         coupler_starts, coupler_ends, coupler_weights = [0], [1], [-1]
         initial_states = np.array([[1, 1]], dtype=np.int8)
 
-        samples, energies, info = steepest_gradient_descent(
+        samples, energies, num_steps = steepest_gradient_descent(
             num_samples, linear_biases, coupler_starts, coupler_ends,
-            coupler_weights, initial_states)
+            coupler_weights, initial_states, self.large_sparse_opt)
 
         self.assertEqual(samples.shape, (1, 2))
         np.testing.assert_array_equal(samples, [[-1, -1]])
         np.testing.assert_array_equal(energies, [-5])
+
+
+class SteepestGradientDescentLargeSparseCython(SteepestGradientDescentCython):
+    large_sparse_opt = True

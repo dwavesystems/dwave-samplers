@@ -22,6 +22,10 @@ from greedy.sampler import SteepestDescentSampler
 
 class TestSteepestDescentSampler(unittest.TestCase):
 
+    # sampling params for this TestCase:
+    # - large & sparse problem optimization OFF
+    params = dict(large_sparse_opt=False)
+
     def test_instantiation(self):
         """The sampler must conform to `dimod.Sampler` interface."""
 
@@ -34,11 +38,11 @@ class TestSteepestDescentSampler(unittest.TestCase):
         sampler = SteepestDescentSampler()
 
         # empty bqm
-        ss = sampler.sample(dimod.BQM.empty('SPIN'))
+        ss = sampler.sample(dimod.BQM.empty('SPIN'), **self.params)
         self.assertEqual(ss.first.sample, {})
 
         # single-variable problem
-        ss = sampler.sample(dimod.BQM.from_ising({'x': 1}, {}))
+        ss = sampler.sample(dimod.BQM.from_ising({'x': 1}, {}), **self.params)
         self.assertEqual(ss.first.sample, {'x': -1})
 
     def test_validation(self):
@@ -49,30 +53,30 @@ class TestSteepestDescentSampler(unittest.TestCase):
         bqm = dimod.BQM.from_ising({'x': 1}, {})
 
         with self.assertRaises(TypeError):
-            sampler.sample(bqm, num_reads=2.3)
+            sampler.sample(bqm, num_reads=2.3, **self.params)
 
         with self.assertRaises(ValueError):
-            sampler.sample(bqm, num_reads=0)
+            sampler.sample(bqm, num_reads=0, **self.params)
 
         with self.assertRaises(TypeError):
-            sampler.sample(bqm, initial_states=())
+            sampler.sample(bqm, initial_states=(), **self.params)
 
         with self.assertRaises(TypeError):
-            sampler.sample(bqm, seed=2.3)
+            sampler.sample(bqm, seed=2.3, **self.params)
 
         with self.assertRaises(ValueError):
-            sampler.sample(bqm, seed=-1)
+            sampler.sample(bqm, seed=-1, **self.params)
 
         with self.assertRaises(ValueError):
-            sampler.sample(bqm, initial_states_generator='invalid')
+            sampler.sample(bqm, initial_states_generator='invalid', **self.params)
 
         init = dimod.SampleSet.from_samples({'y': 1}, vartype='SPIN', energy=0)
         with self.assertRaises(ValueError):
-            sampler.sample(bqm, initial_states=init)
+            sampler.sample(bqm, initial_states=init, **self.params)
 
         init = dimod.SampleSet.from_samples({0: 1}, vartype='SPIN', energy=0)
         with self.assertRaises(ValueError):
-            sampler.sample(empty, initial_states=init)
+            sampler.sample(empty, initial_states=init, **self.params)
 
     def test_small_convex_ising(self):
         """The sampler must converge to a global minimum of a convex Ising problem."""
@@ -82,7 +86,7 @@ class TestSteepestDescentSampler(unittest.TestCase):
         h = {0: 2, 1: 2}
         J = {(0, 1): -1}
 
-        ss = SteepestDescentSampler().sample_ising(h, J)
+        ss = SteepestDescentSampler().sample_ising(h, J, **self.params)
 
         self.assertEqual(len(ss), 1)
         self.assertEqual(len(ss.variables), 2)
@@ -96,7 +100,7 @@ class TestSteepestDescentSampler(unittest.TestCase):
         # with global minimum at (0,0)
         Q = {(0, 0): 2, (1, 1): 2, (0, 1): -1}
 
-        ss = SteepestDescentSampler().sample_qubo(Q)
+        ss = SteepestDescentSampler().sample_qubo(Q, **self.params)
 
         self.assertEqual(len(ss), 1)
         self.assertEqual(len(ss.variables), 2)
@@ -109,7 +113,7 @@ class TestSteepestDescentSampler(unittest.TestCase):
         # use a small convex bqm
         bqm = dimod.BQM.from_ising({'x': 2, 'y': 2}, {'xy': -1})
 
-        ss = SteepestDescentSampler().sample(bqm)
+        ss = SteepestDescentSampler().sample(bqm, **self.params)
 
         self.assertSetEqual(set(ss.variables), set(bqm.variables))
         self.assertDictEqual(ss.first.sample, {'x': -1, 'y': -1})
@@ -120,7 +124,7 @@ class TestSteepestDescentSampler(unittest.TestCase):
         # use a small convex bqm
         bqm = dimod.BQM.from_ising({0: 2, 'a': 2}, {(0, 'a'): -1})
 
-        ss = SteepestDescentSampler().sample(bqm)
+        ss = SteepestDescentSampler().sample(bqm, **self.params)
 
         self.assertSetEqual(set(ss.variables), set(bqm.variables))
         self.assertEqual(ss.first.energy, -5)
@@ -134,7 +138,9 @@ class TestSteepestDescentSampler(unittest.TestCase):
         num_samples = 100
 
         # each sample is derived from a random initial state
-        ss = SteepestDescentSampler().sample(bqm, num_reads=num_samples)
+        ss = SteepestDescentSampler().sample(
+            bqm, num_reads=num_samples, **self.params)
+
         expected = np.tile([-1, -1], (num_samples, 1))
 
         np.testing.assert_array_equal(ss.record.sample, expected)
@@ -149,7 +155,9 @@ class TestSteepestDescentSampler(unittest.TestCase):
         num = 1000
         tol = 0.05
 
-        ss = SteepestDescentSampler().sample(bqm, num_reads=num).aggregate()
+        ss = SteepestDescentSampler().sample(
+            bqm, num_reads=num, **self.params
+        ).aggregate()
 
         # sanity check: two minima
         self.assertEqual(len(ss), 2)
@@ -171,7 +179,8 @@ class TestSteepestDescentSampler(unittest.TestCase):
             {0: -1, 1: -1}, vartype='SPIN', energy=0)
 
         # move along 0-dimension from (-1, -1) and settle in a local minimum (1, -1)
-        ss = SteepestDescentSampler().sample(bqm, initial_states=initial_states)
+        ss = SteepestDescentSampler().sample(
+            bqm, initial_states=initial_states, **self.params)
 
         self.assertEqual(len(ss), 1)
         self.assertDictEqual(ss.first.sample, {0: 1, 1: -1})
@@ -180,7 +189,8 @@ class TestSteepestDescentSampler(unittest.TestCase):
         num_reads = 1000
         ss = SteepestDescentSampler().sample(
             bqm, initial_states=initial_states,
-            initial_states_generator='tile', num_reads=num_reads).aggregate()
+            initial_states_generator='tile', num_reads=num_reads, **self.params
+        ).aggregate()
 
         self.assertEqual(len(ss), 1)
         self.assertDictEqual(ss.first.sample, {0: 1, 1: -1})
@@ -195,39 +205,52 @@ class TestSteepestDescentSampler(unittest.TestCase):
         # num_reads inferred from initial_states
         init = dimod.SampleSet.from_samples([{'x': 1}, {'x': -1}],
                                             vartype='SPIN', energy=0)
-        ss = sampler.sample(bqm, initial_states=init)
+        ss = sampler.sample(bqm, initial_states=init, **self.params)
         self.assertEqual(len(ss), len(init))
 
         # reads truncated with `num_reads`
-        ss = sampler.sample(bqm, initial_states=init, num_reads=1)
+        ss = sampler.sample(bqm, initial_states=init, num_reads=1, **self.params)
         self.assertEqual(len(ss), 1)
 
         # init states tiled according to `num_reads`
         init = dimod.SampleSet.from_samples({'x': 1}, vartype='SPIN', energy=0)
-        ss = sampler.sample(bqm, num_reads=10,
-                            initial_states=init, initial_states_generator='tile')
+        ss = sampler.sample(
+            bqm, num_reads=10, initial_states=init,
+            initial_states_generator='tile', **self.params)
         self.assertEqual(len(ss), 10)
         self.assertEqual(list(ss.aggregate().samples()), [{'x': -1}])
 
         # tiling fails
         with self.assertRaises(ValueError):
-            _ = sampler.sample(bqm, initial_states=None, initial_states_generator='tile')
+            sampler.sample(
+                bqm, initial_states=None, initial_states_generator='tile',
+                **self.params)
 
         # tiling truncates
         init = dimod.SampleSet.from_samples([{'x': 1}, {'x': -1}],
                                             vartype='SPIN', energy=0)
-        ss = sampler.sample(bqm, num_reads=1,
-                            initial_states=init, initial_states_generator='tile')
+        ss = sampler.sample(
+            bqm, num_reads=1, initial_states=init,
+            initial_states_generator='tile', **self.params)
         self.assertEqual(len(ss), 1)
 
         # none generator works
         init = dimod.SampleSet.from_samples([{'x': 1}, {'x': -1}],
                                             vartype='SPIN', energy=0)
-        ss = sampler.sample(bqm, num_reads=1,
-                            initial_states=init, initial_states_generator='none')
+        ss = sampler.sample(
+            bqm, num_reads=1, initial_states=init,
+            initial_states_generator='none', **self.params)
         self.assertEqual(len(ss), 1)
 
         # none generator fails
         with self.assertRaises(ValueError):
-            _ = sampler.sample(bqm, num_reads=1,
-                                initial_states=None, initial_states_generator='none')
+            sampler.sample(
+                bqm, num_reads=1, initial_states=None,
+                initial_states_generator='none', **self.params)
+
+
+class TestSteepestDescentLSOptSampler(TestSteepestDescentSampler):
+
+    # sampling params for this TestCase
+    # - large & sparse problem optimization ON
+    params = dict(large_sparse_opt=True)
