@@ -63,3 +63,25 @@ class SteepestDescentSparse(object):
 
     def time_ran1(self, graph_size, graph_density, num_reads):
         self.sampler.sample(self.bqm, num_reads=num_reads, seed=0)
+
+
+class SteepestDescentLargeSparse(object):
+    """Test steepest descent on large and sparse Erdős-Rényi graphs.
+
+    Note:
+        Because of practical limitations on BQM size in `dimod`, we limit
+        the number of edges in test problems below to ~5M.
+    """
+
+    params = ([2000, 10000, 15000], [0.01, 0.05], [1, 10])
+    param_names = ['graph_size', 'graph_density', 'num_reads']
+    repeat = (3, 10, 60)
+    timeout = 300
+
+    def setup(self, graph_size, graph_density, num_reads):
+        self.sampler = greedy.SteepestDescentSampler()
+        self.graph = nx.fast_gnp_random_graph(n=graph_size, p=graph_density, seed=0)
+        self.bqm = dimod.generators.random.ran_r(r=1, graph=self.graph, seed=0)
+
+    def time_ran1(self, graph_size, graph_density, num_reads):
+        self.sampler.sample(self.bqm, num_reads=num_reads, seed=0, large_sparse_opt=True)
