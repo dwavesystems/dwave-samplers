@@ -22,6 +22,10 @@
     // uninstalling the project. See asv.conf.json documentation.
     //
     // "install_command": ["in-dir={env_dir} python -mpip install {wheel_file}"],
+    "install_command": [
+        "in-dir={build_dir} python -m pip install -r benchmarks/requirements.txt",
+        "in-dir={env_dir} python -m pip install {wheel_file}"
+    ],
     // "uninstall_command": ["return-code=any python -mpip uninstall -y {project}"],
     "build_command": [
         "USE_CYTHON=1 python setup.py build_ext --inplace",
