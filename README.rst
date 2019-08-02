@@ -48,7 +48,7 @@ Simple frustrated Ising triangle:
     sampler = greedy.SteepestDescentSampler()
 
     # Solve the problem
-    result = sampler.sample()
+    result = sampler.sample(bqm)
 
 Large RAN1 sparse problem:
 
