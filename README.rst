@@ -1,3 +1,8 @@
+.. image:: https://circleci.com/gh/dwavesystems/dwave-greedy.svg?style=svg
+    :target: https://circleci.com/gh/dwavesystems/dwave-greedy
+    :alt: Linux/Mac build status
+
+
 ======================
 D-Wave Greedy Samplers
 ======================
