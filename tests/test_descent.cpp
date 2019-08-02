@@ -28,6 +28,7 @@ int main() {
 
     char states[3] = {1, 1, 1}, min_states[3] = {-1, 1, 1};
     double energies[1] = {0}, min_energies[1] = {-1};
+    unsigned num_steps[1] = {0};
 
     // bqm ~ {(0, 1): 1, (1, 2): 1, (2, 0): 1})
     vector<double> linear_biases {0, 0, 0};
@@ -36,7 +37,7 @@ int main() {
     vector<double> coupler_weights {1.0, 1.0, 1.0};
 
     steepest_gradient_descent(
-        states, energies, num_samples,
+        states, energies, num_steps, num_samples,
         linear_biases, coupler_starts, coupler_ends, coupler_weights
     );
 
