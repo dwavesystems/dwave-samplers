@@ -22,9 +22,13 @@ Install from a package on PyPI::
 
     pip install dwave-greedy
 
-or from source::
+or build from source::
 
-    pip install -e git+https://github.com/dwavesystems/dwave-greedy.git#egg=dwave-greeedy
+    USE_CYTHON=1 pip install -e git+https://github.com/dwavesystems/dwave-greedy.git#egg=dwave-greeedy
+
+Note: ``USE_CYTHON=1`` forces Cythonization and proper build from source. When
+building from *PyPI package* source (which includes Cythonized files), this is
+not necessary.
 
 .. installation-end-marker
 
