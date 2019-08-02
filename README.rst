@@ -50,7 +50,7 @@ Simple frustrated Ising triangle:
     # Solve the problem
     result = sampler.sample(bqm)
 
-Large RAN1 sparse problem:
+Large RAN1 sparse problem (requires `networkx` package):
 
 .. code-block:: python
 
