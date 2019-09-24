@@ -163,7 +163,7 @@ class OrangSolver(dimod.Sampler):
             num_occurrences[:r] += 1
 
         return dimod.SampleSet.from_samples((samples, elimination_order), bqm.vartype,
-                                            energy=energies + bqm.offset,
+                                            energy=energies,
                                             num_occurrences=num_occurrences)
 
 
