@@ -119,6 +119,13 @@ class TestSample(unittest.TestCase):
         self.assertEqual(set(ground.values()), {1})
         self.assertEqual(sum(excited.values()), len(excited) - 1)
 
+    def test_offset(self):
+        bqm = dimod.BinaryQuadraticModel.from_qubo({pair: -1 for pair in itertools.combinations(range(4), 2)})
+        bqm.add_offset(-5)
+
+        samples = OrangSolver().sample(bqm, num_reads=2)
+        dimod.testing.assert_response_energies(samples, bqm)
+
     def test_num_reads_gt_max_samples(self):
         bqm = dimod.BinaryQuadraticModel.from_qubo({(0, 0): -1, (0, 1): 1})
 
