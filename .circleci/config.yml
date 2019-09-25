@@ -226,7 +226,9 @@ jobs:
 
       - run:
           name: Installing gcc, cmake and boost
-          command: sudo apt-get install -y gcc g++ cmake libboost-all-dev
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y gcc g++ cmake libboost-all-dev
 
       - run:
           name: run c++ tests
