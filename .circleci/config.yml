@@ -43,11 +43,6 @@ jobs:
     docker:
       - image: circleci/python:3.5
 
-  test-2.7:
-    <<: *test-linux-template
-    docker:
-      - image: circleci/python:2.7
-
   #
   # macos
   #
@@ -97,11 +92,6 @@ jobs:
     environment:
       PYTHON: 3.5.5
 
-  test-osx-2.7:
-    <<: *test-osx-template
-    environment:
-      PYTHON: 2.7.15
-
   #
   # deploy
   #
@@ -117,6 +107,7 @@ jobs:
           name: build wheels
           command: |
             for PYBIN in /opt/python/*/bin; do
+              "${PYBIN}/python" -c "import sys; sys.exit(sys.version_info<(3,5))" || continue
               "${PYBIN}/pip" install -r requirements.txt
               "${PYBIN}/pip" wheel . -w ./wheelhouse
               "${PYBIN}/python" setup.py sdist -d ./dist
@@ -200,11 +191,6 @@ jobs:
     environment:
       PYTHON: 3.5.5
 
-  build-osx-2.7:
-    <<: *osx-build-template
-    environment:
-      PYTHON: 2.7.15
-
 
 workflows:
   version: 2
@@ -213,11 +199,9 @@ workflows:
       - test-3.7
       - test-3.6
       - test-3.5
-      - test-2.7
       - test-osx-3.7
       - test-osx-3.6
       - test-osx-3.5
-      - test-osx-2.7
 
   deploy:
     jobs:
@@ -246,12 +230,6 @@ workflows:
             branches:
               ignore: /.*/
       - build-osx-3.5:
-          filters:
-            tags:
-              only: /^[0-9]+(\.[0-9]+)*(\.dev([0-9]+)?)?$/
-            branches:
-              ignore: /.*/
-      - build-osx-2.7:
           filters:
             tags:
               only: /^[0-9]+(\.[0-9]+)*(\.dev([0-9]+)?)?$/
