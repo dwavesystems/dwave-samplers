@@ -18,7 +18,9 @@ jobs:
 
       - run: &create-virtualenv
           name: Create virtual environment
-          command: python -m virtualenv env
+          command: |
+            python -m pip install virtualenv
+            python -m virtualenv env
 
       - run: &install-requirements
           name: Install requirements
@@ -97,21 +99,21 @@ jobs:
           name: Install python
           command: pyenv install $PYTHON -s
 
+      - run: &pyenv-set-system-python
+          name: Set system python
+          command: |
+            pyenv global $PYTHON
+            echo 'eval "$(pyenv init -)"' >> ~/.bash_profile
+
       - save_cache: &save-cache-pyenv
           key: v2-pyenv-{{ .Environment.CIRCLE_JOB }}-xcode-11.2.1
           paths:
             - ~/.pyenv
 
       # install dependencies and cache them
-      - run: &create-virtualenv-pyenv
-          name: Create virtual environment
-          command: |
-            eval "$(pyenv init -)"
-            pyenv local $PYTHON
-            python -m pip install virtualenv
-            python -m virtualenv env
-
       - restore_cache: *restore-cache-env
+
+      - run: *create-virtualenv
 
       - run: *install-requirements
 
@@ -214,11 +216,13 @@ jobs:
 
       - run: *pyenv-install-python
 
+      - run: *pyenv-set-system-python
+
       - save_cache: *save-cache-pyenv
 
-      - run: *create-virtualenv-pyenv
-
       - restore_cache: *restore-cache-env
+
+      - run: *create-virtualenv
 
       - run: *install-requirements
 
