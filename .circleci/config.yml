@@ -49,19 +49,22 @@ jobs:
 
   test-osx-3.7: &test-osx-template
     macos:
-      xcode: "10.1.0"
+      xcode: "11.2.1"
     environment:
-      PYTHON: 3.7.0
-      HOMEBREW_NO_AUTO_UPDATE: 1
+      PYTHON: 3.7.4
+      # Force (lie about) macOS 10.9 binary compatibility.
+      # Needed for properly versioned wheels.
+      # See: https://github.com/MacPython/wiki/wiki/Spinning-wheels
+      MACOSX_DEPLOYMENT_TARGET: 10.9
     steps:
       - checkout
-      - run: brew install pyenv
+      - run: HOMEBREW_NO_AUTO_UPDATE=1 brew install pyenv
       - restore_cache:
           keys:
-            - pyenv-{{ .Environment.CIRCLE_JOB }}
+            - pyenv-{{ .Environment.CIRCLE_JOB }}-xcode-11.2.1
       - run: pyenv install $PYTHON -s
       - save_cache:
-          key: pyenv-{{ .Environment.CIRCLE_JOB }}
+          key: pyenv-{{ .Environment.CIRCLE_JOB }}-xcode-11.2.1
           paths:
             - ~/.pyenv
       - run:
@@ -73,10 +76,10 @@ jobs:
             python -m virtualenv env
       - restore_cache:
           keys:
-          - v1-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
+          - v2-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
       - run: env/bin/pip install -r tests/requirements.txt
       - save_cache:
-          key: v1-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
+          key: v2-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
           paths:
             - env
       - run: env/bin/python setup.py build_ext --inplace
@@ -144,20 +147,19 @@ jobs:
 
   build-osx-3.7: &osx-build-template
     macos:
-      xcode: "10.1.0"
+      xcode: "11.2.1"
     environment:
-      PYTHON: 3.7.0
-      HOMEBREW_NO_AUTO_UPDATE: 1
-
+      PYTHON: 3.7.4
+      MACOSX_DEPLOYMENT_TARGET: 10.9
     steps: 
       - checkout
-      - run: brew install pyenv
+      - run: HOMEBREW_NO_AUTO_UPDATE=1 brew install pyenv
       - restore_cache:
           keys:
-            - pyenv-{{ .Environment.CIRCLE_JOB }}
+            - pyenv-{{ .Environment.CIRCLE_JOB }}-xcode-11.2.1
       - run: pyenv install $PYTHON -s
       - save_cache:
-          key: pyenv-{{ .Environment.CIRCLE_JOB }}
+          key: pyenv-{{ .Environment.CIRCLE_JOB }}-xcode-11.2.1
           paths:
             - ~/.pyenv
       - run:
@@ -169,10 +171,10 @@ jobs:
             python -m virtualenv env
       - restore_cache:
           keys:
-          - v1-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
+          - v2-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
       - run: env/bin/pip install -r tests/requirements.txt
       - save_cache:
-          key: v1-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
+          key: v2-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
           paths:
             - env
       - run: env/bin/python setup.py build_ext --inplace
