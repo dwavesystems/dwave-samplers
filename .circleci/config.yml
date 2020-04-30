@@ -1,5 +1,7 @@
 version: 2
+
 jobs:
+
   #
   # linux
   #
@@ -10,20 +12,40 @@ jobs:
 
     steps:
       - checkout
-      - restore_cache:
-          key: v1-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ checksum "docs/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
-      - run: python -m virtualenv env
-      - run: env/bin/pip install -r tests/requirements.txt -r docs/requirements.txt
-      - save_cache:
-          key: v1-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ checksum "docs/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
+
+      - restore_cache: &restore-cache-env
+          key: v2-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ checksum "docs/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
+
+      - run: &create-virtualenv
+          name: Create virtual environment
+          command: python -m virtualenv env
+
+      - run: &install-requirements
+          name: Install requirements
+          command: |
+            . env/bin/activate
+            pip install -r tests/requirements.txt -r docs/requirements.txt
+            pip install wheel twine
+
+      - save_cache: &save-cache-env
+          key: v2-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ checksum "docs/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
           paths:
             - env
-      - run: env/bin/python setup.py build_ext --inplace
-      - run:
-          name: pytest
+
+      - run: &build-extension
+          name: Build extension
+          command: env/bin/python setup.py build_ext --inplace
+
+      - run: &build-package
+          name: Build package
+          command: env/bin/python setup.py sdist bdist_wheel
+
+      - run: &run-python-tests
+          name: Run Python tests
           command: env/bin/coverage run -m unittest discover
-      - run:
-          name: cpptest
+
+      - run: &run-cpp-tests
+          name: Run C++ tests
           command: |
             . env/bin/activate
             make -C tests/ smoke
@@ -46,6 +68,7 @@ jobs:
   #
   # macos
   #
+
   test-osx-3.8: &test-osx-template
     macos:
       xcode: "11.2.1"
@@ -60,32 +83,47 @@ jobs:
 
     steps:
       - checkout
-      - run: HOMEBREW_NO_AUTO_UPDATE=1 brew install pyenv
-      - restore_cache:
+
+      # install $PYTHON and cache it
+      - run: &brew-install-pyenv
+          name: Install pyenv
+          command: HOMEBREW_NO_AUTO_UPDATE=1 brew install pyenv
+
+      - restore_cache: &restore-cache-pyenv
           keys:
             - v2-pyenv-{{ .Environment.CIRCLE_JOB }}-xcode-11.2.1
-      - run: pyenv install $PYTHON -s
-      - save_cache:
+
+      - run: &pyenv-install-python
+          name: Install python
+          command: pyenv install $PYTHON -s
+
+      - save_cache: &save-cache-pyenv
           key: v2-pyenv-{{ .Environment.CIRCLE_JOB }}-xcode-11.2.1
           paths:
             - ~/.pyenv
-      - run:
-          name: create virtualenv
+
+      # install dependencies and cache them
+      - run: &create-virtualenv-pyenv
+          name: Create virtual environment
           command: |
             eval "$(pyenv init -)"
             pyenv local $PYTHON
             python -m pip install virtualenv
             python -m virtualenv env
-      - restore_cache:
-          keys:
-          - v2-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
-      - run: env/bin/pip install -r tests/requirements.txt
-      - save_cache:
-          key: v2-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
-          paths:
-            - env
-      - run: env/bin/python setup.py build_ext --inplace
-      - run: env/bin/coverage run -m unittest discover
+
+      - restore_cache: *restore-cache-env
+
+      - run: *install-requirements
+
+      - save_cache: *save-cache-env
+
+      - run: *build-extension
+
+      - run: *build-package
+
+      - run: *run-python-tests
+
+      - run: *run-cpp-tests
 
   test-osx-3.7:
     <<: *test-osx-template
@@ -106,10 +144,10 @@ jobs:
       MACOSX_DEPLOYMENT_TARGET: 10.9
 
   #
-  # deploy
+  # deploy linux
   #
 
-  build-manylinux-64: &manylinux-template
+  deploy-manylinux-64: &deploy-manylinux-template
     docker:
       - image: quay.io/pypa/manylinux1_x86_64
 
@@ -117,7 +155,7 @@ jobs:
       - checkout
 
       - run:
-          name: build wheels
+          name: Build wheels
           command: |
             for PYBIN in /opt/python/*/bin; do
               "${PYBIN}/python" -c "import sys; sys.exit(sys.version_info<(3,5))" || continue
@@ -127,7 +165,7 @@ jobs:
             done
 
       - run:
-          name: bundle shared libraries into wheels
+          name: Bundle shared libraries into wheels
           command: |
             for whl in ./wheelhouse/dwave*greedy*.whl; do
               auditwheel repair "$whl" -w ./dist
@@ -137,7 +175,7 @@ jobs:
           path: dist
 
       - run:
-          name: create a virtualenv
+          name: Create virtual environment
           command: |
             pythons=(/opt/python/*/bin)
             python="${pythons[0]}"
@@ -145,17 +183,21 @@ jobs:
             "$python/python" -m virtualenv env
 
       - run: &upload-template
-          name: install twine and deploy
+          name: Install twine and deploy
           command: |
             env/bin/pip install twine
             env/bin/twine upload -u "$PYPI_USERNAME" -p "$PYPI_PASSWORD" --skip-existing ./dist/*
 
-  build-manylinux-32:
-    <<: *manylinux-template
+  deploy-manylinux-32:
+    <<: *deploy-manylinux-template
     docker:
       - image: quay.io/pypa/manylinux1_i686
 
-  build-osx-3.8: &osx-build-template
+  #
+  # deploy macos
+  #
+
+  deploy-osx-3.8: &deploy-osx-template
     macos:
       xcode: "11.2.1"
 
@@ -165,50 +207,46 @@ jobs:
 
     steps: 
       - checkout
-      - run: HOMEBREW_NO_AUTO_UPDATE=1 brew install pyenv
-      - restore_cache:
-          keys:
-            - v2-pyenv-{{ .Environment.CIRCLE_JOB }}-xcode-11.2.1
-      - run: pyenv install $PYTHON -s
-      - save_cache:
-          key: v2-pyenv-{{ .Environment.CIRCLE_JOB }}-xcode-11.2.1
-          paths:
-            - ~/.pyenv
-      - run:
-          name: create virtualenv
-          command: |
-            eval "$(pyenv init -)"
-            pyenv local $PYTHON
-            python -m pip install virtualenv
-            python -m virtualenv env
-      - restore_cache:
-          keys:
-          - v2-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
-      - run: env/bin/pip install -r tests/requirements.txt
-      - save_cache:
-          key: v2-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
-          paths:
-            - env
-      - run: env/bin/python setup.py build_ext --inplace
-      - run: env/bin/python setup.py bdist_wheel
+
+      - run: *brew-install-pyenv
+
+      - restore_cache: *restore-cache-pyenv
+
+      - run: *pyenv-install-python
+
+      - save_cache: *save-cache-pyenv
+
+      - run: *create-virtualenv-pyenv
+
+      - restore_cache: *restore-cache-env
+
+      - run: *install-requirements
+
+      - save_cache: *save-cache-env
+
+      - run: *build-extension
+
+      - run: *build-package
+
       - store_artifacts:
           path: ./dist
+
       - run: *upload-template
 
-  build-osx-3.7:
-    <<: *osx-build-template
+  deploy-osx-3.7:
+    <<: *deploy-osx-template
     environment:
       PYTHON: 3.7.4
       MACOSX_DEPLOYMENT_TARGET: 10.9
 
-  build-osx-3.6:
-    <<: *osx-build-template
+  deploy-osx-3.6:
+    <<: *deploy-osx-template
     environment:
       PYTHON: 3.6.5
       MACOSX_DEPLOYMENT_TARGET: 10.9
 
-  build-osx-3.5:
-    <<: *osx-build-template
+  deploy-osx-3.5:
+    <<: *deploy-osx-template
     environment:
       PYTHON: 3.5.5
       MACOSX_DEPLOYMENT_TARGET: 10.9
@@ -229,37 +267,37 @@ workflows:
 
   deploy:
     jobs:
-      - build-manylinux-64:
+      - deploy-manylinux-64:
           filters:
             tags:
               only: /^[0-9]+(\.[0-9]+)*(\.dev([0-9]+)?)?$/
             branches:
               ignore: /.*/
-      - build-manylinux-32:
+      - deploy-manylinux-32:
           filters:
             tags:
               only: /^[0-9]+(\.[0-9]+)*(\.dev([0-9]+)?)?$/
             branches:
               ignore: /.*/
-      - build-osx-3.8:
+      - deploy-osx-3.8:
           filters:
             tags:
               only: /^[0-9]+(\.[0-9]+)*(\.dev([0-9]+)?)?$/
             branches:
               ignore: /.*/
-      - build-osx-3.7:
+      - deploy-osx-3.7:
           filters:
             tags:
               only: /^[0-9]+(\.[0-9]+)*(\.dev([0-9]+)?)?$/
             branches:
               ignore: /.*/
-      - build-osx-3.6:
+      - deploy-osx-3.6:
           filters:
             tags:
               only: /^[0-9]+(\.[0-9]+)*(\.dev([0-9]+)?)?$/
             branches:
               ignore: /.*/
-      - build-osx-3.5:
+      - deploy-osx-3.5:
           filters:
             tags:
               only: /^[0-9]+(\.[0-9]+)*(\.dev([0-9]+)?)?$/
