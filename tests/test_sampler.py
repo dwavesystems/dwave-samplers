@@ -26,6 +26,9 @@ class TestSteepestDescentSampler(unittest.TestCase):
     # - large & sparse problem optimization OFF
     params = dict(large_sparse_opt=False)
 
+    # BQM class for this TestCase; start with the old default (dimod.AdjDictBQM)
+    bqmcls = dimod.BQM
+
     def test_instantiation(self):
         """The sampler must conform to `dimod.Sampler` interface."""
 
@@ -38,19 +41,19 @@ class TestSteepestDescentSampler(unittest.TestCase):
         sampler = SteepestDescentSampler()
 
         # empty bqm
-        ss = sampler.sample(dimod.BQM.empty('SPIN'), **self.params)
+        ss = sampler.sample(self.bqmcls.empty('SPIN'), **self.params)
         self.assertEqual(ss.first.sample, {})
 
         # single-variable problem
-        ss = sampler.sample(dimod.BQM.from_ising({'x': 1}, {}), **self.params)
+        ss = sampler.sample(self.bqmcls.from_ising({'x': 1}, {}), **self.params)
         self.assertEqual(ss.first.sample, {'x': -1})
 
     def test_validation(self):
         """Inputs are validated."""
 
         sampler = SteepestDescentSampler()
-        empty = dimod.BQM.from_ising({}, {})
-        bqm = dimod.BQM.from_ising({'x': 1}, {})
+        empty = self.bqmcls.from_ising({}, {})
+        bqm = self.bqmcls.from_ising({'x': 1}, {})
 
         with self.assertRaises(TypeError):
             sampler.sample(bqm, num_reads=2.3, **self.params)
@@ -111,7 +114,7 @@ class TestSteepestDescentSampler(unittest.TestCase):
         """The sampler must accept non-integer/sequential variable names."""
 
         # use a small convex bqm
-        bqm = dimod.BQM.from_ising({'x': 2, 'y': 2}, {'xy': -1})
+        bqm = self.bqmcls.from_ising({'x': 2, 'y': 2}, {'xy': -1})
 
         ss = SteepestDescentSampler().sample(bqm, **self.params)
 
@@ -122,7 +125,7 @@ class TestSteepestDescentSampler(unittest.TestCase):
         """The sampler must accept unorderable variable names."""
 
         # use a small convex bqm
-        bqm = dimod.BQM.from_ising({0: 2, 'a': 2}, {(0, 'a'): -1})
+        bqm = self.bqmcls.from_ising({0: 2, 'a': 2}, {(0, 'a'): -1})
 
         ss = SteepestDescentSampler().sample(bqm, **self.params)
 
@@ -134,7 +137,7 @@ class TestSteepestDescentSampler(unittest.TestCase):
 
         # a convex section of hyperbolic paraboloid in the Ising space,
         # with global minimum at (-1,-1)
-        bqm = dimod.BQM.from_ising({0: 2, 1: 2}, {(0, 1): -1})
+        bqm = self.bqmcls.from_ising({0: 2, 1: 2}, {(0, 1): -1})
         num_samples = 100
 
         # each sample is derived from a random initial state
@@ -150,7 +153,7 @@ class TestSteepestDescentSampler(unittest.TestCase):
 
         # use a simple centrally symmetric hyperbolic paraboloid with
         # two minima in Ising space: (-1, 1) and (1, -1)
-        bqm = dimod.BQM.from_ising({}, {'xy': 1})
+        bqm = self.bqmcls.from_ising({}, {'xy': 1})
 
         num = 1000
         tol = 0.05
@@ -173,7 +176,7 @@ class TestSteepestDescentSampler(unittest.TestCase):
 
         # use a simple centrally symmetric hyperbolic paraboloid with
         # two minima in Ising space: (-1, 1) and (1, -1)
-        bqm = dimod.BQM.from_ising({}, {(0, 1): 1})
+        bqm = self.bqmcls.from_ising({}, {(0, 1): 1})
 
         initial_states = dimod.SampleSet.from_samples(
             {0: -1, 1: -1}, vartype='SPIN', energy=0)
@@ -200,7 +203,7 @@ class TestSteepestDescentSampler(unittest.TestCase):
         """Initial states are properly validated/expanded with the state generator."""
 
         sampler = SteepestDescentSampler()
-        bqm = dimod.BQM.from_ising({'x': 1}, {})
+        bqm = self.bqmcls.from_ising({'x': 1}, {})
 
         # num_reads inferred from initial_states
         init = dimod.SampleSet.from_samples([{'x': 1}, {'x': -1}],
@@ -254,3 +257,24 @@ class TestSteepestDescentLSOptSampler(TestSteepestDescentSampler):
     # sampling params for this TestCase
     # - large & sparse problem optimization ON
     params = dict(large_sparse_opt=True)
+
+
+@unittest.skipUnless('AdjVectorBQM' in dir(dimod), 'requires dimod.AdjVectorBQM')
+class TestSteepestDescentSamplerOnAdjVectorBQM(TestSteepestDescentSampler):
+
+    def setUp(self):
+        bqmcls = dimod.AdjVectorBQM
+
+
+@unittest.skipUnless('AdjArrayBQM' in dir(dimod), 'requires dimod.AdjArrayBQM')
+class TestSteepestDescentSamplerOnAdjArrayBQM(TestSteepestDescentSampler):
+
+    def setUp(self):
+        bqmcls = dimod.AdjArrayBQM
+
+
+@unittest.skipUnless('AdjMapBQM' in dir(dimod), 'requires dimod.AdjMapBQM')
+class TestSteepestDescentSamplerOnAdjMapBQM(TestSteepestDescentSampler):
+
+    def setUp(self):
+        bqmcls = dimod.AdjMapBQM

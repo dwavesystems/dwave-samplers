@@ -70,7 +70,7 @@ with open(package_info_path, encoding='utf-8') as f:
 packages = ['greedy']
 
 # Package requirements, minimal pinning
-install_requires = ['numpy>=1.15.0,<1.16.0', 'dimod>=0.8.14,<0.9.0']
+install_requires = ['numpy>=1.15.0,<2.0.0', 'dimod>=0.8.14,<0.10.0']
 
 # Package extras requirements
 extras_require = {
@@ -78,7 +78,7 @@ extras_require = {
 }
 
 # Setup (extension build) requirements
-setup_requires = ['numpy>=1.14.0,<1.16.0']
+setup_requires = ['numpy>=1.15.0,<2.0.0']
 
 # We distribute cythonized source, so cython is not required
 # for install (build) from package, but allow manual override via env var
