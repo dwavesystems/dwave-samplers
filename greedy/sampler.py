@@ -14,8 +14,6 @@
 
 """A dimod sampler that uses the steepest gradient descent."""
 
-from __future__ import division, absolute_import
-
 from numbers import Integral
 
 import dimod
