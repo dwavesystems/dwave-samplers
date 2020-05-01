@@ -64,16 +64,13 @@ class cythonizing_build_ext(build_ext):
 basedir = os.path.dirname(os.path.abspath(__file__))
 package_info_path = os.path.join(basedir, "greedy", "package_info.py")
 package_info = {}
-try:
-    with open(package_info_path, encoding='utf-8') as f:
-        exec(f.read(), package_info)
-except SyntaxError:
-    execfile(package_info_path, package_info)
+with open(package_info_path, encoding='utf-8') as f:
+    exec(f.read(), package_info)
 
 packages = ['greedy']
 
 # Package requirements, minimal pinning
-install_requires = ['six>=1.10', 'numpy>=1.15.0,<1.16.0', 'dimod>=0.8.14,<0.9.0']
+install_requires = ['numpy>=1.15.0,<1.16.0', 'dimod>=0.8.14,<0.9.0']
 
 # Package extras requirements
 extras_require = {
