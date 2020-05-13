@@ -25,7 +25,6 @@
 #include <cstdlib>
 
 #include <boost/iterator/indirect_iterator.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/random.hpp>
 #include <boost/foreach.hpp>
 
@@ -50,9 +49,6 @@ using std::pair;
 using std::vector;
 
 using boost::make_indirect_iterator;
-using boost::posix_time::ptime;
-using boost::posix_time::microsec_clock;
-using boost::posix_time::min_date_time;
 
 using orang::Var;
 using orang::DomIndexVector;
@@ -89,7 +85,7 @@ unsigned int randomSeed(int userSeed) {
   if (userSeed >= 0) {
     return userSeed;
   } else {
-    return static_cast<unsigned>((microsec_clock::local_time() - ptime(min_date_time)).total_microseconds());
+    return static_cast<unsigned>(std::rand());
   }
 }
 
