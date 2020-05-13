@@ -13,8 +13,6 @@
 #    limitations under the License.
 #
 # =============================================================================
-from __future__ import absolute_import
-
 import dimod
 import dwave_networkx as dnx
 import numpy as np

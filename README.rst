@@ -1,9 +1,6 @@
 .. image:: https://img.shields.io/pypi/v/dwave-orang.svg
     :target: https://pypi.python.org/pypi/dwave-orang
 
-.. image:: https://ci.appveyor.com/api/projects/status/2oc8vrxxh15ecgo1/branch/master?svg=true
-    :target: https://ci.appveyor.com/project/dwave-adtt/dwave-orang
-
 .. image:: https://codecov.io/gh/dwavesystems/dwave-orang/branch/master/graph/badge.svg
   :target: https://codecov.io/gh/dwavesystems/dwave-orang
 
