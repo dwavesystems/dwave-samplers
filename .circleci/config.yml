@@ -53,11 +53,11 @@ jobs:
             python --version
             coverage run -m unittest discover
 
-      - run:
-          name: codecov
-          command: |
-            . env/bin/activate
-            codecov
+      # - run:  &codecov-template
+      #     name: codecov
+      #     command: |
+      #       . env/bin/activate
+      #       codecov
 
   test-py37:
     <<: *full-test-template
@@ -133,6 +133,8 @@ jobs:
         
       - run: *run-tests-template
 
+      # - run: *codecov-template
+
   test-osx-py37:
     <<: *osx-tests-template
     environment:
@@ -180,7 +182,7 @@ jobs:
           command: |
             env\Scripts\activate.ps1
             python --version
-            pip install -r requirements.txt
+            pip install -r tests/requirements.txt
 
       - run:  &win-install-boost-template
           name: install boost
@@ -209,11 +211,11 @@ jobs:
       - store_artifacts:
           path: .\dist
 
-      - run: &win-codecov-template
-          name: codecov
-          command: |
-            env\Scripts\activate.ps1
-            codecov
+      # - run: &win-codecov-template
+      #     name: codecov
+      #     command: |
+      #       env\Scripts\activate.ps1
+      #       codecov
 
   test-win-py38x86: &win-tests-template-x86
     executor:
@@ -248,7 +250,7 @@ jobs:
       - store_artifacts:
           path: .\dist
 
-      - run: *win-codecov-template
+      # - run: *win-codecov-template
 
   test-win-py37:
     <<: *win-tests-template
