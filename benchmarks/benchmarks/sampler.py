@@ -85,3 +85,24 @@ class SteepestDescentLargeSparse(object):
 
     def time_ran1(self, graph_size, graph_density, num_reads):
         self.sampler.sample(self.bqm, num_reads=num_reads, seed=0, large_sparse_opt=True)
+
+
+class SteepestDescentCompleteOverBQMTypes(object):
+    """Test steepest descent on complete graphs."""
+
+    params = ([dimod.AdjArrayBQM,
+               dimod.AdjDictBQM,
+               dimod.AdjMapBQM,
+               dimod.AdjVectorBQM], [1, 10])
+    param_names = ['bqm_type', 'num_reads']
+    repeat = (3, 10, 60)
+    timeout = 300
+    graph_size = 1000
+
+    def setup(self, bqm_type, num_reads):
+        self.sampler = greedy.SteepestDescentSampler()
+        self.bqm = dimod.generators.random.ran_r(
+            r=1, graph=self.graph_size, cls=bqm_type, seed=0)
+
+    def time_ran1(self, bqm_type, num_reads):
+        self.sampler.sample(self.bqm, num_reads=num_reads, seed=0)
