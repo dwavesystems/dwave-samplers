@@ -103,6 +103,8 @@ classifiers = [
     'Programming Language :: Python :: 3.8',
 ]
 
+python_requires = '>=3.5'
+
 setup(
     name=package_info['__packagename__'],
     version=package_info['__version__'],
@@ -113,6 +115,7 @@ setup(
     url=package_info['__url__'],
     license=package_info['__license__'],
     packages=packages,
+    python_requires=python_requires,
     install_requires=install_requires,
     setup_requires=setup_requires,
     extras_require=extras_require,
