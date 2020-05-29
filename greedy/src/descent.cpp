@@ -126,14 +126,14 @@ unsigned int steepest_gradient_descent_solver(
     }
 
     // calculate flip energies for all variables, based on the current
-    // state (loop invariant)
+    // state (loop invariant) ~ O(num_vars * max_degree)
     for (int var = 0; var < num_vars; var++) {
         flip_energies[var] = get_flip_energy(
             var, state, linear_biases, neighbors, neighbour_couplings
         );
     }
 
-    // descend ~ O(downhill_steps * max_degree * logN)
+    // descend ~ O(downhill_steps * num_vars)
     unsigned int steps = 0;
     while (true) {
 

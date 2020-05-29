@@ -20,6 +20,11 @@ import dimod
 from greedy.sampler import SteepestDescentSampler
 
 
+@dimod.testing.load_sampler_bqm_tests(SteepestDescentSampler)
+class TestSteepestDescentSamplerInterface(unittest.TestCase):
+    pass
+
+
 class TestSteepestDescentSampler(unittest.TestCase):
 
     # sampling params for this TestCase:
