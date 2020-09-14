@@ -27,10 +27,6 @@ BQM_CLASSES = [(cls, ) for cls in BQM_SUBCLASSES]
 
 
 @dimod.testing.load_sampler_bqm_tests(SteepestDescentSampler)
-class TestSteepestDescentSamplerInterface(unittest.TestCase):
-    pass
-
-
 class TestSteepestDescentSampler(unittest.TestCase):
 
     # sampling params for this TestCase:
@@ -268,7 +264,6 @@ class TestSteepestDescentSampler(unittest.TestCase):
                 initial_states_generator='none', **self.params)
 
 
-@dimod.testing.load_sampler_bqm_tests(SteepestDescentSampler)
 class TestSteepestDescentLSOptSampler(TestSteepestDescentSampler):
 
     # sampling params for this TestCase
