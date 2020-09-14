@@ -15,9 +15,15 @@
 import unittest
 
 import numpy as np
+from parameterized import parameterized
+
 import dimod
+from dimod.testing.sampler import BQM_SUBCLASSES
 
 from greedy.sampler import SteepestDescentSampler
+
+
+BQM_CLASSES = [(cls, ) for cls in BQM_SUBCLASSES]
 
 
 @dimod.testing.load_sampler_bqm_tests(SteepestDescentSampler)
@@ -31,34 +37,33 @@ class TestSteepestDescentSampler(unittest.TestCase):
     # - large & sparse problem optimization OFF
     params = dict(large_sparse_opt=False)
 
-    # BQM class for this TestCase; start with the old default (dimod.AdjDictBQM)
-    bqmcls = dimod.BQM
-
     def test_instantiation(self):
         """The sampler must conform to `dimod.Sampler` interface."""
 
         sampler = SteepestDescentSampler()
         dimod.testing.assert_sampler_api(sampler)
 
-    def test_edges(self):
+    @parameterized.expand(BQM_CLASSES)
+    def test_edges(self, BQM):
         """The sampler correctly handles edge cases."""
 
         sampler = SteepestDescentSampler()
 
         # empty bqm
-        ss = sampler.sample(self.bqmcls.empty('SPIN'), **self.params)
+        ss = sampler.sample(BQM.empty('SPIN'), **self.params)
         self.assertEqual(ss.first.sample, {})
 
         # single-variable problem
-        ss = sampler.sample(self.bqmcls.from_ising({'x': 1}, {}), **self.params)
+        ss = sampler.sample(BQM.from_ising({'x': 1}, {}), **self.params)
         self.assertEqual(ss.first.sample, {'x': -1})
 
-    def test_validation(self):
+    @parameterized.expand(BQM_CLASSES)
+    def test_validation(self, BQM):
         """Inputs are validated."""
 
         sampler = SteepestDescentSampler()
-        empty = self.bqmcls.from_ising({}, {})
-        bqm = self.bqmcls.from_ising({'x': 1}, {})
+        empty = BQM.from_ising({}, {})
+        bqm = BQM.from_ising({'x': 1}, {})
 
         with self.assertRaises(TypeError):
             sampler.sample(bqm, num_reads=2.3, **self.params)
@@ -115,34 +120,37 @@ class TestSteepestDescentSampler(unittest.TestCase):
         self.assertEqual(ss.record.sample.shape, (1, 2))
         np.testing.assert_array_equal(ss.record.sample[0], [0, 0])
 
-    def test_variable_relabeling(self):
+    @parameterized.expand(BQM_CLASSES)
+    def test_variable_relabeling(self, BQM):
         """The sampler must accept non-integer/sequential variable names."""
 
         # use a small convex bqm
-        bqm = self.bqmcls.from_ising({'x': 2, 'y': 2}, {'xy': -1})
+        bqm = BQM.from_ising({'x': 2, 'y': 2}, {'xy': -1})
 
         ss = SteepestDescentSampler().sample(bqm, **self.params)
 
         self.assertSetEqual(set(ss.variables), set(bqm.variables))
         self.assertDictEqual(ss.first.sample, {'x': -1, 'y': -1})
 
-    def test_unsortable_labels(self):
+    @parameterized.expand(BQM_CLASSES)
+    def test_unsortable_labels(self, BQM):
         """The sampler must accept unorderable variable names."""
 
         # use a small convex bqm
-        bqm = self.bqmcls.from_ising({0: 2, 'a': 2}, {(0, 'a'): -1})
+        bqm = BQM.from_ising({0: 2, 'a': 2}, {(0, 'a'): -1})
 
         ss = SteepestDescentSampler().sample(bqm, **self.params)
 
         self.assertSetEqual(set(ss.variables), set(bqm.variables))
         self.assertEqual(ss.first.energy, -5)
 
-    def test_reproducible_convergence(self):
+    @parameterized.expand(BQM_CLASSES)
+    def test_reproducible_convergence(self, BQM):
         """On a convex problem, all samples must correspond to the global minimum."""
 
         # a convex section of hyperbolic paraboloid in the Ising space,
         # with global minimum at (-1,-1)
-        bqm = self.bqmcls.from_ising({0: 2, 1: 2}, {(0, 1): -1})
+        bqm = BQM.from_ising({0: 2, 1: 2}, {(0, 1): -1})
         num_samples = 100
 
         # each sample is derived from a random initial state
@@ -153,12 +161,13 @@ class TestSteepestDescentSampler(unittest.TestCase):
 
         np.testing.assert_array_equal(ss.record.sample, expected)
 
-    def test_initial_states_randomization(self):
+    @parameterized.expand(BQM_CLASSES)
+    def test_initial_states_randomization(self, BQM):
         """Assuming uniform RNG, samples must follow a bimodal distribution."""
 
         # use a simple centrally symmetric hyperbolic paraboloid with
         # two minima in Ising space: (-1, 1) and (1, -1)
-        bqm = self.bqmcls.from_ising({}, {'xy': 1})
+        bqm = BQM.from_ising({}, {'xy': 1})
 
         num = 1000
         tol = 0.05
@@ -176,12 +185,13 @@ class TestSteepestDescentSampler(unittest.TestCase):
         for record in ss.record:
             self.assertTrue(inf < record.num_occurrences < sup)
 
-    def test_initial_states(self):
+    @parameterized.expand(BQM_CLASSES)
+    def test_initial_states(self, BQM):
         """The sampler must deterministically converge from the initial state(s)."""
 
         # use a simple centrally symmetric hyperbolic paraboloid with
         # two minima in Ising space: (-1, 1) and (1, -1)
-        bqm = self.bqmcls.from_ising({}, {(0, 1): 1})
+        bqm = BQM.from_ising({}, {(0, 1): 1})
 
         initial_states = dimod.SampleSet.from_samples(
             {0: -1, 1: -1}, vartype='SPIN', energy=0)
@@ -204,11 +214,12 @@ class TestSteepestDescentSampler(unittest.TestCase):
         self.assertDictEqual(ss.first.sample, {0: 1, 1: -1})
         self.assertEqual(ss.first.num_occurrences, num_reads)
 
-    def test_initial_states_generation_and_validation(self):
+    @parameterized.expand(BQM_CLASSES)
+    def test_initial_states_generation_and_validation(self, BQM):
         """Initial states are properly validated/expanded with the state generator."""
 
         sampler = SteepestDescentSampler()
-        bqm = self.bqmcls.from_ising({'x': 1}, {})
+        bqm = BQM.from_ising({'x': 1}, {})
 
         # num_reads inferred from initial_states
         init = dimod.SampleSet.from_samples([{'x': 1}, {'x': -1}],
@@ -257,29 +268,9 @@ class TestSteepestDescentSampler(unittest.TestCase):
                 initial_states_generator='none', **self.params)
 
 
+@dimod.testing.load_sampler_bqm_tests(SteepestDescentSampler)
 class TestSteepestDescentLSOptSampler(TestSteepestDescentSampler):
 
     # sampling params for this TestCase
     # - large & sparse problem optimization ON
     params = dict(large_sparse_opt=True)
-
-
-@unittest.skipUnless('AdjVectorBQM' in dir(dimod), 'requires dimod.AdjVectorBQM')
-class TestSteepestDescentSamplerOnAdjVectorBQM(TestSteepestDescentSampler):
-
-    def setUp(self):
-        bqmcls = dimod.AdjVectorBQM
-
-
-@unittest.skipUnless('AdjArrayBQM' in dir(dimod), 'requires dimod.AdjArrayBQM')
-class TestSteepestDescentSamplerOnAdjArrayBQM(TestSteepestDescentSampler):
-
-    def setUp(self):
-        bqmcls = dimod.AdjArrayBQM
-
-
-@unittest.skipUnless('AdjMapBQM' in dir(dimod), 'requires dimod.AdjMapBQM')
-class TestSteepestDescentSamplerOnAdjMapBQM(TestSteepestDescentSampler):
-
-    def setUp(self):
-        bqmcls = dimod.AdjMapBQM
