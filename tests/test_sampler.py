@@ -15,7 +15,7 @@
 import unittest
 
 import numpy as np
-from parameterized import parameterized
+from parameterized import parameterized, parameterized_class
 
 import dimod
 from dimod.testing.sampler import BQM_SUBCLASSES
@@ -26,12 +26,13 @@ from greedy.sampler import SteepestDescentSampler
 BQM_CLASSES = [(cls, ) for cls in BQM_SUBCLASSES]
 
 
+@parameterized_class([
+    # vary large & sparse problem optimization via sampling params
+    {"params": dict(large_sparse_opt=False)},
+    {"params": dict(large_sparse_opt=True)},
+])
 @dimod.testing.load_sampler_bqm_tests(SteepestDescentSampler)
 class TestSteepestDescentSampler(unittest.TestCase):
-
-    # sampling params for this TestCase:
-    # - large & sparse problem optimization OFF
-    params = dict(large_sparse_opt=False)
 
     def test_instantiation(self):
         """The sampler must conform to `dimod.Sampler` interface."""
@@ -262,10 +263,3 @@ class TestSteepestDescentSampler(unittest.TestCase):
             sampler.sample(
                 bqm, num_reads=1, initial_states=None,
                 initial_states_generator='none', **self.params)
-
-
-class TestSteepestDescentLSOptSampler(TestSteepestDescentSampler):
-
-    # sampling params for this TestCase
-    # - large & sparse problem optimization ON
-    params = dict(large_sparse_opt=True)
