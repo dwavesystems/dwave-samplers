@@ -46,6 +46,10 @@ int main() {
          << (int)states[0] << ", " << (int)states[1] << ", " << (int)states[2]
          << "; Energy: " << energies[0] << endl;
 
+    cerr << "Expected state: "
+         << (int)min_states[0] << ", " << (int)min_states[1] << ", " << (int)min_states[2]
+         << "; Energy: " << min_energies[0] << endl;
+
     // assert correct solution
     for (auto i = 0; i < len(states); i++) {
         assert(states[i] == min_states[i]);
@@ -54,7 +58,7 @@ int main() {
         assert(energies[i] == min_energies[i]);
     }
 
-    cout << "OK" << endl;
+    cerr << "OK" << endl;
 
     return 0;
 }
