@@ -25,7 +25,7 @@ from greedy.descent import steepest_gradient_descent
 __all__ = ["SteepestDescentSolver", "SteepestDescentSampler"]
 
 
-class SteepestDescentSolver(dimod.Sampler):
+class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
     """Steepest gradient descent solver/sampler.
 
     Also aliased as :class:`.SteepestDescentSampler`.
@@ -36,10 +36,12 @@ class SteepestDescentSolver(dimod.Sampler):
         >>> import greedy
         ...
         >>> sampler = greedy.SteepestDescentSampler()
-        >>> samples = sample.sample_ising({}, {'ab': 1, 'bc': 1, 'ca': 1})
+        >>> samples = sampler.sample_ising({0: 2, 1: 2}, {(0, 1): -1})
         ...
         >>> print(samples)
-        ... # TODO
+           0  1 energy num_oc.
+        0 -1 -1   -5.0       1
+        ['SPIN', 1 rows, 1 samples, 2 variables]
 
     """
 
@@ -121,158 +123,60 @@ class SteepestDescentSolver(dimod.Sampler):
 
         """
 
-        num_variables = len(bqm)
+        # get the original vartype so we can return consistently
+        original_vartype = bqm.vartype
 
-        # convert bqm to an index-labelled one
-        if all(v in bqm.linear for v in range(num_variables)):
-            _bqm = bqm
-            use_label_map = False
-        else:
-            try:
-                inverse_mapping = dict(enumerate(sorted(bqm.linear)))
-            except TypeError:
-                # in python3 unlike types cannot be sorted
-                inverse_mapping = dict(enumerate(bqm.linear))
-            mapping = {v: i for i, v in inverse_mapping.items()}
+        # convert to spin
+        if bqm.vartype is not dimod.SPIN:
+            bqm = bqm.change_vartype(dimod.SPIN, inplace=False)
 
-            _bqm = bqm.relabel_variables(mapping, inplace=False)
-            use_label_map = True
-
-        # validate/initialize initial_states
-        if initial_states is None:
-            initial_states = dimod.SampleSet.from_samples(
-                (np.empty((0, num_variables)), bqm.variables),
-                energy=0, vartype=bqm.vartype)
-
-        if not isinstance(initial_states, dimod.SampleSet):
-            raise TypeError("'initial_states' is not 'dimod.SampleSet' instance")
-
-        # validate num_reads and/or infer them from initial_states
-        if num_reads is None:
-            num_reads = len(initial_states) or 1
-        if not isinstance(num_reads, Integral):
-            raise TypeError("'num_reads' should be a positive integer")
-        if num_reads < 1:
-            raise ValueError("'num_reads' should be a positive integer")
-
-        # validate/generate seed
+        # validate seed
         if not (seed is None or isinstance(seed, Integral)):
             raise TypeError("'seed' should be None or a positive 32-bit integer")
         if isinstance(seed, Integral) and not 0 <= seed <= 2**32 - 1:
             raise ValueError("'seed' should be an integer between 0 and 2**32 - 1 inclusive")
 
-        # get the Ising linear biases
-        linear = _bqm.spin.linear
-        linear_biases = [linear[v] for v in range(num_variables)]
+        # parse initial_states et al
+        parsed_initial_states = self.parse_initial_states(
+            bqm,
+            num_reads=num_reads,
+            initial_states=initial_states,
+            initial_states_generator=initial_states_generator,
+            seed=seed)
 
-        quadratic = _bqm.spin.quadratic
-        coupler_starts, coupler_ends, coupler_weights = [], [], []
-        if len(quadratic) > 0:
-            couplers, coupler_weights = zip(*quadratic.items())
-            couplers = map(lambda c: (c[0], c[1]), couplers)
-            coupler_starts, coupler_ends = zip(*couplers)
+        num_reads = parsed_initial_states.num_reads
+        initial_states = parsed_initial_states.initial_states
 
-        # initial states generators
-        _generators = {
-            'none': self._none_generator,
-            'tile': self._tile_generator,
-            'random': self._random_generator
-        }
+        # get linear/quadratic data
+        linear, (coupler_starts, coupler_ends, coupler_weights), offset = \
+            bqm.to_numpy_vectors(
+                variable_order=initial_states.variables,
+                dtype=np.double, index_dtype=np.intc)
 
-        if initial_states_generator not in _generators:
-            raise ValueError("unknown value for 'initial_states_generator'")
-
-        # unpack initial_states from sampleset to numpy array, label map and vartype
-        initial_states_array = initial_states.record.sample
-        init_label_map = dict(map(reversed, enumerate(initial_states.variables)))
-        init_vartype = initial_states.vartype
-
-        if set(init_label_map) ^ bqm.variables:
-            raise ValueError("mismatch between variables in 'initial_states' and 'bqm'")
-
-        # reorder initial states array according to label map
-        identity = lambda i: i
-        get_label = inverse_mapping.get if use_label_map else identity
-        ordered_labels = [init_label_map[get_label(i)] for i in range(num_variables)]
-        initial_states_array = initial_states_array[:, ordered_labels]
-
-        numpy_initial_states = np.ascontiguousarray(initial_states_array, dtype=np.int8)
-
-        # convert to ising, if provided in binary
-        if init_vartype == dimod.BINARY:
-            numpy_initial_states = 2 * numpy_initial_states - 1
-        elif init_vartype != dimod.SPIN:
-            raise TypeError("unsupported vartype")  # pragma: no cover
-
-        # extrapolate and/or truncate initial states, if necessary
-        extrapolate = _generators[initial_states_generator]
-        numpy_initial_states = extrapolate(numpy_initial_states, num_reads, num_variables, seed)
-        numpy_initial_states = self._truncate_filter(numpy_initial_states, num_reads)
+        # we need initial states as contiguous numpy array
+        initial_states_array = \
+            np.ascontiguousarray(initial_states.record.sample)
 
         # run the steepest descent
         samples, energies, num_steps = steepest_gradient_descent(
             num_reads,
-            linear_biases, coupler_starts, coupler_ends, coupler_weights,
-            numpy_initial_states, large_sparse_opt)
+            linear, coupler_starts, coupler_ends, coupler_weights,
+            initial_states_array, large_sparse_opt)
 
         # sampling info
         info = dict(num_steps=num_steps)
 
-        offset = _bqm.spin.offset
+        # resulting sampleset
         result = dimod.SampleSet.from_samples(
-            samples,
+            (samples, initial_states.variables),
             energy=energies + offset,
             vartype=dimod.SPIN,
             info=info,
         )
 
-        result.change_vartype(_bqm.vartype, inplace=True)
-        if use_label_map:
-            result.relabel_variables(inverse_mapping, inplace=True)
+        result.change_vartype(original_vartype, inplace=True)
 
         return result
-
-    @staticmethod
-    def _none_generator(initial_states, num_reads, *args, **kwargs):
-        if len(initial_states) < num_reads:
-            raise ValueError("insufficient number of initial states given")
-        return initial_states
-
-    @staticmethod
-    def _tile_generator(initial_states, num_reads, *args, **kwargs):
-        if len(initial_states) < 1:
-            raise ValueError("cannot tile an empty sample set of initial states")
-
-        if len(initial_states) >= num_reads:
-            return initial_states
-
-        reps, rem = divmod(num_reads, len(initial_states))
-
-        initial_states = np.tile(initial_states, (reps, 1))
-        initial_states = np.vstack((initial_states, initial_states[:rem]))
-
-        return initial_states
-
-    @staticmethod
-    def _random_generator(initial_states, num_reads, num_variables, seed=None):
-        rem = max(0, num_reads - len(initial_states))
-
-        np_rand = np.random.RandomState(seed)
-        random_states = 2 * np_rand.randint(2, size=(rem, num_variables)).astype(np.int8) - 1
-
-        # handle zero-length array of input states
-        if len(initial_states):
-            initial_states = np.vstack((initial_states, random_states))
-        else:
-            initial_states = random_states
-
-        return initial_states
-
-    @staticmethod
-    def _truncate_filter(initial_states, num_reads):
-        if len(initial_states) > num_reads:
-            initial_states = initial_states[:num_reads]
-        return initial_states
 
 
 SteepestDescentSampler = SteepestDescentSolver

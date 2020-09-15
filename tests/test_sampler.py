@@ -68,7 +68,7 @@ class TestSteepestDescentSampler(unittest.TestCase):
         with self.assertRaises(ValueError):
             sampler.sample(bqm, num_reads=0, **self.params)
 
-        with self.assertRaises(TypeError):
+        with self.assertRaises(ValueError):
             sampler.sample(bqm, initial_states=(), **self.params)
 
         with self.assertRaises(TypeError):
