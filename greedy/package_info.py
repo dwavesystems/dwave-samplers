@@ -13,7 +13,7 @@
 # limitations under the License.
 
 __package_name__ = 'dwave-greedy'
-__title__ = 'D-Wave Greedy Samplers'
+__title__ = 'D-Wave Greedy'
 __version__ = '0.0.1'
 __author__ = 'D-Wave Systems Inc.'
 __author_email__ = 'radomir@dwavesys.com'
