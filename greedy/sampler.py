@@ -44,7 +44,7 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
     phase and :math:`O(|V|)` per downhill step.
 
     In the ``large_sparse_opt`` mode, runtime complexity on sparse graphs is
-    :math:`O(|V|*log|V|)` for initialization and :math:`O(max_degree * log|V|)`
+    :math:`O(|V|*log|V|)` for initialization and :math:`O(max\_degree * log|V|)`
     per downhill step.
 
     Aliased as :class:`.SteepestDescentSampler`.
@@ -81,17 +81,44 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
     """
 
     parameters = None
+    """dict: Keyword arguments accepted by the sampling methods.
+
+    Exactly equal to::
+
+        {
+            'num_reads': [],
+            'initial_states': [],
+            'initial_states_generator': ['initial_states_generators'],
+            'seed': [],
+            'large_sparse_opt': ['large_sparse_opt_values'],
+        }
+
+    """
+
     properties = None
+    """dict: Values for parameters accepted by the sampling methods.
+
+    Exactly equal to::
+
+        {
+            'initial_states_generators': ('none', 'tile', 'random'),
+            'large_sparse_opt_values': (True, False),
+        }
+
+    """
 
     def __init__(self):
+        # create a copy (isolate from subclass)
         self.parameters = {
             'num_reads': [],
             'initial_states': [],
             'initial_states_generator': ['initial_states_generators'],
-            'seed': []
+            'seed': [],
+            'large_sparse_opt': ['large_sparse_opt_values'],
         }
         self.properties = {
-            'initial_states_generators': ('none', 'tile', 'random')
+            'initial_states_generators': ('none', 'tile', 'random'),
+            'large_sparse_opt_values': (True, False),
         }
 
     def sample(self, bqm, num_reads=None, initial_states=None,
