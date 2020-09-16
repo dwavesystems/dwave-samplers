@@ -5,12 +5,14 @@ __pycache__/
 
 .coverage
 htmlcov/
+coverage.xml
 
 env/
 build/
 dist/
 wheels/
 docs/**/generated/
+docs/_build/
 
 greedy/descent.cpp
 
