@@ -152,6 +152,42 @@ jobs:
       MACOSX_DEPLOYMENT_TARGET: 10.9
 
   #
+  # docs
+  #
+
+  test-docs:
+    docker:
+      - image: circleci/python:3.7
+
+    steps:
+      - checkout
+
+      - restore_cache: *restore-cache-env
+
+      - run: *create-virtualenv
+
+      - run: *install-requirements
+
+      - save_cache: *save-cache-env
+
+      - run: *build-extension
+
+      - run: &build-docs
+          name: Build docs
+          command: |
+            . env/bin/activate
+            make -C docs/ html
+
+      - store_artifacts: &save-docs
+          path: ./docs/build/html
+
+      - run: &run-doctest
+          name: Test docs
+          command: |
+            . env/bin/activate
+            make -C docs/ doctest
+
+  #
   # deploy linux
   #
 
@@ -274,6 +310,7 @@ workflows:
       - test-osx-3.7
       - test-osx-3.6
       - test-osx-3.5
+      - test-docs
 
   deploy:
     jobs:
