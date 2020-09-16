@@ -1,20 +1,59 @@
-.. dwave-greedy documentation master file, created by
-   sphinx-quickstart on Wed Sep 16 07:29:21 2020.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+..  -*- coding: utf-8 -*-
 
-Welcome to dwave-greedy's documentation!
-========================================
+.. _index_greedy:
+
+============
+dwave-greedy
+============
+
+.. include:: README.rst
+   :start-after: index-start-marker
+   :end-before: index-end-marker
+
+
+Documentation
+-------------
+
+.. only:: html
+
+  :Release: |version|
+  :Date: |today|
+
+.. note:: This documentation is for the latest version of
+   `dwave-greedy <https://github.com/dwavesystems/dwave-greedy>`_.
+   Documentation for the version currently installed by
+   `dwave-ocean-sdk <https://github.com/dwavesystems/dwave-ocean-sdk>`_
+   is here: :std:doc:`dwave-greedy <oceandocs:docs_system/sdk_index>`.
+
+.. sdk-start-marker
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+  :maxdepth: 1
 
+  reference/index
 
+.. sdk-end-marker
 
-Indices and tables
-==================
+.. toctree::
+  :caption: Code
+  :maxdepth: 1
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+  Source <https://github.com/dwavesystems/dwave-greedy>
+  installation
+  license
+
+.. toctree::
+  :caption: D-Wave's Ocean Software
+  :maxdepth: 1
+
+  Ocean Home <https://ocean.dwavesys.com/>
+  Ocean Documentation <https://docs.ocean.dwavesys.com>
+  Ocean Glossary <https://docs.ocean.dwavesys.com/en/latest/glossary.html>
+
+.. toctree::
+  :caption: D-Wave
+  :maxdepth: 1
+
+  D-Wave <https://www.dwavesys.com>
+  Leap <https://cloud.dwavesys.com/leap/>
+  D-Wave System Documentation <https://docs.dwavesys.com/docs/latest/index.html>

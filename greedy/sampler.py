@@ -78,6 +78,8 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
 
             postprocessed = greedy.SteepestDescentSampler().sample(bqm, initial_states=samples)
 
+
+        For additional examples, see :meth:`.sample`.
     """
 
     parameters = None
