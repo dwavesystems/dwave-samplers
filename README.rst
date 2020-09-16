@@ -2,6 +2,26 @@
     :target: https://circleci.com/gh/dwavesystems/dwave-greedy
     :alt: Linux/Mac build status
 
+.. image:: https://ci.appveyor.com/api/projects/status/hcp8pxgdvbl0qimi/branch/master?svg=true
+    :target: https://ci.appveyor.com/project/dwave-adtt/dwave-greedy/branch/master
+    :alt: Windows build status
+
+.. image:: https://codecov.io/gh/dwavesystems/dwave-greedy/branch/master/graph/badge.svg?token=ZkZo09uAl7
+    :target: https://codecov.io/gh/dwavesystems/dwave-greedy
+    :alt: Code coverage
+
+.. image:: https://readthedocs.com/projects/d-wave-systems-dwave-greedy/badge/?version=latest
+    :target: https://docs.ocean.dwavesys.com/projects/greedy/en/latest/
+    :alt: Documentation status
+
+.. image:: https://badge.fury.io/py/dwave-greedy.svg
+    :target: https://badge.fury.io/py/dwave-greedy
+    :alt: Last version on PyPI
+
+.. image:: https://img.shields.io/pypi/pyversions/dwave-greedy.svg?style=flat
+    :target: https://pypi.org/project/dwave-greedy/
+    :alt: PyPI - Python Version
+
 
 ============
 dwave-greedy
@@ -46,7 +66,7 @@ or install from source:
 
 .. code-block:: bash
 
-    USE_CYTHON=1 pip install -e git+https://github.com/dwavesystems/dwave-greedy.git#egg=dwave-greeedy
+    USE_CYTHON=1 pip install git+https://github.com/dwavesystems/dwave-greedy.git#egg=dwave-greeedy
 
 Note: ``USE_CYTHON=1`` forces Cythonization and proper build from source. When
 building from *PyPI package* source (which includes Cythonized files), this is
