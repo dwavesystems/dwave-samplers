@@ -2,44 +2,89 @@
     :target: https://circleci.com/gh/dwavesystems/dwave-greedy
     :alt: Linux/Mac build status
 
+.. image:: https://ci.appveyor.com/api/projects/status/hcp8pxgdvbl0qimi/branch/master?svg=true
+    :target: https://ci.appveyor.com/project/dwave-adtt/dwave-greedy/branch/master
+    :alt: Windows build status
 
-======================
-D-Wave Greedy Samplers
-======================
+.. image:: https://codecov.io/gh/dwavesystems/dwave-greedy/branch/master/graph/badge.svg?token=ZkZo09uAl7
+    :target: https://codecov.io/gh/dwavesystems/dwave-greedy
+    :alt: Code coverage
+
+.. image:: https://readthedocs.com/projects/d-wave-systems-dwave-greedy/badge/?version=latest
+    :target: https://docs.ocean.dwavesys.com/projects/greedy/en/latest/
+    :alt: Documentation status
+
+.. image:: https://badge.fury.io/py/dwave-greedy.svg
+    :target: https://badge.fury.io/py/dwave-greedy
+    :alt: Last version on PyPI
+
+.. image:: https://img.shields.io/pypi/pyversions/dwave-greedy.svg?style=flat
+    :target: https://pypi.org/project/dwave-greedy/
+    :alt: PyPI - Python Version
+
+
+============
+dwave-greedy
+============
 
 .. index-start-marker
 
-A collection of simple BQM samplers, including:
+An implementation of a steepest descent solver for binary quadratic models.
 
-*  Steepest descent Ising solver
-*  Random greedy descent Ising solver
-*  Exact (combinatorial) Ising solver
+Steepest descent is the discrete analogue of gradient descent, but the best
+move is computed using a local minimization rather rather than computing a
+gradient. At each step, we determine the dimension along which to descend based
+on the highest energy drop caused by a variable flip.
+
+.. code-block:: python
+
+    >>> import greedy
+    ...
+    >>> solver = greedy.SteepestDescentSolver()
+    >>> sampleset = solver.sample_ising({0: 2, 1: 2}, {(0, 1): -1})
+    ...
+    >>> print(sampleset)
+        0  1 energy num_oc.
+    0 -1 -1   -5.0       1
+    ['SPIN', 1 rows, 1 samples, 2 variables]
 
 .. index-end-marker
 
 
-Installation or Building
-========================
+Installation
+============
 
 .. installation-start-marker
 
-Install from a package on PyPI::
+Install from a package on PyPI:
+
+.. code-block:: bash
 
     pip install dwave-greedy
 
-or build from source::
+or install from source:
 
-    USE_CYTHON=1 pip install -e git+https://github.com/dwavesystems/dwave-greedy.git#egg=dwave-greeedy
+.. code-block:: bash
+
+    USE_CYTHON=1 pip install git+https://github.com/dwavesystems/dwave-greedy.git#egg=dwave-greeedy
 
 Note: ``USE_CYTHON=1`` forces Cythonization and proper build from source. When
 building from *PyPI package* source (which includes Cythonized files), this is
 not necessary.
 
+To build from source:
+
+.. code-block:: bash
+
+    pip install -r requirements.txt
+    python setup.py build_ext --inplace
+    python setup.py install
+
 .. installation-end-marker
 
 
-Example
-=======
+Examples
+========
 
 .. example-start-marker
 
@@ -51,7 +96,7 @@ Simple frustrated Ising triangle:
     import greedy
 
     # Construct a simple problem
-    bqm = dimod.BQM.from_ising({}, {'ab': 1, 'bc': 1, 'ca': 1})
+    bqm = dimod.BQM.from_qubo({'ab': 1, 'bc': 1, 'ca': 1})
 
     # Instantiate the sampler
     sampler = greedy.SteepestDescentSampler()
@@ -59,7 +104,7 @@ Simple frustrated Ising triangle:
     # Solve the problem
     result = sampler.sample(bqm)
 
-Large RAN1 sparse problem (requires `networkx` package):
+Large RAN1_ sparse problem (requires NetworkX_ package):
 
 .. code-block:: python
 
@@ -89,3 +134,7 @@ License
 =======
 
 Released under the Apache License 2.0. See `<LICENSE>`_ file.
+
+
+.. _NetworkX: https://networkx.github.io/
+.. _RAN1: https://docs.ocean.dwavesys.com/en/stable/docs_dimod/reference/generated/dimod.generators.ran_r.html

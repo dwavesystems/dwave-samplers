@@ -14,3 +14,6 @@
 
 from greedy.sampler import *
 import greedy.sampler
+
+from greedy.package_info import __version__
+import greedy.package_info

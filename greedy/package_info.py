@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__packagename__ = 'dwave-greedy'
-__title__ = 'D-Wave Greedy Samplers'
+__package_name__ = 'dwave-greedy'
+__title__ = 'D-Wave Greedy'
 __version__ = '0.0.1'
 __author__ = 'D-Wave Systems Inc.'
-__authoremail__ = 'radomir@dwavesys.com'
+__author_email__ = 'radomir@dwavesys.com'
 __description__ = 'Ocean-compatible collection of greedy/brute-force solvers/samplers'
 __url__ = 'https://github.com/dwavesystems/dwave-greedy'
 __license__ = 'Apache 2.0'
