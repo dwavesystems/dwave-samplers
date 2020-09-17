@@ -263,3 +263,20 @@ class TestSteepestDescentSampler(unittest.TestCase):
             sampler.sample(
                 bqm, num_reads=1, initial_states=None,
                 initial_states_generator='none', **self.params)
+
+    @parameterized.expand([
+        (([-1, -1], 'ab'), ),
+        ((np.array([-1, -1]), 'ab'), ),
+        ((np.array([-1, -1], dtype=np.int8), 'ab'), ),
+    ])
+    def test_initial_states_sample_like(self, initial_states):
+        """Samples-like is accepted for initial_states."""
+
+        # global minimum at (-1,-1)
+        bqm = dimod.BQM.from_ising({'a': 2, 'b': 2}, {'ab': -1})
+
+        ss = SteepestDescentSampler().sample(bqm, initial_states=initial_states)
+
+        # result is identical to initial state, with zero downhill moves
+        np.testing.assert_array_equal(ss.record.sample, [[-1, -1]])
+        np.testing.assert_array_equal(ss.info['num_steps'], [0])
