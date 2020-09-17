@@ -167,7 +167,7 @@ class TestSteepestDescentSampler(unittest.TestCase):
         bqm = BQM.from_ising({}, {'xy': 1})
 
         num = 1000
-        tol = 0.05
+        tol = 0.10
 
         ss = SteepestDescentSampler().sample(
             bqm, num_reads=num, **self.params
