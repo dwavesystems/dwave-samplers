@@ -26,7 +26,7 @@ __all__ = ["SteepestDescentSolver", "SteepestDescentSampler"]
 
 
 class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
-    """Steepest gradient descent solver/sampler.
+    """Steepest descent solver/sampler for binary quadratic models.
 
     Steepest descent is the discrete analogue of gradient descent, but the best
     move is computed using a local minimization rather rather than computing a
@@ -39,15 +39,16 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
     number of ``initial_states``, or a combination of the two, depending on
     the ``initial_states_generator``.
 
-    For a given input model's graph :math:`G = (V, E)`, runtime complexity
-    of the underlying C++ implementation is :math:`O(|E|)` for initialization
-    phase and :math:`O(|V|)` per downhill step.
+    For a given input model's graph :math:`G = (V, E)`, :math:`V` being a set of
+    graph vertices and :math:`E` a set of edges, runtime complexity of the
+    underlying C++ implementation is :math:`O(|E|)` for initialization phase
+    and :math:`O(|V|)` per downhill step.
 
     In the ``large_sparse_opt`` mode, runtime complexity on sparse graphs is
     :math:`O(|V|*log|V|)` for initialization and :math:`O(max\_degree * log|V|)`
     per downhill step.
 
-    Aliased as :class:`.SteepestDescentSampler`.
+    Aliased as :class:`~greedy.sampler.SteepestDescentSampler`.
 
     Examples:
         Solve a simple Ising problem:
@@ -126,8 +127,10 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
     def sample(self, bqm, num_reads=None, initial_states=None,
                initial_states_generator="random", seed=None,
                large_sparse_opt=False, **kwargs):
-        """Sample from a binary quadratic model, starting from ``initial_states``,
-        and converging to local minima using discrete steepest descent method.
+        """Sample from a binary quadratic model.
+
+        Starts from ``initial_states``, and converges to local minima using
+        discrete steepest-descent method.
 
         Args:
             bqm (:class:`~dimod.BinaryQuadraticModel`):
@@ -186,8 +189,9 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
             >>> samples.first.energy
             -1.0
 
-            Run steepest descent one million times (!), converging to local
-            minima, each time starting from a random state:
+            Run steepest descent one million times (takes ~150ms on an average
+            laptop), converging to local minima, each time starting from a
+            random state:
 
             >>> bqm = dimod.BQM.from_ising({}, {'ab': 1})
             >>> sampler = greedy.SteepestDescentSampler()

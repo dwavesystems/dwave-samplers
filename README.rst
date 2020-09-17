@@ -104,7 +104,7 @@ Simple frustrated Ising triangle:
     # Solve the problem
     result = sampler.sample(bqm)
 
-Large RAN1 sparse problem (requires NetworkX_ package):
+Large RAN1_ sparse problem (requires NetworkX_ package):
 
 .. code-block:: python
 
@@ -137,3 +137,4 @@ Released under the Apache License 2.0. See `<LICENSE>`_ file.
 
 
 .. _NetworkX: https://networkx.github.io/
+.. _RAN1: https://docs.ocean.dwavesys.com/en/stable/docs_dimod/reference/generated/dimod.generators.ran_r.html
