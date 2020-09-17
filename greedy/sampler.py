@@ -142,11 +142,12 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
                 selected to match the number of initial states given. If initial states
                 are not provided, only one read is performed.
 
-            initial_states (:class:`~dimod.SampleSet`, optional, default=None):
+            initial_states (samples-like, optional, default=None):
                 One or more samples, each defining an initial state for all the
                 problem variables. Initial states are given one per read, but
                 if fewer than `num_reads` initial states are defined, additional
                 values are generated as specified by `initial_states_generator`.
+                See :func:`dimod.as_samples` for a description of "samples-like".
 
             initial_states_generator ({'none', 'tile', 'random'}, optional, default='random'):
                 Defines the expansion of `initial_states` if fewer than
@@ -250,7 +251,7 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
 
         # we need initial states as contiguous numpy array
         initial_states_array = \
-            np.ascontiguousarray(initial_states.record.sample)
+            np.ascontiguousarray(initial_states.record.sample, dtype=np.int8)
 
         # run the steepest descent
         samples, energies, num_steps = steepest_gradient_descent(
