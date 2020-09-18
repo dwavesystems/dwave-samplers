@@ -1,4 +1,8 @@
-.. _sdk_index_system:
+.. _sdk_index_greedy:
+
+============
+dwave-greedy
+============
 
 .. include:: README.rst
    :start-after: index-start-marker
