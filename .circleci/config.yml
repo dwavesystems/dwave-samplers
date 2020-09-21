@@ -172,6 +172,10 @@ jobs:
 
       - run: *build-extension
 
+      - run:
+          name: Install package
+          command: env/bin/pip install .
+
       - run: &build-docs
           name: Build docs
           command: |
