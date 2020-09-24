@@ -35,11 +35,12 @@ class SteepestDescentComposite(dimod.ComposedSampler):
        >>> from greedy import SteepestDescentComposite
        ...
        >>> sampler = SteepestDescentComposite(DWaveSampler())
-       >>> h = {'a': -1., 'b': 2}
-       >>> J = {('a', 'b'): 1.5}
-       >>> sampleset = sampler.sample_ising(h, J, num_reads=100)
+       >>> h = {0: -1, 4: 2}
+       >>> J = {(0, 4): 1.5}
+       >>> sampleset = sampler.sample_ising(h, J)
        >>> sampleset.first.energy
        -4.5
+
     """
 
     def __init__(self, child_sampler):

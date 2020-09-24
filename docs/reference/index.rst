@@ -7,3 +7,4 @@ Reference Documentation
    :maxdepth: 2
 
    samplers
+   composites

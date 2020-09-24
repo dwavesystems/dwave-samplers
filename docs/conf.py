@@ -78,7 +78,14 @@ todo_include_todos = True
 modindex_common_prefix = ['greedy.']
 
 doctest_global_setup = """
+import dimod
 import greedy
+
+from unittest.mock import Mock
+from dwave.system.testing import MockDWaveSampler
+import dwave.system
+dwave.system.DWaveSampler = Mock()
+dwave.system.DWaveSampler.side_effect = MockDWaveSampler
 """
 
 # -- Options for HTML output -------------------------------------------------
