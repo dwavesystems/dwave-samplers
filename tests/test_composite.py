@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import unittest
-from collections import Mapping
+from collections import abc
 
 import numpy as np
 
@@ -42,11 +42,11 @@ class TestSteepestDescendComposite(unittest.TestCase):
         self.assertEqual(len(response), num_reads)
 
         for sample in response.samples():
-            self.assertIsInstance(sample, Mapping)
+            self.assertIsInstance(sample, abc.Mapping)
             self.assertEqual(set(sample), set(h))
 
         for sample, energy in response.data(['sample', 'energy']):
-            self.assertIsInstance(sample, Mapping)
+            self.assertIsInstance(sample, abc.Mapping)
             self.assertEqual(set(sample), set(h))
             self.assertAlmostEqual(dimod.ising_energy(sample, h, J), energy)
 
