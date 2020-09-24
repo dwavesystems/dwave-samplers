@@ -21,7 +21,6 @@ import numpy as np
 
 from greedy.descent import steepest_gradient_descent
 
-
 __all__ = ["SteepestDescentSolver", "SteepestDescentSampler"]
 
 

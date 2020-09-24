@@ -15,5 +15,8 @@
 from greedy.sampler import *
 import greedy.sampler
 
+from greedy.composite import *
+import greedy.composite
+
 from greedy.package_info import __version__
 import greedy.package_info
