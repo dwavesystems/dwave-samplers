@@ -74,7 +74,7 @@ install_requires = ['numpy>=1.16.0,<2.0.0', 'dimod>=0.9.2,<0.10.0']
 
 # Package extras requirements
 extras_require = {
-    'test': ['coverage', 'mock', 'parameterized'],
+    'test': ['coverage', 'mock', 'parameterized', 'dwave-system>=1.0.0'],
 }
 
 # Setup (extension build) requirements
