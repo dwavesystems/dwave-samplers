@@ -1,6 +1,7 @@
 # distutils: language = c++
 # distutils: include_dirs = greedy/src/
 # distutils: sources = greedy/src/descent.cpp
+# distutils: language_level = 3
 
 # Copyright 2019 D-Wave Systems Inc.
 #

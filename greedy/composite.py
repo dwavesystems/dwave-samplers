@@ -47,7 +47,7 @@ class SteepestDescentComposite(dimod.ComposedSampler):
         self.children = [child_sampler]
 
         # set the parameters
-        self.parameters = parameters = child_sampler.parameters.copy()
+        self.parameters = child_sampler.parameters.copy()
 
         # set the properties
         self.properties = dict(child_properties=child_sampler.properties.copy())

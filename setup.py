@@ -90,6 +90,7 @@ if USE_CYTHON:
 extensions = [Extension(
     name='greedy.descent',
     sources=['./greedy/descent.pyx'],
+    include_dirs=['./greedy/src/']
 )]
 
 classifiers = [
