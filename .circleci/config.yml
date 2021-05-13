@@ -73,11 +73,6 @@ jobs:
     docker:
       - image: circleci/python:3.6
 
-  test-3.5:
-    <<: *test-linux-template
-    docker:
-      - image: circleci/python:3.5
-
   #
   # macos
   #
@@ -156,12 +151,6 @@ jobs:
       PYTHON: 3.6.5
       MACOSX_DEPLOYMENT_TARGET: 10.9
 
-  test-osx-3.5:
-    <<: *test-osx-template
-    environment:
-      PYTHON: 3.5.5
-      MACOSX_DEPLOYMENT_TARGET: 10.9
-
   #
   # docs
   #
@@ -217,7 +206,7 @@ jobs:
           name: Build wheels
           command: |
             for PYBIN in /opt/python/*/bin; do
-              "${PYBIN}/python" -c "import sys; sys.exit((3,5)<=sys.version_info<(3,10))" && continue
+              "${PYBIN}/python" -c "import sys; sys.exit((3,6)<=sys.version_info<(3,10))" && continue
               "${PYBIN}/pip" install -r requirements.txt
               "${PYBIN}/pip" wheel . -w ./wheelhouse
               "${PYBIN}/python" setup.py sdist -d ./dist
@@ -312,12 +301,6 @@ jobs:
       PYTHON: 3.6.5
       MACOSX_DEPLOYMENT_TARGET: 10.9
 
-  deploy-osx-3.5:
-    <<: *deploy-osx-template
-    environment:
-      PYTHON: 3.5.5
-      MACOSX_DEPLOYMENT_TARGET: 10.9
-
 
 workflows:
   version: 2
@@ -327,12 +310,10 @@ workflows:
       - test-3.8
       - test-3.7
       - test-3.6
-      - test-3.5
       - test-osx-3.9
       - test-osx-3.8
       - test-osx-3.7
       - test-osx-3.6
-      - test-osx-3.5
       - test-docs
 
   deploy:
@@ -368,12 +349,6 @@ workflows:
             branches:
               ignore: /.*/
       - deploy-osx-3.6:
-          filters:
-            tags:
-              only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
-            branches:
-              ignore: /.*/
-      - deploy-osx-3.5:
           filters:
             tags:
               only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/

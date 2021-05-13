@@ -6,8 +6,6 @@ environment:
     secure: 9/YAQhmz9Kb1ZeXzhBYeQA==
 
   matrix:
-    - PYTHON: "C:\\Python35"
-    - PYTHON: "C:\\Python35-x64"
     - PYTHON: "C:\\Python36"
     - PYTHON: "C:\\Python36-x64"
     - PYTHON: "C:\\Python37"
@@ -18,11 +16,7 @@ environment:
     - PYTHON: "C:\\Python39-x64"
 
 install:
-  - "%PYTHON%\\python.exe --version"
   - "%PYTHON%\\python.exe -m pip install -r requirements.txt -r tests\\requirements.txt"
-
-  # required to link py35 (x86 and x64)
-  - set PATH=%PATH%;C:\Program Files (x86)\Windows Kits\8.1\bin\x86
 
 build_script:
   - "%PYTHON%\\python.exe setup.py build_ext --inplace"
