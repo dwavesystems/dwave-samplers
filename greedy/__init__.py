@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+__version__ = '0.1.2'
+
 from greedy.sampler import *
 import greedy.sampler
 
 from greedy.composite import *
 import greedy.composite
 
-from greedy.package_info import __version__
 import greedy.package_info

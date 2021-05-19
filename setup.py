@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 from Cython.Build import cythonize
@@ -39,7 +37,6 @@ class build_ext_with_args(build_ext):
         compile_args = self.extra_compile_args[compiler]
         for ext in self.extensions:
             ext.extra_compile_args = compile_args
-            print(dir(ext))
 
         link_args = self.extra_link_args[compiler]
         for ext in self.extensions:
@@ -48,57 +45,13 @@ class build_ext_with_args(build_ext):
         super().build_extensions()
 
 
-# Load package info, without importing the package
-basedir = os.path.dirname(os.path.abspath(__file__))
-package_info_path = os.path.join(basedir, "greedy", "package_info.py")
-package_info = {}
-with open(package_info_path, encoding='utf-8') as f:
-    exec(f.read(), package_info)
-
-packages = ['greedy']
-
-# Package requirements, minimal pinning
-install_requires = ['numpy>=1.16.0,<2.0.0', 'dimod>=0.9.2,<0.10.0']
-
-# Package extras requirements
-extras_require = {
-    'test': ['coverage', 'mock', 'parameterized', 'dwave-system>=1.0.0'],
-}
-
 extensions = [Extension(
     name='greedy.descent',
     sources=['greedy/descent.pyx'],
     include_dirs=[numpy.get_include()]
 )]
 
-classifiers = [
-    'License :: OSI Approved :: Apache Software License',
-    'Operating System :: OS Independent',
-    'Development Status :: 3 - Alpha',
-    'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.6',
-    'Programming Language :: Python :: 3.7',
-    'Programming Language :: Python :: 3.8',
-    'Programming Language :: Python :: 3.9',
-]
-
-python_requires = '>=3.6'
-
 setup(
-    name=package_info['__package_name__'],
-    version=package_info['__version__'],
-    author=package_info['__author__'],
-    author_email=package_info['__author_email__'],
-    description=package_info['__description__'],
-    long_description=open('README.rst', encoding='utf-8').read(),
-    url=package_info['__url__'],
-    license=package_info['__license__'],
-    packages=packages,
-    python_requires=python_requires,
-    install_requires=install_requires,
-    extras_require=extras_require,
     ext_modules=cythonize(extensions),
     cmdclass={'build_ext': build_ext_with_args},
-    classifiers=classifiers,
-    zip_safe=False,
 )
