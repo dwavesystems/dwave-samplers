@@ -1,1 +1,2 @@
+include pyproject.toml
 recursive-include greedy *.h *.cpp *.pxd *.pyx
