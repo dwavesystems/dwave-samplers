@@ -1,6 +1,7 @@
 numpy==1.19.4
 dimod==0.9.14
 cython==0.29.21
+importlib-metadata>=1.0; python_version < "3.8"
 
 # build
 wheel>=0.30.0

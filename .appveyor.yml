@@ -20,6 +20,7 @@ install:
 
 build_script:
   - "%PYTHON%\\python.exe setup.py build_ext --inplace"
+  - "%PYTHON%\\python.exe setup.py install"
 
 test_script:
   - "%PYTHON%\\python.exe -m unittest discover"
