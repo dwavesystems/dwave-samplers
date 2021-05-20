@@ -66,11 +66,11 @@ or install from source:
 
 .. code-block:: bash
 
-    USE_CYTHON=1 pip install git+https://github.com/dwavesystems/dwave-greedy.git#egg=dwave-greeedy
+    pip install git+https://github.com/dwavesystems/dwave-greedy.git#egg=dwave-greeedy
 
-Note: ``USE_CYTHON=1`` forces Cythonization and proper build from source. When
-building from *PyPI package* source (which includes Cythonized files), this is
-not necessary.
+Note: installation from source involves a "cythonization" step. To install
+project requirements automatically, make sure to use a PEP-517 compliant pip,
+e.g. ``pip>=10.0``.
 
 To build from source:
 
