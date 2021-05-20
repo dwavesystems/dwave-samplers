@@ -36,3 +36,7 @@ class TestSteepestDescentSampler(unittest.TestCase):
         self.assertIsNotNone(pi.__description__)
         self.assertIsNotNone(pi.__url__)
         self.assertIsNotNone(pi.__license__)
+
+    def test_deprecation(self):
+        with self.assertWarns(DeprecationWarning):
+            greedy.package_info.__version__

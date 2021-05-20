@@ -30,6 +30,7 @@ import greedy.composite
 # once we drop support for py36.
 import sys
 import types
+import warnings
 
 class _PackageInfoModule(types.ModuleType):
 
@@ -74,7 +75,12 @@ class _PackageInfoModule(types.ModuleType):
 
     def __getattr__(self, name):
         try:
-            return self._attrs[name]
+            val = self._attrs[name]
+            warnings.warn(
+                f"'{self.__name__}' module is deprecated. "
+                "Please convert your code to use `importlib.metadata` instead.",
+                DeprecationWarning)
+            return val
         except KeyError:
             raise AttributeError(f"module '{self.__name__}' has no attribute '{name}'")
 
