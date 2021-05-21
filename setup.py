@@ -48,7 +48,7 @@ class build_ext_with_args(build_ext):
 extensions = [Extension(
     name='greedy.descent',
     sources=['greedy/descent.pyx'],
-    include_dirs=[numpy.get_include()]
+    include_dirs=[numpy.get_include()],
 )]
 
 setup(
