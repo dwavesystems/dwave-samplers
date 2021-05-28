@@ -306,25 +306,31 @@ jobs:
 
       - run: *install-package
 
-      - run: &install-docs-requirements
+      - run:
           name: Install docs requirements
           command: |
             env/bin/pip install -r docs/requirements.txt
 
-      - run: &build-docs
+      - run:
           name: Build docs
           command: |
             . env/bin/activate
             make -C docs/ html
 
-      - store_artifacts: &save-docs
+      - store_artifacts:
           path: ./docs/build/html
 
-      - run: &run-doc-tests
+      - run:
           name: Test docs
           command: |
             . env/bin/activate
             make -C docs/ doctest
+
+      - run:
+          name: Test links
+          command: |
+            . env/bin/activate
+            make -C docs/ linkcheck
 
 
 workflows:
