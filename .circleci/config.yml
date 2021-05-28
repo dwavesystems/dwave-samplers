@@ -119,6 +119,52 @@ jobs:
             . env/bin/activate
             make -C tests/ smoke
 
+  test-install:
+    docker:
+      - image: circleci/python:3.7    # last version pip==8.1.0 works on
+
+    steps:
+      - checkout
+
+      - attach_workspace: *attach-dist
+
+      - run:
+          # pip 10.0 is the first to support pyproject.toml build config
+          name: Install from sdist with pip==10.0
+          command: |
+            python -m venv env-sdist-pip10
+            . env-sdist-pip10/bin/activate
+            pip install 'pip==10.0'
+            pip install ./distotheque/dwave-greedy*.tar.gz
+
+      - run:
+          name: Install from sdist with latest pip
+          command: |
+            python -m venv env-sdist
+            . env-sdist/bin/activate
+            pip install -U pip
+            pip install ./distotheque/dwave-greedy*.tar.gz
+
+      - run:
+          # pip 8.1.0 is the first version that supports manylinux1
+          name: Install from wheel with pip==8.1.0
+          command: |
+            python -m venv env-wheel-pip8
+            . env-wheel-pip8/bin/activate
+            pip install 'pip==8.1.0'
+            # TODO: can we search for package locally, but install deps from pypi?
+            pip install -r requirements.txt
+            pip install --no-index --find-links=distotheque --only-binary=dwave-greedy dwave-greedy
+
+      - run:
+          name: Install from wheel with latest pip
+          command: |
+            python -m venv env-wheel
+            . env-wheel/bin/activate
+            pip install -U pip
+            pip install -r requirements.txt
+            pip install --no-index --find-links=distotheque --only-binary=dwave-greedy dwave-greedy
+
   deploy-dist:
     docker:
       - image: circleci/python:3.9
@@ -297,14 +343,20 @@ workflows:
       - test-linux:
           name: test-linux-py<< matrix.python-version >>
           requires:
-            - build-manylinux
             - build-sdist
+            - build-manylinux
           matrix:
             parameters:
               python-version: *python-versions
 
+      - test-install:
+          requires:
+            - build-sdist
+            - build-manylinux
+
       - test-docs:
           requires:
+            - build-sdist
             - build-manylinux
 
       - build-macos:
@@ -316,8 +368,8 @@ workflows:
       - test-macos:
           name: test-macos-py<< matrix.python-version >>
           requires:
-            - build-macos
             - build-sdist
+            - build-macos
           matrix:
             parameters:
               python-version: *python-versions
@@ -357,6 +409,16 @@ workflows:
           matrix:
             parameters:
               python-version: *python-versions
+
+      - test-install:
+          filters:
+            tags:
+              only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
+            branches:
+              ignore: /.*/
+          requires:
+            - build-sdist
+            - build-manylinux
 
       - build-macos:
           filters:
