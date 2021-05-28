@@ -1,7 +1,9 @@
 version: 2.1
 
 jobs:
-
+  #
+  # linux
+  #
   build-manylinux:
     parameters:
       manylinux-tag:
@@ -22,7 +24,8 @@ jobs:
           command: |
             for py in /opt/python/cp*/bin/python; do
               ver=$("$py" -c 'import sys; print("{0.major}.{0.minor}".format(sys.version_info))')
-              [[ "$ver" != "<< parameters.python-version >>" ]] && continue
+              req=<< parameters.python-version >>
+              [[ "$ver" != "${req:0:3}" ]] && continue
               "$py" -m pip wheel . -w ./wheelhouse --no-deps
             done
 
@@ -34,10 +37,10 @@ jobs:
               auditwheel repair "$whl" --plat "$plat" -w ./distotheque
             done
 
-      - store_artifacts:
+      - store_artifacts: &store-dist
           path: distotheque
 
-      - persist_to_workspace:
+      - persist_to_workspace: &persist-dist
           root: distotheque
           paths: .
 
@@ -48,7 +51,7 @@ jobs:
     steps:
       - checkout
 
-      - run:
+      - run: &build-sdist
           name: Build sdist
           command: |
             python -m venv env
@@ -56,12 +59,9 @@ jobs:
             pip install -r requirements.txt
             python setup.py sdist -d ./distotheque
 
-      - store_artifacts:
-          path: distotheque
+      - store_artifacts: *store-dist
 
-      - persist_to_workspace:
-          root: distotheque
-          paths: .
+      - persist_to_workspace: *persist-dist
 
   test-linux:
     parameters:
@@ -74,7 +74,7 @@ jobs:
     steps:
       - checkout
 
-      - attach_workspace:
+      - attach_workspace: &attach-dist
           at: distotheque
 
       - restore_cache: &restore-cache-env
@@ -113,21 +113,172 @@ jobs:
             . env/bin/activate
             codecov     # calls `coverage xml`, so we must activate venv
 
-  deploy-linux:
+      - run: &run-cpp-tests
+          name: Run C++ tests
+          command: |
+            . env/bin/activate
+            make -C tests/ smoke
+
+  deploy-dist:
     docker:
       - image: circleci/python:3.9
 
     steps:
-      - attach_workspace:
-          at: distotheque
+      - attach_workspace: *attach-dist
 
       - run:
-          name: Deploy sdist and linux wheels
+          name: Deploy sdist and wheels to PyPI
           command: |
             python -m venv env
             . env/bin/activate
             pip install twine
             twine upload -u $PYPI_USERNAME -p $PYPI_PASSWORD --skip-existing ./distotheque/*
+
+  #
+  # macos
+  #
+
+  build-macos:
+    parameters:
+      python-version:
+        type: string
+      xcode:
+        type: string
+        default: "12.3.0"
+
+    macos:
+      xcode: << parameters.xcode >>
+
+    environment:
+      # Force (lie about) macOS 10.9 binary compatibility.
+      # Needed for properly versioned wheels.
+      # See: https://github.com/MacPython/wiki/wiki/Spinning-wheels
+      MACOSX_DEPLOYMENT_TARGET: 10.9
+
+    steps:
+      - checkout
+
+      # install `python-version` and cache it
+      - run: &brew-install-pyenv
+          name: Install pyenv
+          command: |
+            HOMEBREW_NO_AUTO_UPDATE=1 brew install pyenv
+            echo 'eval "$(pyenv init --path)"' >> ~/.bash_profile
+            echo 'eval "$(pyenv init -)"' >> ~/.bash_profile
+
+      - restore_cache: &restore-cache-pyenv
+          keys:
+            - v1-pyenv-{{ .Environment.CIRCLE_JOB }}-xcode-<< parameters.xcode >>
+
+      - run: &pyenv-install-python
+          name: Install python
+          command: |
+            pyenv install << parameters.python-version >> -s
+
+      - run: &pyenv-set-system-python
+          name: Set system python
+          command: |
+            pyenv global << parameters.python-version >>
+
+      - save_cache: &save-cache-pyenv
+          key: v1-pyenv-{{ .Environment.CIRCLE_JOB }}-xcode-<< parameters.xcode >>
+          paths:
+            - ~/.pyenv
+
+      - run: &build-wheel
+          name: Build wheel
+          command: |
+            python -m venv env
+            . env/bin/activate
+            pip install -r requirements.txt
+            python setup.py bdist_wheel -d ./distotheque
+
+      - store_artifacts: *store-dist
+
+      - persist_to_workspace: *persist-dist
+
+  test-macos:
+    parameters:
+      python-version:
+        type: string
+      xcode:
+        type: string
+        default: "12.3.0"
+
+    macos:
+      xcode: << parameters.xcode >>
+
+    steps:
+      - checkout
+
+      - run: *brew-install-pyenv
+
+      - restore_cache: *restore-cache-pyenv
+
+      - run: *pyenv-install-python
+
+      - run: *pyenv-set-system-python
+
+      - save_cache: *save-cache-pyenv
+
+      - attach_workspace: *attach-dist
+
+      - restore_cache: *restore-cache-env
+
+      - run: *create-virtualenv
+
+      - run: *install-requirements
+
+      - save_cache: *save-cache-env
+
+      - run: *install-package
+
+      - run: *run-python-tests
+
+      - run: *run-cpp-tests
+
+  #
+  # docs
+  #
+
+  test-docs:
+    docker:
+      - image: circleci/python:3.7    # RtD uses py37
+
+    steps:
+      - checkout
+
+      - attach_workspace: *attach-dist
+
+      - restore_cache: *restore-cache-env
+
+      - run: *create-virtualenv
+
+      - run: *install-requirements
+
+      - save_cache: *save-cache-env
+
+      - run: *install-package
+
+      - run: &install-docs-requirements
+          name: Install docs requirements
+          command: |
+            env/bin/pip install -r docs/requirements.txt
+
+      - run: &build-docs
+          name: Build docs
+          command: |
+            . env/bin/activate
+            make -C docs/ html
+
+      - store_artifacts: &save-docs
+          path: ./docs/build/html
+
+      - run: &run-doc-tests
+          name: Test docs
+          command: |
+            . env/bin/activate
+            make -C docs/ doctest
 
 
 workflows:
@@ -141,11 +292,32 @@ workflows:
             parameters:
               manylinux-tag: ["manylinux1", "manylinux2010"]
               manylinux-arch: ["x86_64"]
-              python-version: &python-versions ["3.6", "3.7", "3.8", "3.9"]
+              python-version: &python-versions ["3.6.13", "3.7.10", "3.8.9", "3.9.4"]
 
       - test-linux:
+          name: test-linux-py<< matrix.python-version >>
           requires:
             - build-manylinux
+            - build-sdist
+          matrix:
+            parameters:
+              python-version: *python-versions
+
+      - test-docs:
+          requires:
+            - build-manylinux
+
+      - build-macos:
+          name: build-macos-py<< matrix.python-version >>
+          matrix:
+            parameters:
+              python-version: *python-versions
+
+      - test-macos:
+          name: test-macos-py<< matrix.python-version >>
+          requires:
+            - build-macos
+            - build-sdist
           matrix:
             parameters:
               python-version: *python-versions
@@ -178,6 +350,7 @@ workflows:
               only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
             branches:
               ignore: /.*/
+          name: test-linux-py<< matrix.python-version >>
           requires:
             - build-sdist
             - build-manylinux
@@ -185,7 +358,32 @@ workflows:
             parameters:
               python-version: *python-versions
 
-      - deploy-linux:
+      - build-macos:
+          filters:
+            tags:
+              only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
+            branches:
+              ignore: /.*/
+          name: build-macos-py<< matrix.python-version >>
+          matrix:
+            parameters:
+              python-version: *python-versions
+
+      - test-macos:
+          filters:
+            tags:
+              only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
+            branches:
+              ignore: /.*/
+          name: test-macos-py<< matrix.python-version >>
+          requires:
+            - build-sdist
+            - build-macos
+          matrix:
+            parameters:
+              python-version: *python-versions
+
+      - deploy-dist:
           filters:
             tags:
               only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
@@ -193,3 +391,4 @@ workflows:
               ignore: /.*/
           requires:
             - test-linux
+            - test-macos
