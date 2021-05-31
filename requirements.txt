@@ -1,5 +1,5 @@
 numpy==1.19.4
-dimod==0.9.14
+dimod==0.9.15
 cython==0.29.21
 importlib-metadata>=1.0; python_version < "3.8"
 

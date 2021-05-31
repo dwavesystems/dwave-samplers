@@ -1,9 +1,14 @@
 version: 2.1
 
+orbs:
+  win: circleci/windows@2.2.0
+
 jobs:
+
   #
   # linux
   #
+
   build-manylinux:
     parameters:
       manylinux-tag:
@@ -165,21 +170,6 @@ jobs:
             pip install -r requirements.txt
             pip install --no-index --find-links=distotheque --only-binary=dwave-greedy dwave-greedy
 
-  deploy-dist:
-    docker:
-      - image: circleci/python:3.9
-
-    steps:
-      - attach_workspace: *attach-dist
-
-      - run:
-          name: Deploy sdist and wheels to PyPI
-          command: |
-            python -m venv env
-            . env/bin/activate
-            pip install twine
-            twine upload -u $PYPI_USERNAME -p $PYPI_PASSWORD --skip-existing ./distotheque/*
-
   #
   # macos
   #
@@ -284,6 +274,94 @@ jobs:
       - run: *run-cpp-tests
 
   #
+  # windows
+  #
+
+  build-win:
+    parameters:
+      python-version:
+        type: string
+      python-arch:
+        type: string
+
+    executor:
+      name: win/default
+
+    steps:
+      - checkout
+
+      - restore_cache: &restore-cache-nuget-python
+          keys:
+            - v1-nuget-python<< parameters.python-arch >>-<< parameters.python-version >>-{{ .Environment.CIRCLE_JOB }}
+
+      - run: &nuget-install-python
+          name: Install python and create virtualenv
+          command: |
+            nuget install python<< parameters.python-arch >> -Version << parameters.python-version >>
+
+      - save_cache: &save-cache-nuget-python
+          key: v1-nuget-python<< parameters.python-arch >>-<< parameters.python-version >>-{{ .Environment.CIRCLE_JOB }}
+          paths:
+            - python<< parameters.python-arch >>.<< parameters.python-version >>
+
+      - run:
+          name: Build wheel
+          command: |
+            python<< parameters.python-arch >>.<< parameters.python-version >>\tools\python -m venv env
+            env\Scripts\activate.ps1
+            pip install -r requirements.txt
+            python setup.py bdist_wheel -d ./distotheque
+
+      - store_artifacts: *store-dist
+
+      - persist_to_workspace: *persist-dist
+
+  test-win:
+    parameters:
+      python-version:
+        type: string
+      python-arch:
+        type: string
+
+    executor:
+      name: win/default
+
+    steps:
+      - checkout
+
+      - restore_cache: *restore-cache-nuget-python
+
+      - run: *nuget-install-python
+
+      - save_cache: *save-cache-nuget-python
+
+      - attach_workspace: *attach-dist
+
+      - restore_cache: *restore-cache-env
+
+      - run:
+          name: Install requirements
+          command: |
+            python<< parameters.python-arch >>.<< parameters.python-version >>\tools\python -m venv env
+            env\Scripts\activate.ps1
+            pip install -r requirements.txt -r tests/requirements.txt
+
+      - save_cache: *save-cache-env
+
+      - run:
+          name: Install package
+          command: |
+            env\Scripts\activate.ps1
+            pip install --no-index --find-links=distotheque dwave-greedy
+
+      - run:
+          name: Run Python tests
+          command: |
+            env\Scripts\activate.ps1
+            cd tests
+            coverage run -m unittest discover
+
+  #
   # docs
   #
 
@@ -332,6 +410,25 @@ jobs:
             . env/bin/activate
             make -C docs/ linkcheck
 
+  #
+  # deploy package to PyPI
+  #
+
+  pypi-deploy:
+    docker:
+      - image: circleci/python:3.9
+
+    steps:
+      - attach_workspace: *attach-dist
+
+      - run:
+          name: Deploy sdist and wheels to PyPI
+          command: |
+            python -m venv env
+            . env/bin/activate
+            pip install twine
+            twine upload -u $PYPI_USERNAME -p $PYPI_PASSWORD --skip-existing ./distotheque/*
+
 
 workflows:
   test:
@@ -342,9 +439,9 @@ workflows:
           name: build-<< matrix.manylinux-tag >>_<< matrix.manylinux-arch >>-py<< matrix.python-version >>
           matrix:
             parameters:
-              manylinux-tag: ["manylinux1", "manylinux2010"]
+              manylinux-tag: ["manylinux1", "manylinux2014"]
               manylinux-arch: ["x86_64"]
-              python-version: &python-versions ["3.6.13", "3.7.10", "3.8.9", "3.9.4"]
+              python-version: &python-versions ["3.6.8", "3.7.9", "3.8.9", "3.9.4"]
 
       - test-linux:
           name: test-linux-py<< matrix.python-version >>
@@ -379,6 +476,22 @@ workflows:
           matrix:
             parameters:
               python-version: *python-versions
+
+      - build-win:
+          name: build-win-<< matrix.python-arch >>-py<< matrix.python-version >>
+          matrix:
+            parameters:
+              python-version: *python-versions
+              python-arch: ["", "x86"]
+
+      - test-win:
+          name: test-win-<< matrix.python-arch >>-py<< matrix.python-version >>
+          requires:
+            - build-win
+          matrix:
+            parameters:
+              python-version: *python-versions
+              python-arch: ["", "x86"]
 
   deploy:
     jobs:
@@ -451,7 +564,33 @@ workflows:
             parameters:
               python-version: *python-versions
 
-      - deploy-dist:
+      - build-win:
+          filters:
+            tags:
+              only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
+            branches:
+              ignore: /.*/
+          name: build-win-<< matrix.python-arch >>-py<< matrix.python-version >>
+          matrix:
+            parameters:
+              python-version: *python-versions
+              python-arch: ["", "x86"]
+
+      - test-win:
+          filters:
+            tags:
+              only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
+            branches:
+              ignore: /.*/
+          name: test-win-<< matrix.python-arch >>-py<< matrix.python-version >>
+          requires:
+            - build-win
+          matrix:
+            parameters:
+              python-version: *python-versions
+              python-arch: ["", "x86"]
+
+      - pypi-deploy:
           filters:
             tags:
               only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
@@ -460,3 +599,4 @@ workflows:
           requires:
             - test-linux
             - test-macos
+            - test-win
