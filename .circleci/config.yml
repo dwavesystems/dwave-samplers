@@ -431,7 +431,7 @@ jobs:
 
 
 workflows:
-  build_test_deploy:
+  build-test-deploy:
     jobs:
       - build-sdist
 
@@ -482,7 +482,7 @@ workflows:
           matrix:
             parameters:
               python-version: *python-versions
-              python-arch: ["", "x86"]
+              python-arch: &python-archs-win ["", "x86"]
 
       - test-win:
           name: test-win-<< matrix.python-arch >>-py<< matrix.python-version >>
@@ -491,7 +491,7 @@ workflows:
           matrix:
             parameters:
               python-version: *python-versions
-              python-arch: ["", "x86"]
+              python-arch: *python-archs-win
 
       - pypi-deploy:
           filters:
