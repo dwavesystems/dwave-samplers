@@ -431,7 +431,7 @@ jobs:
 
 
 workflows:
-  test:
+  build_test_deploy:
     jobs:
       - build-sdist
 
@@ -493,103 +493,6 @@ workflows:
               python-version: *python-versions
               python-arch: ["", "x86"]
 
-  deploy:
-    jobs:
-      - build-sdist:
-          filters:
-            tags:
-              only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
-            branches:
-              ignore: /.*/
-
-      - build-manylinux:
-          filters:
-            tags:
-              only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
-            branches:
-              ignore: /.*/
-          name: build-<< matrix.manylinux-tag >>_<< matrix.manylinux-arch >>-py<< matrix.python-version >>
-          matrix:
-            parameters:
-              manylinux-tag: ["manylinux1", "manylinux2010"]
-              manylinux-arch: ["x86_64"]
-              python-version: *python-versions
-
-      - test-linux:
-          filters:
-            tags:
-              only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
-            branches:
-              ignore: /.*/
-          name: test-linux-py<< matrix.python-version >>
-          requires:
-            - build-sdist
-            - build-manylinux
-          matrix:
-            parameters:
-              python-version: *python-versions
-
-      - test-install:
-          filters:
-            tags:
-              only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
-            branches:
-              ignore: /.*/
-          requires:
-            - build-sdist
-            - build-manylinux
-
-      - build-macos:
-          filters:
-            tags:
-              only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
-            branches:
-              ignore: /.*/
-          name: build-macos-py<< matrix.python-version >>
-          matrix:
-            parameters:
-              python-version: *python-versions
-
-      - test-macos:
-          filters:
-            tags:
-              only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
-            branches:
-              ignore: /.*/
-          name: test-macos-py<< matrix.python-version >>
-          requires:
-            - build-sdist
-            - build-macos
-          matrix:
-            parameters:
-              python-version: *python-versions
-
-      - build-win:
-          filters:
-            tags:
-              only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
-            branches:
-              ignore: /.*/
-          name: build-win-<< matrix.python-arch >>-py<< matrix.python-version >>
-          matrix:
-            parameters:
-              python-version: *python-versions
-              python-arch: ["", "x86"]
-
-      - test-win:
-          filters:
-            tags:
-              only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
-            branches:
-              ignore: /.*/
-          name: test-win-<< matrix.python-arch >>-py<< matrix.python-version >>
-          requires:
-            - build-win
-          matrix:
-            parameters:
-              python-version: *python-versions
-              python-arch: ["", "x86"]
-
       - pypi-deploy:
           filters:
             tags:
@@ -600,3 +503,5 @@ workflows:
             - test-linux
             - test-macos
             - test-win
+            - test-docs
+            - test-install
