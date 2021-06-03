@@ -10,7 +10,9 @@ coverage.xml
 env/
 build/
 dist/
+distotheque/
 wheels/
+wheelhouse/
 docs/**/generated/
 
 greedy/descent.cpp

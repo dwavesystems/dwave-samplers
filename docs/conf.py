@@ -23,8 +23,8 @@
 # -- Project information -----------------------------------------------------
 
 from greedy import package_info
-project = package_info.__title__
-copyright = package_info.__copyright__
+project = 'D-Wave Greedy'
+copyright = '2019, D-Wave Systems Inc.'
 author = package_info.__author__
 version = package_info.__version__
 release = package_info.__version__
