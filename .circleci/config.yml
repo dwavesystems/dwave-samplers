@@ -433,7 +433,10 @@ jobs:
 workflows:
   build-test-deploy:
     jobs:
-      - build-sdist
+      - build-sdist:
+          filters: &always-run  # required because it's indirectly required by the deploy job that runs on tags only
+            tags:
+              only: /.*/
 
       - build-manylinux:
           name: build-<< matrix.manylinux-tag >>_<< matrix.manylinux-arch >>-py<< matrix.python-version >>
@@ -442,6 +445,8 @@ workflows:
               manylinux-tag: ["manylinux1", "manylinux2014"]
               manylinux-arch: ["x86_64"]
               python-version: &python-versions ["3.6.8", "3.7.9", "3.8.9", "3.9.4"]
+          filters:
+            <<: *always-run
 
       - test-linux:
           name: test-linux-py<< matrix.python-version >>
@@ -451,22 +456,30 @@ workflows:
           matrix:
             parameters:
               python-version: *python-versions
+          filters:
+            <<: *always-run
 
       - test-install:
           requires:
             - build-sdist
             - build-manylinux
+          filters:
+            <<: *always-run
 
       - test-docs:
           requires:
             - build-sdist
             - build-manylinux
+          filters:
+            <<: *always-run
 
       - build-macos:
           name: build-macos-py<< matrix.python-version >>
           matrix:
             parameters:
               python-version: *python-versions
+          filters:
+            <<: *always-run
 
       - test-macos:
           name: test-macos-py<< matrix.python-version >>
@@ -476,6 +489,8 @@ workflows:
           matrix:
             parameters:
               python-version: *python-versions
+          filters:
+            <<: *always-run
 
       - build-win:
           name: build-win-<< matrix.python-arch >>-py<< matrix.python-version >>
@@ -483,6 +498,8 @@ workflows:
             parameters:
               python-version: *python-versions
               python-arch: &python-archs-win ["", "x86"]
+          filters:
+            <<: *always-run
 
       - test-win:
           name: test-win-<< matrix.python-arch >>-py<< matrix.python-version >>
@@ -492,16 +509,18 @@ workflows:
             parameters:
               python-version: *python-versions
               python-arch: *python-archs-win
+          filters:
+            <<: *always-run
 
       - pypi-deploy:
-          filters:
-            tags:
-              only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
-            branches:
-              ignore: /.*/
           requires:
             - test-linux
             - test-macos
             - test-win
             - test-docs
             - test-install
+          filters:
+            tags:
+              only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
+            branches:
+              ignore: /.*/
