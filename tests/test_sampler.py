@@ -279,4 +279,4 @@ class TestSteepestDescentSampler(unittest.TestCase):
 
         # result is identical to initial state, with zero downhill moves
         np.testing.assert_array_equal(ss.record.sample, [[-1, -1]])
-        np.testing.assert_array_equal(ss.info['num_steps'], [0])
+        np.testing.assert_array_equal(ss.record.num_steps, [0])
