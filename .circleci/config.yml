@@ -3,6 +3,179 @@ version: 2.1
 orbs:
   win: circleci/windows@2.2.0
 
+parameters:
+  xcode:
+    type: string
+    default: "12.3.0"
+
+commands:
+  install-requirements-nix:
+    description: Install package test requirements on a *nix OS
+    parameters:
+      cache:
+        type: boolean
+        default: true
+      cache-gen:
+        type: integer
+        default: 1
+      cache-key-prefix:
+        type: string
+        default: ""
+    steps:
+      - when:
+          condition: << parameters.cache >>
+          steps:
+            - restore_cache:
+                key: v<< parameters.cache-gen >>-prefix-<< parameters.cache-key-prefix >>-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
+
+      - run:
+          name: Create virtual environment
+          command: |
+            python -m venv env
+
+      - run:
+          name: Install requirements
+          command: |
+            env/bin/pip install -r requirements.txt -r tests/requirements.txt
+
+      - when:
+          condition: << parameters.cache >>
+          steps:
+            - save_cache:
+                key: v<< parameters.cache-gen >>-prefix-<< parameters.cache-key-prefix >>-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
+                paths:
+                  - env
+
+  install-requirements-win:
+    description: Install package test requirements on a Windows system
+    parameters:
+      python-arch:
+        type: string
+        default: ""   # default to 64-bit python
+      python-version:
+        type: string
+      cache:
+        type: boolean
+        default: true
+      cache-gen:
+        type: integer
+        default: 1
+      cache-key-prefix:
+        type: string
+        default: ""
+    steps:
+      - when:
+          condition: << parameters.cache >>
+          steps:
+            - restore_cache:
+                key: v<< parameters.cache-gen >>-prefix-<< parameters.cache-key-prefix >>-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
+
+      - run:
+          name: Install requirements
+          command: |
+            python<< parameters.python-arch >>.<< parameters.python-version >>\tools\python -m venv env
+            env\Scripts\activate.ps1
+            pip install -r requirements.txt -r tests/requirements.txt
+
+      - when:
+          condition: << parameters.cache >>
+          steps:
+            - save_cache:
+                key: v<< parameters.cache-gen >>-prefix-<< parameters.cache-key-prefix >>-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
+                paths:
+                  - env
+
+  brew-install-pyenv:
+    description: Install pyenv using brew
+    steps:
+      - run:
+          name: Install pyenv
+          command: |
+            HOMEBREW_NO_AUTO_UPDATE=1 brew install pyenv
+            echo 'eval "$(pyenv init --path)"' >> ~/.bash_profile
+            echo 'eval "$(pyenv init -)"' >> ~/.bash_profile
+
+  pyenv-install-python:
+    description: Install python using pyenv, cache it, and set as pyenv global default
+    parameters:
+      python-version:
+        type: string
+      cache:
+        type: boolean
+        default: true
+      cache-gen:
+        type: integer
+        default: 1
+      cache-key-prefix:
+        type: string
+        default: ""
+    steps:
+      - brew-install-pyenv
+
+      - when:
+          condition: << parameters.cache >>
+          steps:
+            - restore_cache:
+                keys:
+                  - v<< parameters.cache-gen >>-prefix-<< parameters.cache-key-prefix >>-pyenv-{{ .Environment.CIRCLE_JOB }}
+
+      - run:
+          name: Install python
+          command: |
+            pyenv install << parameters.python-version >> -s
+
+      - run:
+          name: Set system python
+          command: |
+            pyenv global << parameters.python-version >>
+
+      - when:
+          condition: << parameters.cache >>
+          steps:
+            - save_cache:
+                key: v<< parameters.cache-gen >>-prefix-<< parameters.cache-key-prefix >>-pyenv-{{ .Environment.CIRCLE_JOB }}
+                paths:
+                  - ~/.pyenv
+
+  nuget-install-python:
+    description: Install python using nuget and cache it
+    parameters:
+      python-arch:
+        type: string
+        default: ""   # default to 64-bit python
+      python-version:
+        type: string
+      cache:
+        type: boolean
+        default: true
+      cache-gen:
+        type: integer
+        default: 1
+      cache-key-prefix:
+        type: string
+        default: ""
+    steps:
+      - when:
+          condition: << parameters.cache >>
+          steps:
+            - restore_cache:
+                keys:
+                  - v<< parameters.cache-gen >>-prefix-<< parameters.cache-key-prefix >>-nuget-python<< parameters.python-arch >>-<< parameters.python-version >>-{{ .Environment.CIRCLE_JOB }}
+
+      - run:
+          name: Install python
+          command: |
+            nuget install python<< parameters.python-arch >> -Version << parameters.python-version >>
+
+      - when:
+          condition: << parameters.cache >>
+          steps:
+            - save_cache:
+                key: v<< parameters.cache-gen >>-prefix-<< parameters.cache-key-prefix >>-nuget-python<< parameters.python-arch >>-<< parameters.python-version >>-{{ .Environment.CIRCLE_JOB }}
+                paths:
+                  - python<< parameters.python-arch >>.<< parameters.python-version >>
+
+
 jobs:
 
   #
@@ -82,23 +255,8 @@ jobs:
       - attach_workspace: &attach-dist
           at: distotheque
 
-      - restore_cache: &restore-cache-env
-          key: v1-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
-
-      - run: &create-virtualenv
-          name: Create virtual environment
-          command: |
-            python -m venv env
-
-      - run: &install-requirements
-          name: Install requirements
-          command: |
-            env/bin/pip install -r requirements.txt -r tests/requirements.txt
-
-      - save_cache: &save-cache-env
-          key: v1-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
-          paths:
-            - env
+      - install-requirements-nix:
+          cache: true
 
       - run: &install-package
           name: Install package
@@ -180,7 +338,7 @@ jobs:
         type: string
       xcode:
         type: string
-        default: "12.3.0"
+        default: << pipeline.parameters.xcode >>
 
     macos:
       xcode: << parameters.xcode >>
@@ -194,32 +352,10 @@ jobs:
     steps:
       - checkout
 
-      # install `python-version` and cache it
-      - run: &brew-install-pyenv
-          name: Install pyenv
-          command: |
-            HOMEBREW_NO_AUTO_UPDATE=1 brew install pyenv
-            echo 'eval "$(pyenv init --path)"' >> ~/.bash_profile
-            echo 'eval "$(pyenv init -)"' >> ~/.bash_profile
-
-      - restore_cache: &restore-cache-pyenv
-          keys:
-            - v1-pyenv-{{ .Environment.CIRCLE_JOB }}-xcode-<< parameters.xcode >>
-
-      - run: &pyenv-install-python
-          name: Install python
-          command: |
-            pyenv install << parameters.python-version >> -s
-
-      - run: &pyenv-set-system-python
-          name: Set system python
-          command: |
-            pyenv global << parameters.python-version >>
-
-      - save_cache: &save-cache-pyenv
-          key: v1-pyenv-{{ .Environment.CIRCLE_JOB }}-xcode-<< parameters.xcode >>
-          paths:
-            - ~/.pyenv
+      - pyenv-install-python:
+          python-version: << parameters.python-version >>
+          cache: true
+          cache-key-prefix: << parameters.xcode >>
 
       - run: &build-wheel
           name: Build wheel
@@ -239,7 +375,7 @@ jobs:
         type: string
       xcode:
         type: string
-        default: "12.3.0"
+        default: << pipeline.parameters.xcode >>
 
     macos:
       xcode: << parameters.xcode >>
@@ -247,25 +383,15 @@ jobs:
     steps:
       - checkout
 
-      - run: *brew-install-pyenv
-
-      - restore_cache: *restore-cache-pyenv
-
-      - run: *pyenv-install-python
-
-      - run: *pyenv-set-system-python
-
-      - save_cache: *save-cache-pyenv
+      - pyenv-install-python:
+          python-version: << parameters.python-version >>
+          cache: true
+          cache-key-prefix: << parameters.xcode >>
 
       - attach_workspace: *attach-dist
 
-      - restore_cache: *restore-cache-env
-
-      - run: *create-virtualenv
-
-      - run: *install-requirements
-
-      - save_cache: *save-cache-env
+      - install-requirements-nix:
+          cache: true
 
       - run: *install-package
 
@@ -290,19 +416,9 @@ jobs:
     steps:
       - checkout
 
-      - restore_cache: &restore-cache-nuget-python
-          keys:
-            - v1-nuget-python<< parameters.python-arch >>-<< parameters.python-version >>-{{ .Environment.CIRCLE_JOB }}
-
-      - run: &nuget-install-python
-          name: Install python and create virtualenv
-          command: |
-            nuget install python<< parameters.python-arch >> -Version << parameters.python-version >>
-
-      - save_cache: &save-cache-nuget-python
-          key: v1-nuget-python<< parameters.python-arch >>-<< parameters.python-version >>-{{ .Environment.CIRCLE_JOB }}
-          paths:
-            - python<< parameters.python-arch >>.<< parameters.python-version >>
+      - nuget-install-python:
+          python-arch: << parameters.python-arch >>
+          python-version: << parameters.python-version >>
 
       - run:
           name: Build wheel
@@ -329,24 +445,16 @@ jobs:
     steps:
       - checkout
 
-      - restore_cache: *restore-cache-nuget-python
-
-      - run: *nuget-install-python
-
-      - save_cache: *save-cache-nuget-python
+      - nuget-install-python:
+          python-arch: << parameters.python-arch >>
+          python-version: << parameters.python-version >>
 
       - attach_workspace: *attach-dist
 
-      - restore_cache: *restore-cache-env
-
-      - run:
-          name: Install requirements
-          command: |
-            python<< parameters.python-arch >>.<< parameters.python-version >>\tools\python -m venv env
-            env\Scripts\activate.ps1
-            pip install -r requirements.txt -r tests/requirements.txt
-
-      - save_cache: *save-cache-env
+      - install-requirements-win:
+          python-arch: << parameters.python-arch >>
+          python-version: << parameters.python-version >>
+          cache: true
 
       - run:
           name: Install package
@@ -374,13 +482,8 @@ jobs:
 
       - attach_workspace: *attach-dist
 
-      - restore_cache: *restore-cache-env
-
-      - run: *create-virtualenv
-
-      - run: *install-requirements
-
-      - save_cache: *save-cache-env
+      - install-requirements-nix:
+          cache: true
 
       - run: *install-package
 
