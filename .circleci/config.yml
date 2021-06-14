@@ -49,11 +49,6 @@ commands:
   install-requirements-win:
     description: Install package test requirements on a Windows system
     parameters:
-      python-arch:
-        type: string
-        default: ""   # default to 64-bit python
-      python-version:
-        type: string
       cache:
         type: boolean
         default: true
@@ -73,7 +68,7 @@ commands:
       - run:
           name: Install requirements
           command: |
-            python<< parameters.python-arch >>.<< parameters.python-version >>\tools\python -m venv env
+            python -m venv env
             env\Scripts\activate.ps1
             pip install -r requirements.txt -r tests/requirements.txt
 
@@ -150,7 +145,7 @@ commands:
         default: true
       cache-gen:
         type: integer
-        default: 1
+        default: 2
       cache-key-prefix:
         type: string
         default: ""
@@ -165,7 +160,13 @@ commands:
       - run:
           name: Install python
           command: |
-            nuget install python<< parameters.python-arch >> -Version << parameters.python-version >>
+            nuget install python<< parameters.python-arch >> -Version << parameters.python-version >> -OutputDirectory c:\python
+
+      - run:
+          name: Set system python
+          command: |
+            $env:path = "c:\python\python<< parameters.python-arch >>.<< parameters.python-version >>\tools;$env:path"
+            [Environment]::SetEnvironmentVariable("path", $env:path, [System.EnvironmentVariableTarget]::Machine)
 
       - when:
           condition: << parameters.cache >>
@@ -173,7 +174,7 @@ commands:
             - save_cache:
                 key: v<< parameters.cache-gen >>-prefix-<< parameters.cache-key-prefix >>-nuget-python<< parameters.python-arch >>-<< parameters.python-version >>-{{ .Environment.CIRCLE_JOB }}
                 paths:
-                  - python<< parameters.python-arch >>.<< parameters.python-version >>
+                  - c:\python\python<< parameters.python-arch >>.<< parameters.python-version >>
 
 
 jobs:
@@ -419,11 +420,12 @@ jobs:
       - nuget-install-python:
           python-arch: << parameters.python-arch >>
           python-version: << parameters.python-version >>
+          cache: true
 
       - run:
           name: Build wheel
           command: |
-            python<< parameters.python-arch >>.<< parameters.python-version >>\tools\python -m venv env
+            python -m venv env
             env\Scripts\activate.ps1
             pip install -r requirements.txt
             python setup.py bdist_wheel -d ./distotheque
@@ -448,12 +450,11 @@ jobs:
       - nuget-install-python:
           python-arch: << parameters.python-arch >>
           python-version: << parameters.python-version >>
+          cache: true
 
       - attach_workspace: *attach-dist
 
       - install-requirements-win:
-          python-arch: << parameters.python-arch >>
-          python-version: << parameters.python-version >>
           cache: true
 
       - run:
