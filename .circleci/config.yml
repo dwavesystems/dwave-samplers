@@ -2,6 +2,7 @@ version: 2.1
 
 orbs:
   win: circleci/windows@2.2.0
+  ocean: dwave/ocean@dev:fee3dc9
 
 parameters:
   xcode:
@@ -10,175 +11,6 @@ parameters:
 
 environment:
   PIP_PROGRESS_BAR: off
-
-commands:
-  install-requirements-nix:
-    description: Install package test requirements on a *nix OS
-    parameters:
-      cache:
-        type: boolean
-        default: true
-      cache-gen:
-        type: integer
-        default: 1
-      cache-key-prefix:
-        type: string
-        default: ""
-    steps:
-      - when:
-          condition: << parameters.cache >>
-          steps:
-            - restore_cache:
-                key: v<< parameters.cache-gen >>-prefix-<< parameters.cache-key-prefix >>-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
-
-      - run:
-          name: Create virtual environment
-          command: |
-            python -m venv env
-
-      - run:
-          name: Install requirements
-          command: |
-            env/bin/pip install -r requirements.txt -r tests/requirements.txt
-
-      - when:
-          condition: << parameters.cache >>
-          steps:
-            - save_cache:
-                key: v<< parameters.cache-gen >>-prefix-<< parameters.cache-key-prefix >>-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
-                paths:
-                  - env
-
-  install-requirements-win:
-    description: Install package test requirements on a Windows system
-    parameters:
-      cache:
-        type: boolean
-        default: true
-      cache-gen:
-        type: integer
-        default: 1
-      cache-key-prefix:
-        type: string
-        default: ""
-    steps:
-      - when:
-          condition: << parameters.cache >>
-          steps:
-            - restore_cache:
-                key: v<< parameters.cache-gen >>-prefix-<< parameters.cache-key-prefix >>-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
-
-      - run:
-          name: Install requirements
-          command: |
-            python -m venv env
-            env\Scripts\activate.ps1
-            pip install -r requirements.txt -r tests/requirements.txt
-
-      - when:
-          condition: << parameters.cache >>
-          steps:
-            - save_cache:
-                key: v<< parameters.cache-gen >>-prefix-<< parameters.cache-key-prefix >>-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
-                paths:
-                  - env
-
-  brew-install-pyenv:
-    description: Install pyenv using brew
-    steps:
-      - run:
-          name: Install pyenv
-          command: |
-            HOMEBREW_NO_AUTO_UPDATE=1 brew install pyenv
-            echo 'eval "$(pyenv init --path)"' >> ~/.bash_profile
-            echo 'eval "$(pyenv init -)"' >> ~/.bash_profile
-
-  pyenv-install-python:
-    description: Install python using pyenv, cache it, and set as pyenv global default
-    parameters:
-      python-version:
-        type: string
-      cache:
-        type: boolean
-        default: true
-      cache-gen:
-        type: integer
-        default: 1
-      cache-key-prefix:
-        type: string
-        default: ""
-    steps:
-      - brew-install-pyenv
-
-      - when:
-          condition: << parameters.cache >>
-          steps:
-            - restore_cache:
-                keys:
-                  - v<< parameters.cache-gen >>-prefix-<< parameters.cache-key-prefix >>-pyenv-{{ .Environment.CIRCLE_JOB }}
-
-      - run:
-          name: Install python
-          command: |
-            pyenv install << parameters.python-version >> -s
-
-      - run:
-          name: Set system python
-          command: |
-            pyenv global << parameters.python-version >>
-
-      - when:
-          condition: << parameters.cache >>
-          steps:
-            - save_cache:
-                key: v<< parameters.cache-gen >>-prefix-<< parameters.cache-key-prefix >>-pyenv-{{ .Environment.CIRCLE_JOB }}
-                paths:
-                  - ~/.pyenv
-
-  nuget-install-python:
-    description: Install python using nuget and cache it
-    parameters:
-      python-arch:
-        type: string
-        default: ""   # default to 64-bit python
-      python-version:
-        type: string
-      cache:
-        type: boolean
-        default: true
-      cache-gen:
-        type: integer
-        default: 2
-      cache-key-prefix:
-        type: string
-        default: ""
-    steps:
-      - when:
-          condition: << parameters.cache >>
-          steps:
-            - restore_cache:
-                keys:
-                  - v<< parameters.cache-gen >>-prefix-<< parameters.cache-key-prefix >>-nuget-python<< parameters.python-arch >>-<< parameters.python-version >>-{{ .Environment.CIRCLE_JOB }}
-
-      - run:
-          name: Install python
-          command: |
-            nuget install python<< parameters.python-arch >> -Version << parameters.python-version >> -OutputDirectory c:\python
-
-      - run:
-          name: Set system python
-          command: |
-            $env:path = "c:\python\python<< parameters.python-arch >>.<< parameters.python-version >>\tools;$env:path"
-            [Environment]::SetEnvironmentVariable("path", $env:path, [System.EnvironmentVariableTarget]::Machine)
-
-      - when:
-          condition: << parameters.cache >>
-          steps:
-            - save_cache:
-                key: v<< parameters.cache-gen >>-prefix-<< parameters.cache-key-prefix >>-nuget-python<< parameters.python-arch >>-<< parameters.python-version >>-{{ .Environment.CIRCLE_JOB }}
-                paths:
-                  - c:\python\python<< parameters.python-arch >>.<< parameters.python-version >>
-
 
 jobs:
 
@@ -233,13 +65,13 @@ jobs:
     steps:
       - checkout
 
-      - run: &build-sdist
-          name: Build sdist
-          command: |
-            python -m venv env
-            . env/bin/activate
-            pip install -r requirements.txt
-            python setup.py sdist -d ./distotheque
+      - ocean/pip-install:
+          requirements: requirements.txt
+          cache: false
+
+      - ocean/build-dist:
+          dist-type: sdist
+          dist-dir: ./distotheque
 
       - store_artifacts: *store-dist
 
@@ -259,26 +91,13 @@ jobs:
       - attach_workspace: &attach-dist
           at: distotheque
 
-      - install-requirements-nix:
-          cache: true
+      - ocean/install-requirements
 
-      - run: &install-package
-          name: Install package
-          command: |
-            env/bin/pip install --no-index --find-links=distotheque dwave-greedy
+      - ocean/pip-install:
+          args: --no-index --find-links=distotheque dwave-greedy
 
-      - run: &run-python-tests
-          name: Run Python tests
-          command: |
-            . env/bin/activate
-            cd tests    # make sure we use the installed package
-            coverage run -m unittest discover
-
-      - run: &upload-python-code-coverage
-          name: Upload code coverage
-          command: |
-            . env/bin/activate
-            codecov     # calls `coverage xml`, so we must activate venv
+      - ocean/coverage-run-unittest:
+          upload-coverage: true
 
       - run: &run-cpp-tests
           name: Run C++ tests
@@ -356,18 +175,19 @@ jobs:
     steps:
       - checkout
 
-      - pyenv-install-python:
+      - ocean/brew-install-pyenv
+
+      - ocean/pyenv-install-python:
           python-version: << parameters.python-version >>
-          cache: true
           cache-key-prefix: << parameters.xcode >>
 
-      - run: &build-wheel
-          name: Build wheel
-          command: |
-            python -m venv env
-            . env/bin/activate
-            pip install -r requirements.txt
-            python setup.py bdist_wheel -d ./distotheque
+      - ocean/pip-install:
+          requirements: requirements.txt
+          cache: false
+
+      - ocean/build-dist:
+          dist-type: bdist_wheel
+          dist-dir: ./distotheque
 
       - store_artifacts: *store-dist
 
@@ -387,19 +207,20 @@ jobs:
     steps:
       - checkout
 
-      - pyenv-install-python:
+      - ocean/brew-install-pyenv
+
+      - ocean/pyenv-install-python:
           python-version: << parameters.python-version >>
-          cache: true
           cache-key-prefix: << parameters.xcode >>
 
       - attach_workspace: *attach-dist
 
-      - install-requirements-nix:
-          cache: true
+      - ocean/install-requirements
 
-      - run: *install-package
+      - ocean/pip-install:
+          args: --no-index --find-links=distotheque dwave-greedy
 
-      - run: *run-python-tests
+      - ocean/coverage-run-unittest
 
       - run: *run-cpp-tests
 
@@ -420,18 +241,17 @@ jobs:
     steps:
       - checkout
 
-      - nuget-install-python:
+      - ocean/nuget-install-python:
           python-arch: << parameters.python-arch >>
           python-version: << parameters.python-version >>
-          cache: true
 
-      - run:
-          name: Build wheel
-          command: |
-            python -m venv env
-            env\Scripts\activate.ps1
-            pip install -r requirements.txt
-            python setup.py bdist_wheel -d ./distotheque
+      - ocean/pip-install:
+          requirements: requirements.txt
+          cache: false
+
+      - ocean/build-dist:
+          dist-type: bdist_wheel
+          dist-dir: ./distotheque
 
       - store_artifacts: *store-dist
 
@@ -450,28 +270,18 @@ jobs:
     steps:
       - checkout
 
-      - nuget-install-python:
+      - ocean/nuget-install-python:
           python-arch: << parameters.python-arch >>
           python-version: << parameters.python-version >>
-          cache: true
 
       - attach_workspace: *attach-dist
 
-      - install-requirements-win:
-          cache: true
+      - ocean/install-requirements
 
-      - run:
-          name: Install package
-          command: |
-            env\Scripts\activate.ps1
-            pip install --no-index --find-links=distotheque dwave-greedy
+      - ocean/pip-install:
+          args: --no-index --find-links=distotheque dwave-greedy
 
-      - run:
-          name: Run Python tests
-          command: |
-            env\Scripts\activate.ps1
-            cd tests
-            coverage run -m unittest discover
+      - ocean/coverage-run-unittest
 
   #
   # docs
@@ -486,15 +296,11 @@ jobs:
 
       - attach_workspace: *attach-dist
 
-      - install-requirements-nix:
-          cache: true
+      - ocean/install-requirements:
+          requirements: requirements.txt tests/requirements.txt docs/requirements.txt
 
-      - run: *install-package
-
-      - run:
-          name: Install docs requirements
-          command: |
-            env/bin/pip install -r docs/requirements.txt
+      - ocean/pip-install:
+          args: --no-index --find-links=distotheque dwave-greedy
 
       - run:
           name: Build docs
