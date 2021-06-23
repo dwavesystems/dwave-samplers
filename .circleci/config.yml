@@ -1,13 +1,7 @@
 version: 2.1
 
 orbs:
-  win: circleci/windows@2.2.0
-  ocean: dwave/ocean@dev:37b6e77
-
-parameters:
-  xcode:
-    type: string
-    default: "12.3.0"
+  ocean: dwave/ocean@dev:62d6492
 
 environment:
   PIP_PROGRESS_BAR: off
@@ -60,149 +54,6 @@ jobs:
             pip install -r requirements.txt
             pip install --no-index --find-links=dist --only-binary=dwave-greedy dwave-greedy
 
-  #
-  # macos
-  #
-
-  build-macos:
-    parameters:
-      python-version:
-        type: string
-      xcode:
-        type: string
-        default: << pipeline.parameters.xcode >>
-
-    macos:
-      xcode: << parameters.xcode >>
-
-    environment:
-      # Force (lie about) macOS 10.9 binary compatibility.
-      # Needed for properly versioned wheels.
-      # See: https://github.com/MacPython/wiki/wiki/Spinning-wheels
-      MACOSX_DEPLOYMENT_TARGET: 10.9
-
-    steps:
-      - checkout
-
-      - ocean/brew-install-pyenv
-
-      - ocean/pyenv-install-python:
-          python-version: << parameters.python-version >>
-          cache-key-prefix: << parameters.xcode >>
-
-      - ocean/pip-install:
-          requirements: requirements.txt
-          cache: false
-
-      - ocean/build-dist:
-          dist-type: bdist_wheel
-          dist-dir: ./dist
-
-      - store_artifacts: &store-dist
-          path: dist
-
-      - persist_to_workspace: &persist-dist
-          root: dist
-          paths: .
-
-  test-macos:
-    parameters:
-      python-version:
-        type: string
-      xcode:
-        type: string
-        default: << pipeline.parameters.xcode >>
-
-    macos:
-      xcode: << parameters.xcode >>
-
-    steps:
-      - checkout
-
-      - ocean/brew-install-pyenv
-
-      - ocean/pyenv-install-python:
-          python-version: << parameters.python-version >>
-          cache-key-prefix: << parameters.xcode >>
-
-      - attach_workspace: *attach-dist
-
-      - ocean/install-requirements
-
-      - ocean/pip-install:
-          args: --no-index --find-links=dist dwave-greedy
-
-      - ocean/coverage-run-unittest
-
-      - run:
-          name: Run C++ tests
-          command: |
-            . env/bin/activate
-            make -C tests/
-
-  #
-  # windows
-  #
-
-  build-win:
-    parameters:
-      python-version:
-        type: string
-      python-arch:
-        type: string
-
-    executor:
-      name: win/default
-
-    steps:
-      - checkout
-
-      - ocean/nuget-install-python:
-          python-arch: << parameters.python-arch >>
-          python-version: << parameters.python-version >>
-
-      - ocean/pip-install:
-          requirements: requirements.txt
-          cache: false
-
-      - ocean/build-dist:
-          dist-type: bdist_wheel
-          dist-dir: ./dist
-
-      - store_artifacts: *store-dist
-
-      - persist_to_workspace: *persist-dist
-
-  test-win:
-    parameters:
-      python-version:
-        type: string
-      python-arch:
-        type: string
-
-    executor:
-      name: win/default
-
-    steps:
-      - checkout
-
-      - ocean/nuget-install-python:
-          python-arch: << parameters.python-arch >>
-          python-version: << parameters.python-version >>
-
-      - attach_workspace: *attach-dist
-
-      - ocean/install-requirements
-
-      - ocean/pip-install:
-          args: --no-index --find-links=dist dwave-greedy
-
-      - ocean/coverage-run-unittest
-
-  #
-  # docs
-  #
-
   test-docs:
     docker:
       - image: circleci/python:3.7    # RtD uses py37
@@ -212,7 +63,7 @@ jobs:
 
       - attach_workspace: *attach-dist
 
-      - ocean/install-requirements:
+      - ocean/pip-install:
           requirements: requirements.txt tests/requirements.txt docs/requirements.txt
 
       - ocean/pip-install:
@@ -238,10 +89,6 @@ jobs:
           command: |
             . env/bin/activate
             make -C docs/ linkcheck
-
-  #
-  # deploy package to PyPI
-  #
 
   pypi-deploy:
     docker:
@@ -284,8 +131,8 @@ workflows:
             - ocean/build-manylinux
           matrix:
             parameters:
-              package: ["dwave-greedy"]
               python-version: *python-versions
+              package: ["dwave-greedy"]
           filters:
             <<: *always-run
 
@@ -303,7 +150,7 @@ workflows:
           filters:
             <<: *always-run
 
-      - build-macos:
+      - ocean/build-macos-wheel:
           name: build-macos-py<< matrix.python-version >>
           matrix:
             parameters:
@@ -311,18 +158,19 @@ workflows:
           filters:
             <<: *always-run
 
-      - test-macos:
+      - ocean/test-macos-from-dist:
           name: test-macos-py<< matrix.python-version >>
           requires:
             - ocean/build-sdist
-            - build-macos
+            - ocean/build-macos-wheel
           matrix:
             parameters:
               python-version: *python-versions
+              package: ["dwave-greedy"]
           filters:
             <<: *always-run
 
-      - build-win:
+      - ocean/build-windows-wheel:
           name: build-win-<< matrix.python-arch >>-py<< matrix.python-version >>
           matrix:
             parameters:
@@ -331,22 +179,23 @@ workflows:
           filters:
             <<: *always-run
 
-      - test-win:
+      - ocean/test-windows-from-dist:
           name: test-win-<< matrix.python-arch >>-py<< matrix.python-version >>
           requires:
-            - build-win
+            - ocean/build-windows-wheel
           matrix:
             parameters:
               python-version: *python-versions
               python-arch: *python-archs-win
+              package: ["dwave-greedy"]
           filters:
             <<: *always-run
 
       - pypi-deploy:
           requires:
             - ocean/test-linux-from-dist
-            - test-macos
-            - test-win
+            - ocean/test-macos-from-dist
+            - ocean/test-windows-from-dist
             - test-docs
             - test-install
           filters:
