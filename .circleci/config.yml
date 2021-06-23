@@ -2,7 +2,7 @@ version: 2.1
 
 orbs:
   win: circleci/windows@2.2.0
-  ocean: dwave/ocean@dev:fee3dc9
+  ocean: dwave/ocean@dev:37b6e77
 
 parameters:
   xcode:
@@ -13,98 +13,6 @@ environment:
   PIP_PROGRESS_BAR: off
 
 jobs:
-
-  #
-  # linux
-  #
-
-  build-manylinux:
-    parameters:
-      manylinux-tag:
-        type: string
-      manylinux-arch:
-        type: string
-      python-version:
-        type: string
-
-    docker:
-      - image: quay.io/pypa/<< parameters.manylinux-tag >>_<< parameters.manylinux-arch >>
-
-    steps:
-      - checkout
-
-      - run:
-          name: Build wheels
-          command: |
-            for py in /opt/python/cp*/bin/python; do
-              ver=$("$py" -c 'import sys; print("{0.major}.{0.minor}".format(sys.version_info))')
-              req=<< parameters.python-version >>
-              [[ "$ver" != "${req:0:3}" ]] && continue
-              "$py" -m pip wheel . -w ./wheelhouse --no-deps
-            done
-
-      - run:
-          name: Bundle shared libraries into wheels
-          command: |
-            plat="<< parameters.manylinux-tag >>_<< parameters.manylinux-arch >>"
-            for whl in ./wheelhouse/*.whl; do
-              auditwheel repair "$whl" --plat "$plat" -w ./distotheque
-            done
-
-      - store_artifacts: &store-dist
-          path: distotheque
-
-      - persist_to_workspace: &persist-dist
-          root: distotheque
-          paths: .
-
-  build-sdist:
-    docker:
-      - image: circleci/python:3.9
-
-    steps:
-      - checkout
-
-      - ocean/pip-install:
-          requirements: requirements.txt
-          cache: false
-
-      - ocean/build-dist:
-          dist-type: sdist
-          dist-dir: ./distotheque
-
-      - store_artifacts: *store-dist
-
-      - persist_to_workspace: *persist-dist
-
-  test-linux:
-    parameters:
-      python-version:
-        type: string
-
-    docker:
-      - image: circleci/python:<< parameters.python-version >>
-
-    steps:
-      - checkout
-
-      - attach_workspace: &attach-dist
-          at: distotheque
-
-      - ocean/install-requirements
-
-      - ocean/pip-install:
-          args: --no-index --find-links=distotheque dwave-greedy
-
-      - ocean/coverage-run-unittest:
-          upload-coverage: true
-
-      - run: &run-cpp-tests
-          name: Run C++ tests
-          command: |
-            . env/bin/activate
-            make -C tests/ smoke
-
   test-install:
     docker:
       - image: circleci/python:3.7    # last version pip==8.1.0 works on
@@ -112,7 +20,8 @@ jobs:
     steps:
       - checkout
 
-      - attach_workspace: *attach-dist
+      - attach_workspace: &attach-dist
+          at: dist
 
       - run:
           # pip 10.0 is the first to support pyproject.toml build config
@@ -121,7 +30,7 @@ jobs:
             python -m venv env-sdist-pip10
             . env-sdist-pip10/bin/activate
             pip install 'pip==10.0'
-            pip install ./distotheque/dwave-greedy*.tar.gz
+            pip install ./dist/dwave-greedy*.tar.gz
 
       - run:
           name: Install from sdist with latest pip
@@ -129,7 +38,7 @@ jobs:
             python -m venv env-sdist
             . env-sdist/bin/activate
             pip install -U pip
-            pip install ./distotheque/dwave-greedy*.tar.gz
+            pip install ./dist/dwave-greedy*.tar.gz
 
       - run:
           # pip 8.1.0 is the first version that supports manylinux1
@@ -140,7 +49,7 @@ jobs:
             pip install 'pip==8.1.0'
             # TODO: can we search for package locally, but install deps from pypi?
             pip install -r requirements.txt
-            pip install --no-index --find-links=distotheque --only-binary=dwave-greedy dwave-greedy
+            pip install --no-index --find-links=dist --only-binary=dwave-greedy dwave-greedy
 
       - run:
           name: Install from wheel with latest pip
@@ -149,7 +58,7 @@ jobs:
             . env-wheel/bin/activate
             pip install -U pip
             pip install -r requirements.txt
-            pip install --no-index --find-links=distotheque --only-binary=dwave-greedy dwave-greedy
+            pip install --no-index --find-links=dist --only-binary=dwave-greedy dwave-greedy
 
   #
   # macos
@@ -187,11 +96,14 @@ jobs:
 
       - ocean/build-dist:
           dist-type: bdist_wheel
-          dist-dir: ./distotheque
+          dist-dir: ./dist
 
-      - store_artifacts: *store-dist
+      - store_artifacts: &store-dist
+          path: dist
 
-      - persist_to_workspace: *persist-dist
+      - persist_to_workspace: &persist-dist
+          root: dist
+          paths: .
 
   test-macos:
     parameters:
@@ -218,11 +130,15 @@ jobs:
       - ocean/install-requirements
 
       - ocean/pip-install:
-          args: --no-index --find-links=distotheque dwave-greedy
+          args: --no-index --find-links=dist dwave-greedy
 
       - ocean/coverage-run-unittest
 
-      - run: *run-cpp-tests
+      - run:
+          name: Run C++ tests
+          command: |
+            . env/bin/activate
+            make -C tests/
 
   #
   # windows
@@ -251,7 +167,7 @@ jobs:
 
       - ocean/build-dist:
           dist-type: bdist_wheel
-          dist-dir: ./distotheque
+          dist-dir: ./dist
 
       - store_artifacts: *store-dist
 
@@ -279,7 +195,7 @@ jobs:
       - ocean/install-requirements
 
       - ocean/pip-install:
-          args: --no-index --find-links=distotheque dwave-greedy
+          args: --no-index --find-links=dist dwave-greedy
 
       - ocean/coverage-run-unittest
 
@@ -300,7 +216,7 @@ jobs:
           requirements: requirements.txt tests/requirements.txt docs/requirements.txt
 
       - ocean/pip-install:
-          args: --no-index --find-links=distotheque dwave-greedy
+          args: --no-index --find-links=dist dwave-greedy
 
       - run:
           name: Build docs
@@ -340,18 +256,18 @@ jobs:
             python -m venv env
             . env/bin/activate
             pip install twine
-            twine upload -u $PYPI_USERNAME -p $PYPI_PASSWORD --skip-existing ./distotheque/*
+            twine upload -u $PYPI_USERNAME -p $PYPI_PASSWORD --skip-existing ./dist/*
 
 
 workflows:
   build-test-deploy:
     jobs:
-      - build-sdist:
+      - ocean/build-sdist:
           filters: &always-run  # required because it's indirectly required by the deploy job that runs on tags only
             tags:
               only: /.*/
 
-      - build-manylinux:
+      - ocean/build-manylinux:
           name: build-<< matrix.manylinux-tag >>_<< matrix.manylinux-arch >>-py<< matrix.python-version >>
           matrix:
             parameters:
@@ -361,28 +277,29 @@ workflows:
           filters:
             <<: *always-run
 
-      - test-linux:
+      - ocean/test-linux-from-dist:
           name: test-linux-py<< matrix.python-version >>
           requires:
-            - build-sdist
-            - build-manylinux
+            - ocean/build-sdist
+            - ocean/build-manylinux
           matrix:
             parameters:
+              package: ["dwave-greedy"]
               python-version: *python-versions
           filters:
             <<: *always-run
 
       - test-install:
           requires:
-            - build-sdist
-            - build-manylinux
+            - ocean/build-sdist
+            - ocean/build-manylinux
           filters:
             <<: *always-run
 
       - test-docs:
           requires:
-            - build-sdist
-            - build-manylinux
+            - ocean/build-sdist
+            - ocean/build-manylinux
           filters:
             <<: *always-run
 
@@ -397,7 +314,7 @@ workflows:
       - test-macos:
           name: test-macos-py<< matrix.python-version >>
           requires:
-            - build-sdist
+            - ocean/build-sdist
             - build-macos
           matrix:
             parameters:
@@ -427,7 +344,7 @@ workflows:
 
       - pypi-deploy:
           requires:
-            - test-linux
+            - ocean/test-linux-from-dist
             - test-macos
             - test-win
             - test-docs
