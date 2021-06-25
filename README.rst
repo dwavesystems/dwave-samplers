@@ -12,7 +12,7 @@
 
 .. image:: https://badge.fury.io/py/dwave-greedy.svg
     :target: https://badge.fury.io/py/dwave-greedy
-    :alt: Last version on PyPI
+    :alt: Latest version on PyPI
 
 .. image:: https://img.shields.io/pypi/pyversions/dwave-greedy.svg?style=flat
     :target: https://pypi.org/project/dwave-greedy/
