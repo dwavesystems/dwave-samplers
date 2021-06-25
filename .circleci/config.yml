@@ -6,7 +6,7 @@ parameters:
     default: dwave-greedy
 
 orbs:
-  ocean: dwave/ocean@dev:7db5e55
+  ocean: dwave/ocean@1.1
 
 environment:
   PIP_PROGRESS_BAR: off
@@ -83,6 +83,8 @@ workflows:
           requires:
             - ocean/build-sdist
             - ocean/build-manylinux-wheel
+          post-steps:
+            - run: make -C tests/
           matrix:
             parameters:
               python-version: *python-versions
@@ -121,6 +123,8 @@ workflows:
           requires:
             - ocean/build-sdist
             - ocean/build-macos-wheel
+          post-steps:
+            - run: make -C tests/
           matrix:
             parameters:
               python-version: *python-versions
