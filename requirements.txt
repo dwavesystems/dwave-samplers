@@ -1,4 +1,4 @@
-cython==0.29.6
+cython==0.29.21
 dimod==0.8.10
 dwave_networkx==0.7.1
-numpy==1.15.3
+numpy==1.19.4
