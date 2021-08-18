@@ -100,6 +100,10 @@ def steepest_gradient_descent(num_samples,
     cdef int _num_samples = num_samples
     cdef bool _large_sparse_opt = large_sparse_opt
     cdef vector[double] _linear_biases = linear_biases
+
+    # TODO: in dimod 0.10+, coupler indices default to int64, but we downcast
+    # them still to int. We can update this when we upgrade to a more efficient
+    # bqm data interface. Until then, beware of the 2B num_variables limit.
     cdef vector[int] _coupler_starts = coupler_starts
     cdef vector[int] _coupler_ends = coupler_ends
     cdef vector[double] _coupler_weights = coupler_weights
