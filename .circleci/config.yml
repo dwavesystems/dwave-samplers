@@ -6,7 +6,7 @@ parameters:
     default: dwave-greedy
 
 orbs:
-  ocean: dwave/ocean@1.1
+  ocean: dwave/ocean@1.2
 
 environment:
   PIP_PROGRESS_BAR: off
@@ -79,7 +79,7 @@ workflows:
             <<: *always-run
 
       - ocean/test-linux-from-dist:
-          name: test-linux-py<< matrix.python-version >>
+          name: test-linux-py<< matrix.python-version >>|<< matrix.constraints >>
           requires:
             - ocean/build-sdist
             - ocean/build-manylinux-wheel
@@ -89,6 +89,7 @@ workflows:
             parameters:
               python-version: *python-versions
               package: [<< pipeline.parameters.package >>]
+              constraints: ["dimod~=0.9.0,>=0.9.2", "dimod~=0.10.0"]
           filters:
             <<: *always-run
 
