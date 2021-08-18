@@ -79,7 +79,7 @@ class _PackageInfoModule(types.ModuleType):
             warnings.warn(
                 f"'{self.__name__}' module is deprecated. "
                 "Please convert your code to use `importlib.metadata` instead.",
-                DeprecationWarning)
+                DeprecationWarning, stacklevel=2)
             return val
         except KeyError:
             raise AttributeError(f"module '{self.__name__}' has no attribute '{name}'")

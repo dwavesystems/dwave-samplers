@@ -253,9 +253,7 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
 
         # get linear/quadratic data
         linear, (coupler_starts, coupler_ends, coupler_weights), offset = \
-            bqm.to_numpy_vectors(
-                variable_order=initial_states.variables,
-                dtype=np.double, index_dtype=np.intc)
+            bqm.to_numpy_vectors(variable_order=initial_states.variables)
 
         # we need initial states as contiguous numpy array
         initial_states_array = \

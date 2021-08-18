@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import unittest
+import warnings
 
 import greedy
 
@@ -22,20 +23,26 @@ class TestSteepestDescentSampler(unittest.TestCase):
     def test_import(self):
         from greedy import package_info, __version__
 
-        self.assertEqual(__version__, package_info.__version__)
-        self.assertEqual(__version__, greedy.package_info.__version__)
-        self.assertIn('__version__', dir(package_info))
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+            self.assertEqual(__version__, package_info.__version__)
+            self.assertEqual(__version__, greedy.package_info.__version__)
+            self.assertIn('__version__', dir(package_info))
 
     def test_attributes(self):
         pi = greedy.package_info
 
-        self.assertIsNotNone(pi.__package_name__)
-        self.assertIsNotNone(pi.__version__)
-        self.assertIsNotNone(pi.__author__)
-        self.assertIsNotNone(pi.__author_email__)
-        self.assertIsNotNone(pi.__description__)
-        self.assertIsNotNone(pi.__url__)
-        self.assertIsNotNone(pi.__license__)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+            self.assertIsNotNone(pi.__package_name__)
+            self.assertIsNotNone(pi.__version__)
+            self.assertIsNotNone(pi.__author__)
+            self.assertIsNotNone(pi.__author_email__)
+            self.assertIsNotNone(pi.__description__)
+            self.assertIsNotNone(pi.__url__)
+            self.assertIsNotNone(pi.__license__)
 
     def test_deprecation(self):
         with self.assertWarns(DeprecationWarning):
