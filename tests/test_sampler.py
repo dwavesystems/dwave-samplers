@@ -138,8 +138,8 @@ class TestMarginals:
         # for each variable, we need the sum over all energies when variable
         # is low or high
         energies = {}
-        for v in bqm:
-            idx = exact.variables.index[v]
+        for v in bqm.variables:
+            idx = exact.variables.index(v)
 
             hien = exact.record[exact.record.sample[:, idx] > 0].energy
 

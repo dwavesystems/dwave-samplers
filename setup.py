@@ -31,7 +31,7 @@ python_requires = '>=3.6'
 exec(open("./orang/package_info.py").read())
 
 install_requires = ['numpy>=1.15.0,<2.0.0',
-                    'dimod>=0.8.0,<0.9.0',
+                    'dimod>=0.8.0,<0.11.0',
                     'dwave_networkx>=0.7.0,<0.8.0',
                     ]
 

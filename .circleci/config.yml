@@ -35,6 +35,7 @@ jobs:
           command: |
             . env/bin/activate
             python --version
+            pip install --upgrade pip
             pip install -r requirements.txt -r tests/requirements.txt
 
       - save_cache: &save-cache-template
@@ -148,6 +149,7 @@ jobs:
           command: |
             env\Scripts\activate.ps1
             python --version
+            pip install --upgrade pip
             pip install -r tests/requirements.txt
 
       - run:  &win-install-boost-template
