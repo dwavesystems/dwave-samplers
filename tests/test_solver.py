@@ -1,18 +1,17 @@
 # Copyright 2019 D-Wave Systems Inc.
 #
-#    Licensed under the Apache License, Version 2.0 (the "License");
-#    you may not use this file except in compliance with the License.
-#    You may obtain a copy of the License at
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-#        http://www.apache.org/licenses/LICENSE-2.0
+#   http://www.apache.org/licenses/LICENSE-2.0
 #
-#    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an "AS IS" BASIS,
-#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    See the License for the specific language governing permissions and
-#    limitations under the License.
-#
-# =============================================================================
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import inspect
 import itertools
 import unittest
@@ -29,14 +28,14 @@ class TestConstruction(unittest.TestCase):
 
         # check that the args exposed by parameters is consistent with the
         # sampler inputs
-        # getargspec is deprecated in python3, but for backwards compatibility
-        args = {arg for arg in inspect.getargspec(sampler.sample).args
+        args = {arg for arg in inspect.getfullargspec(sampler.sample).args
                 if arg != 'self' and arg != 'bqm'}
         self.assertEqual(set(sampler.parameters), args)
 
         self.assertEqual(sampler.properties, {'max_treewidth': 25})
 
 
+@dimod.testing.load_sampler_bqm_tests(OrangSolver())
 class TestSample(unittest.TestCase):
     def test_empty(self):
         bqm = dimod.BinaryQuadraticModel.empty(dimod.SPIN)
@@ -121,7 +120,7 @@ class TestSample(unittest.TestCase):
 
     def test_offset(self):
         bqm = dimod.BinaryQuadraticModel.from_qubo({pair: -1 for pair in itertools.combinations(range(4), 2)})
-        bqm.add_offset(-5)
+        bqm.offset += -5
 
         samples = OrangSolver().sample(bqm, num_reads=2)
         dimod.testing.assert_response_energies(samples, bqm)

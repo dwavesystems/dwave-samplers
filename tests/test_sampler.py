@@ -1,19 +1,16 @@
 # Copyright 2019 D-Wave Systems Inc.
 #
-#    Licensed under the Apache License, Version 2.0 (the "License");
-#    you may not use this file except in compliance with the License.
-#    You may obtain a copy of the License at
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-#        http://www.apache.org/licenses/LICENSE-2.0
+#   http://www.apache.org/licenses/LICENSE-2.0
 #
-#    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an "AS IS" BASIS,
-#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    See the License for the specific language governing permissions and
-#    limitations under the License.
-#
-# =============================================================================
-from __future__ import division
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 import collections
 import inspect
@@ -22,6 +19,7 @@ import unittest
 
 import dimod
 import numpy as np
+import networkx as nx
 
 from orang import OrangSampler
 
@@ -33,14 +31,13 @@ class TestConstruction(unittest.TestCase):
 
         # check that the args exposed by parameters is consistent with the
         # sampler inputs
-        # getargspec is deprecated in python3, but for backwards compatibility
-        args = {arg for arg in inspect.getargspec(sampler.sample).args
+        args = {arg for arg in inspect.getfullargspec(sampler.sample).args
                 if arg != 'self' and arg != 'bqm'}
         self.assertEqual(set(sampler.parameters), args)
 
         self.assertEqual(sampler.properties, {'max_treewidth': 25})
 
-
+@dimod.testing.load_sampler_bqm_tests(OrangSampler())
 class TestSample(unittest.TestCase):
     def test_empty(self):
         bqm = dimod.BinaryQuadraticModel.empty(dimod.SPIN)
@@ -264,3 +261,15 @@ class TestK3BINARY(unittest.TestCase, TestMarginals):
 
 class Test3pathBINARY(unittest.TestCase, TestMarginals):
     bqm = dimod.BinaryQuadraticModel.from_qubo({'ab': .69, 'bc': 1})
+
+
+class TestLongerPath(unittest.TestCase, TestMarginals):
+    g = nx.path_graph(10)
+    linear = {node: np.random.randint(-20,20) for node in g.nodes}
+    quadratic = {edge: np.random.randint(-20,20) for edge in g.edges}
+    bqm = dimod.BinaryQuadraticModel(linear, quadratic, "BINARY")
+
+
+class TestDictBQM(unittest.TestCase, TestMarginals):
+    bqm = dimod.AdjDictBQM({'a': 6.0, 0: 1}, {('a', 0): -3, (0, 'c'): 10}, 0, 'BINARY')
+
