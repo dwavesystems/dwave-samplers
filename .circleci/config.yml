@@ -23,12 +23,14 @@ jobs:
           at: dist
 
       - run:
-          # pip 10.0 is the first to support pyproject.toml build config
-          name: Install from sdist with pip==10.0
+          # pip 19.0 is the first to support pyproject.toml build config *with*
+          # environment markers (note: we split numpy on py310), and
+          # *manylinux2010* wheels (required by the numpy version we use)
+          name: Install from sdist with pip==19.0
           command: |
-            python -m venv env-sdist-pip10
-            . env-sdist-pip10/bin/activate
-            pip install 'pip==10.0'
+            python -m venv env-sdist-pip19
+            . env-sdist-pip19/bin/activate
+            pip install 'pip==19.0'
             pip install ./dist/dwave-greedy*.tar.gz
 
       - run:
