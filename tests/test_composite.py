@@ -18,7 +18,7 @@ from collections import abc
 import numpy as np
 
 import dimod
-from dwave.system.testing import MockDWaveSampler, mock
+from dwave.system.testing import MockDWaveSampler
 
 from greedy.composite import SteepestDescentComposite
 
