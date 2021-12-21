@@ -48,9 +48,11 @@ jobs:
             python -m venv env-wheel-pip8
             . env-wheel-pip8/bin/activate
             pip install 'pip==8.1.0'
-            # TODO: can we search for package locally, but install deps from pypi?
-            pip install -r requirements.txt
-            pip install --no-index --find-links=dist --only-binary=dwave-greedy dwave-greedy
+            # simulate install from wheel on pypi (but use local dist)
+            # (1) install greedy only (no deps) from local dist
+            pip install --no-index --find-links=dist --only-binary=dwave-greedy dwave-greedy --no-deps
+            # (2) install deps only from pypi
+            pip install --find-links=dist --only-binary=:all: dwave-greedy
 
       - run:
           name: Install from wheel with latest pip
