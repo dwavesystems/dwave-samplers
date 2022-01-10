@@ -51,22 +51,31 @@ def sample_bqm_wrapper(bqm: BinaryQuadraticModel,
                        marginals: bool = False,
                        num_reads: int = 1,
                        seed: float = None) -> Tuple[np.ndarray, dict]:
-    """Cython wrapper for sample_bqm().
+    """Cython wrapper for :func:`sampleBQM`.
 
     Args:
-        bqm: Binary quadratic model to sample from.
+        bqm:
+            Binary quadratic model to sample from.
 
-        beta: `Boltzmann distribution`_ inverse temperature parameter.
+        beta:
+            `Boltzmann distribution`_ inverse temperature parameter.
 
         max_complexity:
+            Upper bound on algorithm's complexity.
 
         order:
+            The elimination order of variables.
 
         marginals:
+            Determines whether or not to compute the marginals. If True, they 
+            will be included in the returned dict.
 
-        num_reads: Number of samples to return.
+        num_reads:
+            Number of samples to return.
 
-        seed: 
+        seed:
+            Random number generator seed. Negative values will cause a time-based 
+            seed to be used.
 
     Returns:
         The samples and marginals.

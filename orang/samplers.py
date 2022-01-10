@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import List, Optional
+
 import dimod
+from dimod.typing import Variable
 import dwave_networkx as dnx
 import numpy as np
 
@@ -29,23 +32,22 @@ class OrangSolver(dimod.Sampler):
     given binary quadratic model.
 
     Examples:
-
-        Create a solver
+        Create a solver:
 
         >>> solver = orang.OrangSolver()
 
-        Create a simple Ising problem
+        Create a simple Ising problem:
 
         >>> h = {'a': .1, 'b': 0}
         >>> J = {('a', 'b') : -1}
 
-        We can use Orang to find the ground state
+        We can use Orang to find the ground state.
 
         >>> sampleset = solver.sample_ising(h, J)
         >>> sampleset.first.sample
         {'a': -1, 'b': -1}
 
-        We can also take multiple reads to find states of increasing energy
+        We can also take multiple reads to find states of increasing energy.
 
         >>> sampleset = solver.sample_ising(h, J, num_reads=3)
         >>> print(sampleset)
@@ -87,21 +89,22 @@ class OrangSolver(dimod.Sampler):
         self.parameters = dict(OrangSolver.parameters)
         self.properties = dict(OrangSolver.properties)
 
-    def sample(self, bqm, num_reads=1, elimination_order=None):
+    def sample(self, bqm: dimod.BinaryQuadraticModel, num_reads: Optional[int] = 1,
+               elimination_order: Optional[List[Variable]] = None) -> dimod.SampleSet:
         """Find ground states of a binary quadratic model.
 
         Args:
-            bqm (:obj:`dimod.BinaryQuadraticModel`):
-                A binary quadratic model.
+            bqm:
+                The binary quadratic model.
 
-            num_reads (int, optional, default=1):
+            num_reads:
                 The total number of samples to draw. The samples are drawn in
-                order of energy so if `num_reads=1` only the ground state will
-                be returned. If `num_reads=2` the ground state and the first
-                excited state. If `num_reads >= len(bqm)**2` then samples
-                are duplicated.
+                order of energy so if `num_reads=1`, only the ground state will
+                be returned. If `num_reads=2`, the ground state and the first
+                excited state are returned. If `num_reads >= len(bqm)**2`, then 
+                samples are duplicated.
 
-            elimination_order (list, optional):
+            elimination_order:
                 The variable elimination order. Should be a list of the
                 variables in the binary quadratic model. If None is provided,
                 the min-fill heuristic [#gd]_ is used to generate one.
@@ -179,12 +182,11 @@ class OrangSampler(dimod.Sampler):
     `Boltzmann distribution`_ defined by the given binary quadratic model.
 
     Examples:
-
-        Create a sampler
+        Create a sampler:
 
         >>> sampler = orang.OrangSampler()
 
-        Create a simple Ising problem
+        Create a simple Ising problem:
 
         >>> h = {'a': .1, 'b': 0}
         >>> J = {('a', 'b') : -1}
@@ -196,7 +198,7 @@ class OrangSampler(dimod.Sampler):
         >>> sampleset.first.sample
         {'a': -1, 'b': -1}
 
-        We can also see information about the distribution
+        We can also see information about the distribution.
 
         >>> variable_marginals = sampleset.info['variable_marginals']
         >>> round(variable_marginals['a'], 3)  # prob(a == 1)
@@ -248,33 +250,32 @@ class OrangSampler(dimod.Sampler):
         self.parameters = dict(OrangSampler.parameters)
         self.properties = dict(OrangSampler.properties)
 
-    def sample(self, bqm, num_reads=1, elimination_order=None,
-               beta=3,
-               marginals=True,
-               seed=None):
+    def sample(self, bqm: dimod.BinaryQuadraticModel, num_reads: Optional[int] = 1,
+               elimination_order: Optional[List[Variable]] = None, beta: Optional[float] = 3.0,
+               marginals: Optional[bool] = True, seed: Optional[int] = None) -> dimod.SampleSet:
         """Draw samples and compute marginals of a binary quadratic model.
 
         Args:
-            bqm (:obj:`dimod.BinaryQuadraticModel`):
+            bqm:
                 A binary quadratic model.
 
-            num_reads (int, optional, default=1):
+            num_reads:
                 The number of samples to draw.
 
-            elimination_order (list, optional):
+            elimination_order:
                 The variable elimination order. Should be a list of the
                 variables in the binary quadratic model. If None is provided,
                 the min-fill heuristic [#gd]_ is used to generate one.
 
-            beta (float, optional, default=3.0):
+            beta:
                 `Boltzmann distribution`_ inverse temperature parameter.
 
-            marginals (bool, optional, default=True):
+            marginals:
                 Whether or not to compute the marginals. If True, they will be
                 included in the return :obj:`~dimod.SampleSet`'s `info` field.
                 See example in :class:`.OrangSampler`.
 
-            seed (int, optional):
+            seed:
                 Random number generator seed. Negative values will cause a
                 time-based seed to be used.
 
