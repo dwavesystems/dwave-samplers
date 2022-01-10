@@ -47,11 +47,11 @@ packages = ['orang',
 extensions = [Extension("orang.solve",
                         ["orang/solve.pyx",
                          ],
-                        include_dirs=['orang/src/include']),
+                        include_dirs=['orang/src/include', np.get_include(), dimod.get_include()]),
               Extension("orang.sample",
                         ["orang/sample.pyx",
                          ],
-                        include_dirs=['orang/src/include']),
+                        include_dirs=['orang/src/include', np.get_include(), dimod.get_include()]),
               ]
 
 class build_ext(_build_ext):
@@ -97,8 +97,4 @@ setup(
     python_requires=python_requires,
     setup_requires=setup_requires,
     ext_modules=cythonize(extensions),
-    include_dirs=[
-        np.get_include(),
-        dimod.get_include(),
-    ]
 )

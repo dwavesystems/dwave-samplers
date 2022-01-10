@@ -123,13 +123,12 @@ class OrangSolver(dimod.Sampler):
            https://arxiv.org/abs/1207.4109
 
         """
-        if bqm.dtype != np.float:
-            bqm = dimod.as_bqm(bqm, copy=True, dtype=float)
-
         if not bqm:
             samples = np.empty((num_reads, 0), dtype=samples_dtype)
             energies = bqm.energies(samples, dtype=energies_dtype)
             return dimod.SampleSet.from_samples(samples, bqm.vartype, energy=energies)
+
+        bqm = dimod.as_bqm(bqm, copy=True, dtype=float)
 
         max_samples = min(num_reads, 2**len(bqm))
 
@@ -304,9 +303,6 @@ class OrangSampler(dimod.Sampler):
         .. _Boltzmann distribution: https://en.wikipedia.org/wiki/Boltzmann_distribution
 
         """
-        if bqm.dtype != np.float:
-            bqm = dimod.as_bqm(bqm, copy=True, dtype=float)
-
         if not bqm:
             info = {'log_partition_function': 0.0}
             if marginals:
@@ -316,6 +312,8 @@ class OrangSampler(dimod.Sampler):
             energies = bqm.energies(samples, dtype=energies_dtype)
             return dimod.SampleSet.from_samples(samples, bqm.vartype,
                                                 energy=energies, info=info)
+
+        bqm = dimod.as_bqm(bqm, copy=True, dtype=float)
 
         if elimination_order is None:
             # note that this does not respect the given seed
