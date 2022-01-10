@@ -42,7 +42,7 @@ cdef extern from "src/include/sample.hpp":
                          int** samples_data, int* samples_rows, int* samples_cols,
                          double** single_mrg_data, int* single_mrg_len,
                          double** pair_mrg_data, int* pair_mrg_rows, int* pair_mrg_cols,
-                         int** pair_data, int* pair_rows, int* pair_cols)
+                         int** pair_data, int* pair_rows, int* pair_cols) except +
 
 def sample_bqm_wrapper(bqm: BinaryQuadraticModel,
                        beta: float,

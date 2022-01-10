@@ -33,7 +33,7 @@ cdef extern from "src/include/solve.hpp":
                         double max_complexity,
                         int max_solutions,
                         double** energies_data, int* energies_len,
-                        int** sols_data, int* sols_rows, int* sols_cols)
+                        int** sols_data, int* sols_rows, int* sols_cols) except +
 
 samples_dtype = np.intc  # needs to be consistent with samples_type
 energies_dtype = np.double  # needs to be consistent with energies_type 
