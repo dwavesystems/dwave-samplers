@@ -42,7 +42,24 @@ def solve_bqm_wrapper(bqm: BinaryQuadraticModel,
                       order: list,
                       max_complexity: int,
                       max_solutions: int = 1):
-    """Cython wrapper for solve_bqm()."""
+    """Cython wrapper for :func:`solveBQM`.
+
+    Args:
+        bqm:
+            Binary quadratic model to sample from.
+
+        order:
+            The elimination order of variables.
+
+        max_complexity:
+            Upper bound on algorithm's complexity.
+
+        max_solutions:
+            Maximum number of solutions to find.
+
+    Returns:
+        The samples and marginals.
+    """
 
     if not bqm.num_variables:
         raise ValueError("bqm must have at least one variable.")
