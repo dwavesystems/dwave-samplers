@@ -46,10 +46,10 @@ def solve_bqm_wrapper(bqm: BinaryQuadraticModel,
 
     Args:
         bqm:
-            Binary quadratic model to sample from.
+            Binary quadratic model to sample from. Variables must be linearly indexed.
 
         order:
-            The elimination order of variables.
+            List of variables representing the variable elimination order.
 
         max_complexity:
             Upper bound on algorithm's complexity.
@@ -63,6 +63,9 @@ def solve_bqm_wrapper(bqm: BinaryQuadraticModel,
 
     if not bqm.num_variables:
         raise ValueError("bqm must have at least one variable.")
+
+    if len(order) != bqm.num_variables or set(order) != bqm.variables:
+        raise ValueError("order must contain the variables in bqm.")
 
     cdef cyBQM_float64 cybqm = bqm.data
     cdef double beta = -1  # solving

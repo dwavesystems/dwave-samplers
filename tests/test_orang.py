@@ -64,3 +64,14 @@ class TestWrappers(unittest.TestCase):
                                beta=1,
                                max_complexity=2,
                                order=elimination_order)
+
+    def test_invalid_order(self):
+        bqm = dimod.BQM({0: 0, 1: 1, 2: -1}, {}, 0, 'BINARY')
+
+        with self.assertRaises(ValueError):
+            elimination_order = [0,1]
+            solve_bqm_wrapper(bqm=bqm, max_complexity=2, order=elimination_order)
+
+        with self.assertRaises(ValueError):
+            elimination_order = ['a','b','c']
+            sample_bqm_wrapper(bqm=bqm, beta=1, max_complexity=2, order=elimination_order)

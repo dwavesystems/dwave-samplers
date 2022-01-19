@@ -55,7 +55,7 @@ def sample_bqm_wrapper(bqm: BinaryQuadraticModel,
 
     Args:
         bqm:
-            Binary quadratic model to sample from.
+            Binary quadratic model to sample from. Variables must be linearly indexed.
 
         beta:
             `Boltzmann distribution`_ inverse temperature parameter.
@@ -64,17 +64,17 @@ def sample_bqm_wrapper(bqm: BinaryQuadraticModel,
             Upper bound on algorithm's complexity.
 
         order:
-            The elimination order of variables.
+            List of variables representing the variable elimination order.
 
         marginals:
-            Determines whether or not to compute the marginals. If True, they 
+            Determines whether or not to compute the marginals. If True, they
             will be included in the returned dict.
 
         num_reads:
             Number of samples to return.
 
         seed:
-            Random number generator seed. Negative values will cause a time-based 
+            Random number generator seed. Negative values will cause a time-based
             seed to be used.
 
     Returns:
@@ -82,6 +82,9 @@ def sample_bqm_wrapper(bqm: BinaryQuadraticModel,
     """
     if not bqm.num_variables:
         raise ValueError("bqm must have at least one variable.")
+
+    if len(order) != bqm.num_variables or set(order) != bqm.variables:
+        raise ValueError("order must contain the variables in bqm.")
 
     cdef cyBQM_float64 cybqm = bqm.data
 
