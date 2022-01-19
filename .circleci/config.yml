@@ -131,8 +131,9 @@ jobs:
       <<: *global-environment
       CIBW_PROJECT_REQUIRES_PYTHON: ~=<< parameters.python-version>>
       CIBW_ARCHS_WINDOWS: AMD64
-      CIBW_BEFORE_BUILD_WINDOWS: nuget install boost -ExcludeVersion -OutputDirectory .
-      CIBW_ENVIRONMENT_WINDOWS: PATH=$PATH:/boost/lib/native/include/
+      CIBW_BEFORE_BUILD_WINDOWS: nuget install boost -ExcludeVersion -OutputDirectory . && echo path is %PATH% && echo %cd%
+      CIBW_ENVIRONMENT_WINDOWS: >
+        PATH="C:\\cibw\\boost\\lib\\native\\include;$PATH"
 
     steps:
       - checkout
@@ -405,91 +406,91 @@ jobs:
 workflows:
   tests:
     jobs:
-      - build-linux: &build
-          matrix:
-            parameters:
-              python-version: &python-versions [3.6.8, 3.7.9, 3.8.9, 3.9.4, 3.10.0]
-      - build-linux-aarch64: *build
-      - build-sdist
-      - build-osx: &build-osx
-          matrix:
-            parameters:
-              python-version: *python-versions
-              cibw-arch: [x86_64, universal2]
-            exclude:
-              - python-version: 3.6.8
-                cibw-arch: universal2
-              - python-version: 3.7.9
-                cibw-arch: universal2
+      # - build-linux: &build
+      #     matrix:
+      #       parameters:
+      #         python-version: &python-versions [3.6.8, 3.7.9, 3.8.9, 3.9.4, 3.10.0]
+      # - build-linux-aarch64: *build
+      # - build-sdist
+      # - build-osx: &build-osx
+      #     matrix:
+      #       parameters:
+      #         python-version: *python-versions
+      #         cibw-arch: [x86_64, universal2]
+      #       exclude:
+      #         - python-version: 3.6.8
+      #           cibw-arch: universal2
+      #         - python-version: 3.7.9
+      #           cibw-arch: universal2
       - build-windows:
           matrix:
             parameters:
-              python-version: *python-versions
-      - test-codecov
-      - test-doctest
-      - test-linux:
-          name: test-linux-py<< matrix.python-version >>
-          requires:
-            - build-linux
-          matrix:
-            parameters:
-              python-version: *python-versions
-      - test-osx:
-          name: test-osx-py<< matrix.python-version >>
-          requires:
-            - build-osx
-          matrix:
-            parameters:
-              python-version: *python-versions
-            exclude:
-              # this doesn't play nicely with the xcode version we're using.
-              # rather than mess around with https://github.com/pyenv/pyenv/issues/1740
-              # etc let's just skip until december
-              - python-version: 3.6.8
-      - test-sdist:
-          requires:
-            - build-sdist
+              python-version: [3.8.9, 3.9.4]
+      # - test-codecov
+      # - test-doctest
+      # - test-linux:
+      #     name: test-linux-py<< matrix.python-version >>
+      #     requires:
+      #       - build-linux
+      #     matrix:
+      #       parameters:
+      #         python-version: *python-versions
+      # - test-osx:
+      #     name: test-osx-py<< matrix.python-version >>
+      #     requires:
+      #       - build-osx
+      #     matrix:
+      #       parameters:
+      #         python-version: *python-versions
+      #       exclude:
+      #         # this doesn't play nicely with the xcode version we're using.
+      #         # rather than mess around with https://github.com/pyenv/pyenv/issues/1740
+      #         # etc let's just skip until december
+      #         - python-version: 3.6.8
+      # - test-sdist:
+      #     requires:
+      #       - build-sdist
       - test-windows:
           name: test-windows-py<< matrix.python-version >>
           requires:
             - build-windows
           matrix:
             parameters:
-              python-version: *python-versions
-      - test-linux-cpp
-  deploy:
-    jobs:
-      - build-linux: &deploy-build
-          <<: *build
-          filters:
-            tags:
-              only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
-            branches:
-              ignore: /.*/
-      - build-linux-aarch64: *deploy-build
-      - build-osx:
-          <<: *build-osx
-          filters:
-            tags:
-              only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
-            branches:
-              ignore: /.*/
-      - build-sdist:
-          filters:
-            tags:
-              only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
-            branches:
-              ignore: /.*/
-      - build-windows: *deploy-build
-      - deploy-all:
-          filters:
-            tags:
-              only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
-            branches:
-              ignore: /.*/
-          requires:
-            - build-linux
-            - build-linux-aarch64
-            - build-osx
-            - build-sdist
-            - build-windows
+              python-version: [3.8.9, 3.9.4]
+  #     - test-linux-cpp
+  # deploy:
+  #   jobs:
+  #     - build-linux: &deploy-build
+  #         <<: *build
+  #         filters:
+  #           tags:
+  #             only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
+  #           branches:
+  #             ignore: /.*/
+  #     - build-linux-aarch64: *deploy-build
+  #     - build-osx:
+  #         <<: *build-osx
+  #         filters:
+  #           tags:
+  #             only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
+  #           branches:
+  #             ignore: /.*/
+  #     - build-sdist:
+  #         filters:
+  #           tags:
+  #             only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
+  #           branches:
+  #             ignore: /.*/
+  #     - build-windows: *deploy-build
+  #     - deploy-all:
+  #         filters:
+  #           tags:
+  #             only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
+  #           branches:
+  #             ignore: /.*/
+  #         requires:
+  #           - build-linux
+  #           - build-linux-aarch64
+  #           - build-osx
+  #           - build-sdist
+  #           - build-windows
