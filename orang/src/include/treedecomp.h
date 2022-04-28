@@ -157,7 +157,7 @@ public:
     roots_() {
 
     using std::vector;
-    using std::auto_ptr;
+    using std::unique_ptr;
     using std::set_intersection;
     using std::back_inserter;
     using std::ostringstream;
@@ -210,7 +210,7 @@ public:
       Var v = varOrder[i];
       Var vParent = varParents[v];
 
-      auto_ptr<TreeDecompNode> vNode( new TreeDecompNode(v) );
+      unique_ptr<TreeDecompNode> vNode( new TreeDecompNode(v) );
       double nodeWidth = log(static_cast<double>(domSizes[v]));
       BOOST_FOREACH( Var u, adjSets[v] ) {
         vNode->sepVars().push_back(u);
@@ -225,10 +225,10 @@ public:
 
       nodes[v] = vNode.get();
       if (vParent == Var(-1)) {
-        roots_.push_back( vNode );
+        roots_.push_back( vNode.release() );
       } else {
         vNode->parent() = nodes[vParent];
-        nodes[vParent]->children().push_back( vNode );
+        nodes[vParent]->children().push_back( vNode.release() );
       }
     }
 
