@@ -131,9 +131,9 @@ jobs:
       <<: *global-environment
       CIBW_PROJECT_REQUIRES_PYTHON: ~=<< parameters.python-version>>
       CIBW_ARCHS_WINDOWS: AMD64
-      CIBW_BEFORE_BUILD_WINDOWS: nuget install boost -ExcludeVersion -OutputDirectory . && echo path is %PATH% && echo %cd% && echo include is %INCLUDE%
+      CIBW_BEFORE_BUILD_WINDOWS: nuget install boost -ExcludeVersion -OutputDirectory .
       CIBW_ENVIRONMENT_WINDOWS: >
-        INCLUDE="$INCLUDE;C:\\Users\\circleci\\project\\boost\\lib\\native\\include"
+        INCLUDE="$INCLUDE;boost\\lib\\native\\include"
 
 
     steps:
