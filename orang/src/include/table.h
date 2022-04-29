@@ -26,7 +26,6 @@
 #include <vector>
 #include <limits>
 
-#include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <exception.h>
