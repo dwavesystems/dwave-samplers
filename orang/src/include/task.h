@@ -138,17 +138,17 @@ public:
       const VarVector& clampedVars) const {
 
     value_type v = combineIdentity();
-    BOOST_FOREACH( const value_type& rv, rootValues ) {
+    for (const auto &rv: rootValues) {
       v = combine(v, rv);
     }
 
     VarVector::const_iterator cvEnd = clampedVars.end();
-    BOOST_FOREACH( const const_table_smartptr& tp, tables_ ) {
+    for (const auto &tp: tables_) {
       bool allClamped = true;
       typename table_type::const_iterator tblIter = tp->begin();
 
       VarVector::const_iterator cvIter = clampedVars.begin();
-      BOOST_FOREACH( const TableVar& tv, tp->vars() ) {
+      for (const auto &tv: tp->vars()) {
         while (cvIter != cvEnd && *cvIter < tv.index) {
           ++cvIter;
         }
@@ -185,7 +185,7 @@ Task<Ops>::baseTables(
 
   table_vector retTables;
 
-  BOOST_FOREACH( const_table_smartptr t, tables_ ) {
+  for (const auto &t: tables_) {
 
     // check if t's scope contains dNode.nodeVar and is otherwise contained in dNode.sepVars + dNodes.clampedVars
     bool goodScope = false;
