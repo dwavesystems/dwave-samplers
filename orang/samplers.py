@@ -301,6 +301,8 @@ class OrangSampler(dimod.Sampler):
 
         .. _treewidth: https://en.wikipedia.org/wiki/Treewidth
         .. _Boltzmann distribution: https://en.wikipedia.org/wiki/Boltzmann_distribution
+        .. [#gd] Gogate & Dechter, "A Complete Anytime Algorithm for Treewidth",
+           https://arxiv.org/abs/1207.4109
 
         """
         if not bqm:
