@@ -166,7 +166,6 @@ TableMerger<T>::operator ()(
   // typedef and using declarations
 
   using std::size_t;
-  using std::auto_ptr;
   using std::vector;
   using std::find_if;
   using std::mem_fun_ref;

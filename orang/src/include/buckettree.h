@@ -26,7 +26,6 @@
 #include <boost/foreach.hpp>
 #include <boost/iterator/indirect_iterator.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/scoped_ptr.hpp>
 
 #include <base.h>
 #include <exception.h>
