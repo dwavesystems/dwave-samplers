@@ -23,7 +23,6 @@
 #include <vector>
 
 #include <boost/assign/list_of.hpp>
-#include <boost/foreach.hpp>
 
 #include <base.h>
 #include <table.h>
@@ -114,7 +113,7 @@ BOOST_AUTO_TEST_CASE( solvable_marginalizer )
 
   BOOST_CHECK_CLOSE(mrg(tableData::inIndex, mrgTable), tableData::expectedMinMrgValue, 1e-6);
 
-  BOOST_FOREACH( const VarVector* expectedOutSol, tableData::expectedOutSols ) {
+  for (const auto &expectedOutSol: tableData::expectedOutSols) {
     DomIndexVector outSol = tableData::inSol;
     mrg.solve(outSol);
     BOOST_CHECK_EQUAL_COLLECTIONS(outSol.begin(), outSol.end(),
