@@ -23,7 +23,6 @@
 
 #include <boost/iterator/indirect_iterator.hpp>
 #include <boost/random.hpp>
-#include <boost/foreach.hpp>
 
 #include <base.h>
 #include <table.h>
@@ -91,7 +90,7 @@ vector<double> singleMarginals(const BucketTree<SampleTask>& bucket_tree) {
   VarVector vars1(1);
   TableMerger<SampleTask> merge_tables(bucket_tree.task());
   SampleTask::marginalizer_smartptr marginalizer = bucket_tree.task().marginalizer();
-  BOOST_FOREACH( const BucketTree<SampleTask>::nodetables_type& nt, bucket_tree.nodeTables() ) {
+  for (const auto &nt: bucket_tree.nodeTables()) {
     vars1[0] = nt.nodeVar;
     SampleTask::table_smartptr m_table = merge_tables(vars1, make_indirect_iterator(nt.tables.begin()),
         make_indirect_iterator(nt.tables.end()), *marginalizer);
@@ -106,7 +105,7 @@ vector<double> singleMarginals(const BucketTree<SampleTask>& bucket_tree) {
 PairMrgMap pairMarginals(const BucketTree<SampleTask>& bucket_tree) {
   PairMrgMap mrg;
 
-  BOOST_FOREACH( const SampleTask::const_table_smartptr& t, bucket_tree.task().tables() ) {
+  for (const auto &t: bucket_tree.task().tables()) {
     if (t->vars().size() == 2) {
       VarPair p(t->vars()[0].index, t->vars()[1].index);
       mrg[p];
@@ -116,8 +115,8 @@ PairMrgMap pairMarginals(const BucketTree<SampleTask>& bucket_tree) {
   VarVector vars2(2);
   TableMerger<SampleTask> merge_tables(bucket_tree.task());
   SampleTask::marginalizer_smartptr marginalizer = bucket_tree.task().marginalizer();
-  BOOST_FOREACH( const BucketTree<SampleTask>::nodetables_type& nt, bucket_tree.nodeTables() ) {
-    BOOST_FOREACH( Var v, nt.sepVars ) {
+  for (const auto &nt: bucket_tree.nodeTables()) {
+    for (const auto &v : nt.sepVars) {
       VarPair p(min(nt.nodeVar, v), max(nt.nodeVar, v));
       if (mrg.find(p) == mrg.end()) continue;
       vars2[0] = p.first;
@@ -204,7 +203,7 @@ void sample(SampleTask& task,
     pair_mp.reset(mallocOrThrow(pair_mrg.size() * 2 * sizeof(**pair_data)));
     int* pair_mp_data = static_cast<int*>(pair_mp.get());
     double* pair_mrg_mp_data = static_cast<double*>(pair_mrg_mp.get());
-    BOOST_FOREACH( const PairMrgMap::value_type& e, pair_mrg ) {
+    for (const auto &e: pair_mrg) {
       *pair_mp_data++ = static_cast<int>(e.first.first);
       *pair_mp_data++ = static_cast<int>(e.first.second);
       *pair_mrg_mp_data++ = e.second.values[0];
