@@ -10,12 +10,16 @@
 .. image:: https://circleci.com/gh/dwavesystems/dwave-orang.svg?style=svg
     :target: https://circleci.com/gh/dwavesystems/dwave-orang
 
-orang
-=====
+===========
+dwave-orang
+===========
 
 .. index-start-marker
 
-Generic tree decomposition-based solver.
+An implementation of a `generic tree decomposition-based solver <https://en.wikipedia.org/wiki/Tree_decomposition>`_ 
+for binary quadratic models, using bucket tree elimination.
+
+This package contains both an exact solver (OrangSolver) and a Boltzmann sampler (OrangSampler).
 
 .. index-end-marker
 
@@ -66,9 +70,10 @@ To install from source:
 License
 -------
 
-Released under the Apache License 2.0. See LICENSE file.
+Released under the Apache License 2.0. See `<LICENSE>`_ file.
 
-Contribution
+Contributing
 ------------
 
-See CONTRIBUTING.rst file.
+Ocean's `contributing guide <https://docs.ocean.dwavesys.com/en/stable/contributing.html>`_
+has guidelines for contributing to Ocean packages.

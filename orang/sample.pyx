@@ -1,83 +1,107 @@
 # distutils: language = c++
 # cython: language_level = 3
 #
-# =============================================================================
 # Copyright 2019 D-Wave Systems Inc.
 #
-#    Licensed under the Apache License, Version 2.0 (the "License");
-#    you may not use this file except in compliance with the License.
-#    You may obtain a copy of the License at
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-#        http://www.apache.org/licenses/LICENSE-2.0
+#   http://www.apache.org/licenses/LICENSE-2.0
 #
-#    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an "AS IS" BASIS,
-#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    See the License for the specific language governing permissions and
-#    limitations under the License.
-#
-# =============================================================================
-import dimod
-import numpy as np
-cimport numpy as np
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
+from typing import Tuple
 from libcpp cimport bool
 from libc.stdlib cimport free
 
-from orang.conversions cimport coo_tables
-from orang.orang cimport tables_type, samples_type, sampleTables
+import numpy as np
+import dimod
+from dimod.binary.binary_quadratic_model import BinaryQuadraticModel
 
-cdef extern from "numpy/arrayobject.h":
-    void PyArray_ENABLEFLAGS(np.ndarray arr, int flags)
+cimport numpy as np
+from dimod cimport cyBQM_float64
+from dimod.libcpp cimport cppBinaryQuadraticModel
 
-samples_dtype = np.intc  # needs to be consistent with samples_type
+from orang.orang cimport samples_type, PyArray_ENABLEFLAGS
 
+cdef extern from "src/include/sample.hpp":
+    void sampleBQM[V, B](cppBinaryQuadraticModel[B, V]& refBQM,
+                         int* var_order,
+                         double beta,
+                         int low,
+                         double max_complexity,
+                         int num_samples,
+                         bool marginals,
+                         int seed,
+                         double* log_pf,
+                         int** samples_data, int* samples_rows, int* samples_cols,
+                         double** single_mrg_data, int* single_mrg_len,
+                         double** pair_mrg_data, int* pair_mrg_rows, int* pair_mrg_cols,
+                         int** pair_data, int* pair_rows, int* pair_cols) except +
 
-def sample_coo(linear, quadratic, offset, vartype, beta, max_complexity, order=None,
-               num_reads=1, marginals=False, seed=None):
+def sample_bqm_wrapper(bqm: BinaryQuadraticModel,
+                       beta: float,
+                       max_complexity: float,
+                       order: list,
+                       marginals: bool = False,
+                       num_reads: int = 1,
+                       seed: float = None) -> Tuple[np.ndarray, dict]:
+    """Cython wrapper for :func:`sampleBQM`.
 
-    cdef int num_variables = len(linear)
-    cdef double dlow = -1 if vartype is dimod.SPIN else 0
-    cdef double b = beta
+    Args:
+        bqm:
+            Binary quadratic model to sample from. Variables must be linearly indexed.
 
-    cdef int seed_
+        beta:
+            `Boltzmann distribution`_ inverse temperature parameter.
+
+        max_complexity:
+            Upper bound on algorithm's complexity.
+
+        order:
+            List of variables representing the variable elimination order.
+
+        marginals:
+            Determines whether or not to compute the marginals. If True, they
+            will be included in the returned dict.
+
+        num_reads:
+            Number of samples to return.
+
+        seed:
+            Random number generator seed. Negative values will cause a time-based
+            seed to be used.
+
+    Returns:
+        The samples and marginals.
+    """
+    if not bqm.num_variables:
+        raise ValueError("bqm must have at least one variable.")
+
+    if len(order) != bqm.num_variables or set(order) != bqm.variables:
+        raise ValueError("order must contain the variables in bqm.")
+
+    cdef cyBQM_float64 cybqm = bqm.data
+
+    cdef double _beta = beta
+    cdef double _max_complexity = max_complexity
+    cdef int low = -1 if bqm.vartype is dimod.SPIN else 0
+
+    cdef int _seed
     if seed is None:
-        seed_ = np.random.randint(np.iinfo(np.intc).max, dtype=np.intc)
+        _seed = np.random.randint(np.iinfo(np.intc).max, dtype=np.intc)
     else:
-        seed_ = seed
+        _seed = seed
 
-    if not num_variables:
-        # nothing to sample from
-        raise ValueError("coo must contain at least one variable")
+    cdef int[:] elimination_order = np.asarray(order, dtype=np.intc)
+    cdef int* elimination_order_ptr = &elimination_order[0]
 
-    cdef tables_type tables = coo_tables(linear, quadratic, dlow, b)
-
-    cdef int[:] elimination_order
-    if order is None:
-        elimination_order = np.arange(num_variables, dtype=np.intc)
-    else:
-        elimination_order = np.asarray(order, dtype=np.intc)
-
-    cdef int ilow = -1 if vartype is dimod.SPIN else 0
-
-    samples, marginals = sample_tables(tables, num_variables, ilow,
-                                       elimination_order, max_complexity,
-                                       num_reads, marginals, seed_)
-
-    # need to add the offset back in to the log partition function
-    marginals['log_partition_function'] += -beta*offset
-
-    return samples, marginals
-
-
-cdef sample_tables(tables_type tables, int num_variables, int low,
-                   int[:] elimination_order, double max_complexity,
-                   int num_reads, bool marginals, int seed):
-
-    cdef int elimination_order_length = elimination_order.shape[0]
-    cdef int* elimination_order_pointer = &elimination_order[0]
-
-    # pass in pointers so that sampleTables can fill things in
+    # pass in pointers so that sample_bqm can fill things in
     cdef double logpf
 
     # samples
@@ -94,16 +118,19 @@ cdef sample_tables(tables_type tables, int num_variables, int low,
     cdef int* pair_pointer
     cdef int prows, pcols
 
-    sampleTables(tables, num_variables, low,
-                 elimination_order_pointer, elimination_order_length, max_complexity,
-                 num_reads,
-                 marginals,
-                 seed,
-                 &logpf,
-                 &samples_pointer, &srows, &scols,
-                 &single_marginals_pointer, &smlen,
-                 &pair_marginals_pointer, &pmrows, &pmcols,
-                 &pair_pointer, &prows, &pcols)
+    sampleBQM(cybqm.cppbqm,
+              elimination_order_ptr,
+              _beta,
+              low,
+              _max_complexity,
+              num_reads,
+              marginals,
+              _seed,
+              &logpf,
+              &samples_pointer, &srows, &scols,
+              &single_marginals_pointer, &smlen,
+              &pair_marginals_pointer, &pmrows, &pmcols,
+              &pair_pointer, &prows, &pcols)
 
     # create a numpy array without making a copy then tell numpy it needs to
     # free the memory
@@ -141,5 +168,7 @@ cdef sample_tables(tables_type tables, int num_variables, int low,
                              )
     else:
         marginal_data = dict(log_partition_function=logpf)
+
+    marginal_data['log_partition_function'] += -beta*bqm.offset
 
     return samples, marginal_data
