@@ -20,7 +20,6 @@
 
 #include <cmath>
 
-#include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <base.h>
@@ -63,7 +62,7 @@ private:
   virtual value_type marginalizeImpl(std::size_t, const table_type& mrgTable) {
     typename value_type::value_type bestValue = mrgTable.begin()->value();
     double totalCount = 0.0;
-    BOOST_FOREACH( const value_type& v, mrgTable ) {
+    for (const auto &v: mrgTable) {
       if (cmp_(v.value(), bestValue)) {
         bestValue = v.value();
         totalCount = v.count();
