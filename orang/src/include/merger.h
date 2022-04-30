@@ -25,8 +25,7 @@
 #include <algorithm>
 #include <functional>
 #include <utility>
-
-#include <boost/ptr_container/ptr_vector.hpp>
+#include <memory>
 
 #include <base.h>
 #include <table.h>
@@ -167,11 +166,9 @@ TableMerger<T>::operator ()(
   using std::size_t;
   using std::vector;
   using std::find_if;
-  using std::mem_fun_ref;
   using std::distance;
   using std::make_pair;
-
-  using boost::ptr_vector;
+  using std::unique_ptr;
 
   using internal::GrayVar;
   using internal::TableVarIter;
@@ -185,7 +182,7 @@ TableMerger<T>::operator ()(
   typedef TableVarIter<table_type> tablevariter_type;
   typedef vector<tablevariter_type> tablevariter_vector;
 
-  typedef ptr_vector<GrayVar<T> > grayvar_ptrvector;
+  typedef std::vector<unique_ptr<GrayVar<T>>> grayvar_ptrvector;
 
   //===========================================================================================================
   //
@@ -234,8 +231,9 @@ TableMerger<T>::operator ()(
   size_t mrgIndex = 0;
 
   // Gray-counting vectors.  One for variables in outScope, one for all other variables appearing in inTables.
-  grayvar_ptrvector outGrayVars(outScope.size());
-  grayvar_ptrvector mrgGrayVars(0);
+  grayvar_ptrvector outGrayVars;
+  grayvar_ptrvector mrgGrayVars;
+  outGrayVars.reserve(outScope.size());
 
   //===========================================================================================================
   //
@@ -265,15 +263,15 @@ TableMerger<T>::operator ()(
 
     // Determine which GrayVar vector is to receive the new GrayVar.
     if (outVarIter != outVarEnd && currentVar == outVarIter->index) {
-      outGrayVars.push_back(new GrayVar<T>(outVarIter->domSize, &outIndex, outVarIter->stepSize));
-      grayVar = &outGrayVars.back();
+      outGrayVars.push_back(unique_ptr<GrayVar<T>>(new GrayVar<T>(outVarIter->domSize, &outIndex, outVarIter->stepSize)));
+      grayVar = outGrayVars.back().get();
       ++outVarIter;
     } else {
       DomIndex domSize = task_.domSize(currentVar);
       mrgScope.push_back(currentVar);
       mrgDomSizes.push_back(domSize);
-      mrgGrayVars.push_back(new GrayVar<T>(domSize, &mrgIndex, mrgDelta));
-      grayVar = &mrgGrayVars.back();
+      mrgGrayVars.push_back(unique_ptr<GrayVar<T>>(new GrayVar<T>(domSize, &mrgIndex, mrgDelta)));
+      grayVar = mrgGrayVars.back().get();
       mrgDelta *= domSize;
     }
 
@@ -316,12 +314,12 @@ TableMerger<T>::operator ()(
       for (auto it = inTableIters.begin() + 1; it != inTableIters.end(); ++it) {
         mrgTable[mrgIndex] = task_type::combine(mrgTable[mrgIndex], **it);
       }
-    } while (find_if(mrgGrayVars.begin(), mrgGrayVars.end(), mem_fun_ref(&GrayVar<T>::advance)) != mrgGrayVars.end());
+    } while (find_if(mrgGrayVars.begin(), mrgGrayVars.end(), std::mem_fn(&GrayVar<T>::advance)) != mrgGrayVars.end());
 
     outTableRef[outIndex] = marginalize(outIndex, mrgTable);
 
     // loop condition: GrayVar<T>::advance returns true iff its value changed.  Continue until no value changes
-  } while (find_if(outGrayVars.begin(), outGrayVars.end(), mem_fun_ref(&GrayVar<T>::advance)) != outGrayVars.end());
+  } while (find_if(outGrayVars.begin(), outGrayVars.end(), std::mem_fn(&GrayVar<T>::advance)) != outGrayVars.end());
 
   //===========================================================================================================
   //
