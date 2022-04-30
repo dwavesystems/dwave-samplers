@@ -22,9 +22,9 @@
 #include <algorithm>
 #include <iterator>
 #include <vector>
+#include <memory>
 
 #include <boost/iterator/indirect_iterator.hpp>
-#include <boost/shared_ptr.hpp>
 
 #include <base.h>
 #include <exception.h>
@@ -62,7 +62,7 @@ private:
   typedef typename task_type::solvablemarginalizer_type solvablemarginalizer_type;
 
   struct Node {
-    typedef boost::shared_ptr<Node> smartptr;
+    typedef std::shared_ptr<Node> smartptr;
 
     std::vector<smartptr> children;
     table_vector baseTables;

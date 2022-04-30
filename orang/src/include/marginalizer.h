@@ -19,8 +19,7 @@
 #define INCLUDED_ORANG_MARGINALIZER_H
 
 #include <cstddef>
-
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include <base.h>
 #include <table.h>
@@ -94,8 +93,8 @@ struct MarginalizerTypes {
   typedef S solution_type;
   typedef Marginalizer<Y> marginalizer_type;
   typedef SolvableMarginalizer<Y,S> solvablemarginalizer_type;
-  typedef boost::shared_ptr<marginalizer_type> marginalizer_smartptr;
-  typedef boost::shared_ptr<solvablemarginalizer_type> solvablemarginalizer_smartptr;
+  typedef std::shared_ptr<marginalizer_type> marginalizer_smartptr;
+  typedef std::shared_ptr<solvablemarginalizer_type> solvablemarginalizer_smartptr;
 };
 
 } // namespace orang

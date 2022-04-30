@@ -25,8 +25,7 @@
 #include <string>
 #include <vector>
 #include <limits>
-
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include <exception.h>
 #include <base.h>
@@ -63,8 +62,8 @@ public:
   typedef typename std::vector<Y>::iterator iterator;
   typedef typename std::vector<Y>::const_iterator const_iterator;
 
-  typedef boost::shared_ptr<Table> smartptr;
-  typedef boost::shared_ptr<const Table> const_smartptr;
+  typedef std::shared_ptr<Table> smartptr;
+  typedef std::shared_ptr<const Table> const_smartptr;
 
 private:
   std::vector<TableVar> vars_;

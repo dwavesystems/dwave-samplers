@@ -31,11 +31,9 @@ using std::numeric_limits;
 
 #include <boost/lambda/bind.hpp>
 #include <boost/assign/list_of.hpp>
-#include <boost/shared_ptr.hpp>
 using boost::lambda::bind;
 using boost::lambda::_1;
 using boost::assign::list_of;
-using boost::shared_ptr;
 
 #include <base.h>
 #include <table.h>
