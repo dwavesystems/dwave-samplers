@@ -92,8 +92,8 @@ vector<double> singleMarginals(const BucketTree<SampleTask>& bucket_tree) {
   SampleTask::marginalizer_smartptr marginalizer = bucket_tree.task().marginalizer();
   for (const auto &nt: bucket_tree.nodeTables()) {
     vars1[0] = nt.nodeVar;
-    SampleTask::table_smartptr m_table = merge_tables(vars1, make_indirect_iterator(nt.tables.begin()),
-        make_indirect_iterator(nt.tables.end()), *marginalizer);
+    SampleTask::table_smartptr m_table = merge_tables(vars1, nt.tables.begin(),
+        nt.tables.end(), *marginalizer);
 
     Normalizer normalize((*marginalizer)(0, *m_table));
     mrg[nt.nodeVar] = normalize((*m_table)[1]);
@@ -121,8 +121,8 @@ PairMrgMap pairMarginals(const BucketTree<SampleTask>& bucket_tree) {
       if (mrg.find(p) == mrg.end()) continue;
       vars2[0] = p.first;
       vars2[1] = p.second;
-      SampleTask::table_smartptr m_table = merge_tables(vars2, make_indirect_iterator(nt.tables.begin()),
-          make_indirect_iterator(nt.tables.end()), *marginalizer);
+      SampleTask::table_smartptr m_table = merge_tables(vars2, nt.tables.begin(),
+          nt.tables.end(), *marginalizer);
 
       Normalizer normalize((*marginalizer)(0, *m_table));
       PairMrgVals& mv = mrg[p];
