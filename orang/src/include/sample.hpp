@@ -21,7 +21,6 @@
 #include <cstddef>
 #include <cstdlib>
 
-#include <boost/iterator/indirect_iterator.hpp>
 #include <boost/random.hpp>
 
 #include <base.h>
@@ -42,8 +41,6 @@ using std::min;
 using std::numeric_limits;
 using std::pair;
 using std::vector;
-
-using boost::make_indirect_iterator;
 
 using orang::Var;
 using orang::DomIndexVector;
@@ -255,10 +252,7 @@ void sampleBQM(
     vector<Table<double>::smartptr> tables = getTables(bqm, beta, low);
 
     int num_vars = bqm.num_variables();
-    SampleTask task(make_indirect_iterator(tables.begin()),
-                    make_indirect_iterator(tables.end()),
-                    rng,
-                    num_vars);
+    SampleTask task(tables.begin(), tables.end(), rng, num_vars);
 
     sample(task,
            var_order,

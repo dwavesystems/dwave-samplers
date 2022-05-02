@@ -21,8 +21,6 @@
 #include <cstddef>
 #include <cstdlib>
 
-#include <boost/iterator/indirect_iterator.hpp>
-
 #include <base.h>
 #include <table.h>
 #include <task.h>
@@ -36,8 +34,6 @@
 using std::size_t;
 using std::numeric_limits;
 using std::vector;
-
-using boost::make_indirect_iterator;
 
 using orang::DomIndexVector;
 using orang::VarVector;
@@ -130,10 +126,7 @@ void solveBQM(dimod::BinaryQuadraticModel<B, V> &bqm,
   vector<Table<double>::smartptr> tables = getTables(bqm, beta, low);
 
   int num_vars = bqm.num_variables();
-  SolveTask task(make_indirect_iterator(tables.begin()),
-                 make_indirect_iterator(tables.end()),
-                 1,
-                 num_vars);
+  SolveTask task(tables.begin(), tables.end(), 1, num_vars);
 
   solve(task,
         var_order,

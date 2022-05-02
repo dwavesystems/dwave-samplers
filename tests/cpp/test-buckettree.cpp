@@ -123,7 +123,7 @@ ostream& operator<<(ostream& out, const NodeTableSet<Y>& ns) {
 
 namespace testData {
 
-const vector<Table<int> > tables = list_of<Table<int> >
+vector<Table<int> > tables= list_of<Table<int> >
 ((vars =  0,  1,  2, domSizes = 2, 2, 2, values =  6,  8, -7,  8,  3, -8, -4,  1))
 ((vars =  0,  1,  3, domSizes = 2, 2, 2, values =  9,  9, -7,  9,  9,  0,  6, -7))
 ((vars =  1,  2,  4, domSizes = 2, 2, 2, values = -1,  8,  6,  9,  3, -9,  7,  8))
@@ -139,6 +139,14 @@ const vector<Table<int> > tables = list_of<Table<int> >
 ((vars =  8, 10, 11, domSizes = 2, 2, 2, values = -5,  6, -5,  8, -3, -6, -5,  2))
 ((vars =  9, 11, 12, domSizes = 2, 2, 2, values = -1, -3,  6,  2,  1,  8, -4,  5))
 ((vars = 10, 11, 12, domSizes = 2, 2, 2, values =  5, -2,  1, -8, -8,  1,  5,  8));
+
+const auto tablesPtr = []{
+  vector<Table<int>*> tmp;
+  for (auto &table: tables) {
+    tmp.push_back(&table);
+  }
+  return tmp;
+}();
 
 const VarVector varOrderAllClamped;
 const VarVector varOrderNoClamped = list_of(0)(1)(2)(3)(4)(5)(6)(7)(8)(9)(10)(11)(12);
@@ -353,7 +361,7 @@ BOOST_AUTO_TEST_CASE( allclamped_nosolve_notables )
   const DomIndexVector& x0 = testData::x0AllClamped;
   const int expectedProblemValue = testData::expectedProblemValueAllClamped;
 
-  task_type task(testData::tables.begin(), testData::tables.end(), 1);
+  task_type task(testData::tablesPtr.begin(), testData::tablesPtr.end(), 1);
   TreeDecomp decomp(task.graph(), varOrder, task.domSizes());
   BucketTree<task_type> bucketTree(task, decomp, x0, false, false);
 
@@ -368,7 +376,7 @@ BOOST_AUTO_TEST_CASE( noclamped_nosolve_notables )
   const DomIndexVector& x0 = testData::x0NoClamped;
   const int expectedProblemValue = testData::expectedProblemValueNoClamped;
 
-  task_type task(testData::tables.begin(), testData::tables.end(), 1);
+  task_type task(testData::tablesPtr.begin(), testData::tablesPtr.end(), 1);
   TreeDecomp decomp(task.graph(), varOrder, task.domSizes());
   BucketTree<task_type> bucketTree(task, decomp, x0, false, false);
 
@@ -383,7 +391,7 @@ BOOST_AUTO_TEST_CASE( tworoots_nosolve_notables )
   const DomIndexVector& x0 = testData::x0TwoRoots;
   const int expectedProblemValue = testData::expectedProblemValueTwoRoots;
 
-  task_type task(testData::tables.begin(), testData::tables.end(), 1);
+  task_type task(testData::tablesPtr.begin(), testData::tablesPtr.end(), 1);
   TreeDecomp decomp(task.graph(), varOrder, task.domSizes());
   BucketTree<task_type> bucketTree(task, decomp, x0, false, false);
 
@@ -400,7 +408,7 @@ BOOST_AUTO_TEST_CASE( allclamped_solve_notables )
   const int expectedProblemValue = testData::expectedProblemValueAllClamped;
   const MinSolutionSet<int>& expectedSolution = testData::expectedSolutionAllClamped;
 
-  task_type task(testData::tables.begin(), testData::tables.end(), 2);
+  task_type task(testData::tablesPtr.begin(), testData::tablesPtr.end(), 2);
   task.maxSolutions(1);
   TreeDecomp decomp(task.graph(), varOrder, task.domSizes());
   BucketTree<task_type> bucketTree(task, decomp, x0, true, false);
@@ -419,7 +427,7 @@ BOOST_AUTO_TEST_CASE( noclamped_solve_notables )
   const int expectedProblemValue = testData::expectedProblemValueNoClamped;
   const MinSolutionSet<int>& expectedSolution = testData::expectedSolutionNoClamped;
 
-  task_type task(testData::tables.begin(), testData::tables.end(), 2);
+  task_type task(testData::tablesPtr.begin(), testData::tablesPtr.end(), 2);
   task.maxSolutions(1);
   TreeDecomp decomp(task.graph(), varOrder, task.domSizes());
   BucketTree<task_type> bucketTree(task, decomp, x0, true, false);
@@ -438,7 +446,7 @@ BOOST_AUTO_TEST_CASE( tworoots_solve_notables )
   const int expectedProblemValue = testData::expectedProblemValueTwoRoots;
   const MinSolutionSet<int>& expectedSolution = testData::expectedSolutionTwoRoots;
 
-  task_type task(testData::tables.begin(), testData::tables.end(), 2);
+  task_type task(testData::tablesPtr.begin(), testData::tablesPtr.end(), 2);
   task.maxSolutions(1);
   TreeDecomp decomp(task.graph(), varOrder, task.domSizes());
   BucketTree<task_type> bucketTree(task, decomp, x0, true, false);
@@ -457,7 +465,7 @@ BOOST_AUTO_TEST_CASE( allclamped_nosolve_tables )
   const DomIndexVector& x0 = testData::x0AllClamped;
   const int expectedProblemValue = testData::expectedProblemValueAllClamped;
 
-  task_type task(testData::tables.begin(), testData::tables.end(), 1);
+  task_type task(testData::tablesPtr.begin(), testData::tablesPtr.end(), 1);
   TreeDecomp decomp(task.graph(), varOrder, task.domSizes());
   BucketTree<task_type> bucketTree(task, decomp, x0, false, true);
 
@@ -473,7 +481,7 @@ BOOST_AUTO_TEST_CASE( noclamped_nosolve_tables )
   const int expectedProblemValue = testData::expectedProblemValueNoClamped;
   const set<NodeTableSet<int> >& expectedNodeTablesSet = testData::expectedNodeTablesNoClamped;
 
-  task_type task(testData::tables.begin(), testData::tables.end(), 1);
+  task_type task(testData::tablesPtr.begin(), testData::tablesPtr.end(), 1);
   TreeDecomp decomp(task.graph(), varOrder, task.domSizes());
   BucketTree<task_type> bucketTree(task, decomp, x0, false, true);
 
@@ -494,7 +502,7 @@ BOOST_AUTO_TEST_CASE( tworoots_nosolve_tables )
   const int expectedProblemValue = testData::expectedProblemValueTwoRoots;
   const set<NodeTableSet<int> >& expectedNodeTablesSet = testData::expectedNodeTablesTwoRoots;
 
-  task_type task(testData::tables.begin(), testData::tables.end(), 1);
+  task_type task(testData::tablesPtr.begin(), testData::tablesPtr.end(), 1);
   TreeDecomp decomp(task.graph(), varOrder, task.domSizes());
   BucketTree<task_type> bucketTree(task, decomp, x0, false, true);
 
@@ -516,7 +524,7 @@ BOOST_AUTO_TEST_CASE( allclamped_solve_tables )
   const MinSolutionSet<int>& expectedSolution = testData::expectedSolutionAllClamped;
   const int expectedProblemValue = testData::expectedProblemValueAllClamped;
 
-  task_type task(testData::tables.begin(), testData::tables.end(), 1);
+  task_type task(testData::tablesPtr.begin(), testData::tablesPtr.end(), 1);
   task.maxSolutions(1);
   TreeDecomp decomp(task.graph(), varOrder, task.domSizes());
   BucketTree<task_type> bucketTree(task, decomp, x0, true, true);
@@ -536,7 +544,7 @@ BOOST_AUTO_TEST_CASE( noclamped_solve_tables )
   const MinSolutionSet<int>& expectedSolution = testData::expectedSolutionNoClamped;
   const set<NodeTableSet<int> >& expectedNodeTablesSet = testData::expectedNodeTablesNoClamped;
 
-  task_type task(testData::tables.begin(), testData::tables.end(), 1);
+  task_type task(testData::tablesPtr.begin(), testData::tablesPtr.end(), 1);
   task.maxSolutions(1);
   TreeDecomp decomp(task.graph(), varOrder, task.domSizes());
   BucketTree<task_type> bucketTree(task, decomp, x0, true, true);
@@ -562,7 +570,7 @@ BOOST_AUTO_TEST_CASE( tworoots_solve_tables )
   const MinSolutionSet<int>& expectedSolution = testData::expectedSolutionTwoRoots;
   const set<NodeTableSet<int> >& expectedNodeTablesSet = testData::expectedNodeTablesTwoRoots;
 
-  task_type task(testData::tables.begin(), testData::tables.end(), 1);
+  task_type task(testData::tablesPtr.begin(), testData::tablesPtr.end(), 1);
   task.maxSolutions(1);
   TreeDecomp decomp(task.graph(), varOrder, task.domSizes());
   BucketTree<task_type> bucketTree(task, decomp, x0, true, true);

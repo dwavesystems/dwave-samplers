@@ -96,7 +96,7 @@ public:
     Var numV = 0;
 
     for ( ; tablesBegin != tablesEnd; ++tablesBegin) {
-      const_table_smartptr tableCopy( new table_type(*tablesBegin) );
+      const_table_smartptr tableCopy( new table_type(**tablesBegin) );
       tables_.push_back(tableCopy);
 
       if (!tableCopy->vars().empty()) {

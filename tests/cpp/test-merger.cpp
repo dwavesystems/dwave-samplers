@@ -89,7 +89,7 @@ typedef task_type::marginalizer_smartptr marginalizer_smartptr;
 
 BOOST_AUTO_TEST_CASE( merger )
 {
-  task_type task(testData::inTables.begin(), testData::inTables.end(), 1);
+  task_type task(testData::inTablesPtr.begin(), testData::inTablesPtr.end(), 1);
   TableMerger<task_type> merge(task);
   marginalizer_smartptr marginalizer = task.marginalizer();
   const_table_smartptr outTable = merge(testData::outVars, testData::inTablesPtr.begin(), testData::inTablesPtr.end(), *marginalizer);
@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE( merger )
 
 BOOST_AUTO_TEST_CASE( merge_to_nullscope )
 {
-  task_type task(testData::inTables.begin(), testData::inTables.end(), 1);
+  task_type task(testData::inTablesPtr.begin(), testData::inTablesPtr.end(), 1);
   TableMerger<task_type> merge(task);
   marginalizer_smartptr marginalizer = task.marginalizer();
   const_table_smartptr outTable = merge(VarVector(), testData::inTablesPtr.begin(), testData::inTablesPtr.end(), *marginalizer);
@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE( merge_to_nullscope )
 
 BOOST_AUTO_TEST_CASE( empty_merger )
 {
-  task_type task(testData::inTables.begin(), testData::inTables.end(), 1);
+  task_type task(testData::inTablesPtr.begin(), testData::inTablesPtr.end(), 1);
   TableMerger<task_type> merge(task);
   marginalizer_smartptr marginalizer = task.marginalizer();
   const_table_smartptr outTable = merge(testData::emptyOutVars,

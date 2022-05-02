@@ -104,7 +104,7 @@ struct DummyRng {
 
 namespace testData {
 
-const vector<Table<int> > goodTables = list_of<Table<int> >
+vector<Table<int> > goodTables = list_of<Table<int> >
 ((vars = none,    domSizes = none,    values = 9999))
 ((vars = 0,       domSizes = 2,       values = -1, 1))
 ((vars = 5,       domSizes = 2,       values = 1, 10))
@@ -114,14 +114,31 @@ const vector<Table<int> > goodTables = list_of<Table<int> >
 ((vars = 1, 4, 5, domSizes = 2, 3, 2, values = 3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 6))
 ((vars = 6,       domSizes = 5,       values = 0, 0, 1, 0, 0));
 
+const auto goodTablesPtr = []{
+  vector<Table<int>*> tmp;
+  for (auto &table: goodTables) {
+    tmp.push_back(&table);
+  }
+  return tmp;
+}();
+
+
 const SizeVector expectedDomSizes = list_of(2)(2)(4)(1)(3)(2)(5)(1)(1);
 
 const Graph expectedGraph(list_of<Graph::adj_pair> (0,1) (0,2) (1,2) (1,4) (1,5) (4,5)
     .convert_to_container<vector<Graph::adj_pair> >(), 9);
 
-const vector<Table<int> > badTables = list_of<Table<int> >
+vector<Table<int> > badTables = list_of<Table<int> >
 ((vars = 1, 2, 3, domSizes = 2, 2, 2, values = 0, 0, 0, 0, 0, 0, 0, 0))
 ((vars = 0, 3,    domSizes = 2, 3,    values = 1, 1, 1, 1, 1, 1));
+
+const auto badTablesPtr = []{
+  vector<Table<int>*> tmp;
+  for (auto &table: badTables) {
+    tmp.push_back(&table);
+  }
+  return tmp;
+}();
 
 const TreeDecompNode dNode = initDNode( 1, (list_of(2)(5)), (list_of(4)) );
 const DomIndexVector baseTablesX0 = list_of(0)(0)(0)(0)(1)(0)(0);
@@ -129,8 +146,17 @@ const DomIndexVector baseTablesX0 = list_of(0)(0)(0)(0)(1)(0)(0);
 const set<Table<int> > expectedTables = list_of<Table<int> >
 ((vars = 1, 5, domSizes = 2, 2, values = 4, 1, 5, 3));
 
-const vector<Table<double> > doubleTables = list_of<Table<double> >
+vector<Table<double> > doubleTables = list_of<Table<double> >
 ((vars = 0, domSizes = 2, values = 1.0, 2.0));
+
+const auto doubleTablesPtr = []{
+  vector<Table<double>*> tmp;
+  for (auto &table: doubleTables) {
+    tmp.push_back(&table);
+  }
+  return tmp;
+}();
+
 
 const vector<double> rootValues = list_of(1.0)(2.0)(3.0);
 
@@ -156,7 +182,7 @@ typedef Task<logsumprod_ops_type> logsumprod_task_type;
 
 BOOST_AUTO_TEST_CASE( constructor )
 {
-  min_task_type task(testData::goodTables.begin(), testData::goodTables.end(), 1,
+  min_task_type task(testData::goodTablesPtr.begin(), testData::goodTablesPtr.end(), 1,
     static_cast<Var>(testData::expectedDomSizes.size()));
 
   BOOST_CHECK_EQUAL(task.numVars(), testData::expectedDomSizes.size());
@@ -177,13 +203,13 @@ BOOST_AUTO_TEST_CASE( constructor )
 BOOST_AUTO_TEST_CASE( constructor_exception )
 {
   BOOST_CHECK_THROW(
-      min_task_type task(testData::badTables.begin(), testData::badTables.end(), 1),
+      min_task_type task(testData::badTablesPtr.begin(), testData::badTablesPtr.end(), 1),
       InvalidArgumentException);
 }
 
 BOOST_AUTO_TEST_CASE( tables )
 {
-  min_task_type task(testData::goodTables.begin(), testData::goodTables.end(), 1);
+  min_task_type task(testData::goodTablesPtr.begin(), testData::goodTablesPtr.end(), 1);
   BOOST_CHECK_EQUAL_COLLECTIONS(make_indirect_iterator(
       task.tables().begin()), make_indirect_iterator(task.tables().end()),
       testData::goodTables.begin(), testData::goodTables.end());
@@ -192,7 +218,7 @@ BOOST_AUTO_TEST_CASE( tables )
 BOOST_AUTO_TEST_CASE( base_tables )
 {
   try {
-    min_task_type task(testData::goodTables.begin(), testData::goodTables.end(), 1);
+    min_task_type task(testData::goodTablesPtr.begin(), testData::goodTablesPtr.end(), 1);
 
     min_task_type::table_vector tables = task.baseTables(testData::dNode, testData::baseTablesX0);
     BOOST_CHECK_EQUAL_COLLECTIONS(make_indirect_iterator(tables.begin()), make_indirect_iterator(tables.end()),
@@ -207,7 +233,7 @@ BOOST_AUTO_TEST_CASE( base_tables )
 
 BOOST_AUTO_TEST_CASE( problem_value )
 {
-  logsumprod_task_type task(testData::goodTables.begin(), testData::goodTables.end(), testData::rng);
+  logsumprod_task_type task(testData::goodTablesPtr.begin(), testData::goodTablesPtr.end(), testData::rng);
 
   double pv = task.problemValue(testData::rootValues, testData::problemValueX0, testData::clampedVars);
   BOOST_CHECK_EQUAL(pv, testData::expectedProblemValue);
@@ -215,7 +241,7 @@ BOOST_AUTO_TEST_CASE( problem_value )
 
 BOOST_AUTO_TEST_CASE ( task_as_ops )
 {
-  min_task_type task(testData::doubleTables.begin(), testData::doubleTables.end(), 1);
+  min_task_type task(testData::doubleTablesPtr.begin(), testData::doubleTablesPtr.end(), 1);
   task.maxSolutions(2);
   BOOST_CHECK_EQUAL(task.maxSolutions(), 2);
 }
