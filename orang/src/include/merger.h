@@ -247,11 +247,10 @@ TableMerger<T>::operator ()(
   Var nextVar = outScope.empty() ? Var(-1) : outScope.front();
   tablevariter_vector tableVarIters;
   for (auto it = tablesBegin; it != tablesEnd; ++it) {
-    const auto &t = *it;
-    inTableIters.push_back(t.begin());
-    tableVarIters.push_back(tablevariter_type(t.vars().begin(), t.vars().end(), &inTableIters.back()));
+    inTableIters.push_back(it->begin());
+    tableVarIters.push_back(tablevariter_type(it->vars().begin(), it->vars().end(), &inTableIters.back()));
 
-    Var tableVar0 = t.vars().empty() ? Var(-1) : t.var(0).index;
+    Var tableVar0 = it->vars().empty() ? Var(-1) : it->var(0).index;
     nextVar = tableVar0 < nextVar ? tableVar0 : nextVar;
   }
 

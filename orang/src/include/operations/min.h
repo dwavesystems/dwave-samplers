@@ -154,9 +154,8 @@ private:
       valueindex_iterator svEnd = svBegin + outDomSize_;
 
       for (auto it = svBegin; it != svEnd; ++it) {
-        const auto vip = *it;
-        sol.solution[outVar_] = vip.second;
-        sol.value = minproblem_type::combine(baseValue, vip.first);
+        sol.solution[outVar_] = it->second;
+        sol.value = minproblem_type::combine(baseValue, it->first);
 
         if (outSolSet.size() < solSet.maxSolutions()) {
           outSolSet.insert(sol);
