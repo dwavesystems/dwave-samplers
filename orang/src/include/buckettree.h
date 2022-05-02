@@ -123,7 +123,7 @@ public:
     rootValues.reserve(decomp.roots().size());
     roots_.reserve(decomp.roots().size());
     for (const auto &dNode: decomp.roots()) {
-      roots_.push_back(buildNode(dNode, 0, rootValues, x0));
+      roots_.push_back(buildNode(*dNode, 0, rootValues, x0));
       if (!hasNodeTables_) {
         roots_.back()->lambdaTables.clear();
         roots_.back()->baseTables.clear();
@@ -136,7 +136,7 @@ public:
       nodeTables_.reserve(numNodes_);
       TreeDecompNode::node_vector::const_iterator dRootsIter = decomp.roots().begin();
       for (auto &r: roots_) {
-        buildNodeTables(r, *dRootsIter);
+        buildNodeTables(r, **dRootsIter);
         ++dRootsIter;
       }
     }
@@ -189,7 +189,7 @@ typename BucketTree<T>::node_smartptr BucketTree<T>::buildNode(
   n->baseTables = task_.baseTables(dNode, x0);
   n->children.reserve(dNode.children().size());
   for (const auto &cdn: dNode.children()) {
-    n->children.push_back( buildNode(cdn, &n->lambdaTables, rootValues, x0) );
+    n->children.push_back( buildNode(*cdn, &n->lambdaTables, rootValues, x0) );
   }
 
   if (solvable_) {
@@ -273,13 +273,13 @@ void BucketTree<T>::buildNodeTables(typename BucketTree<T>::Node::smartptr& node
         }
 
         node->children[i]->piTable = merge(
-            dChildren[i].sepVars(), boost::make_indirect_iterator(inTables.begin()),
+            dChildren[i]->sepVars(), boost::make_indirect_iterator(inTables.begin()),
             boost::make_indirect_iterator(inTables.end()), *mrg);
       }
     }
 
     for (size_t i = 0; i < numChildren; ++i) {
-      buildNodeTables(node->children[i], dChildren[i]);
+      buildNodeTables(node->children[i], *dChildren[i]);
     }
   }
 

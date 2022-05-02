@@ -22,7 +22,7 @@
 #include <functional>
 #include <utility>
 #include <vector>
-using std::mem_fun_ref;
+using std::mem_fn;
 using std::pair;
 using std::vector;
 
@@ -90,21 +90,21 @@ void preorderRecurse(const TreeDecompNode& n, VarVector& order) {
     order.push_back(cv);
   }
   for (const auto &cn: n.children()) {
-    preorderRecurse(cn, order);
+    preorderRecurse(*cn, order);
   }
 }
 
 VarVector preorderPlusClamped(const TreeDecomp& decomp) {
   VarVector order;
   for (const auto &r: decomp.roots()) {
-    preorderRecurse(r, order);
+    preorderRecurse(*r, order);
   }
   return order;
 }
 
 void postorderRecurse(const TreeDecompNode& n, VarVector& order) {
   for (const auto &cn: n.children()) {
-    postorderRecurse(cn, order);
+    postorderRecurse(*cn, order);
   }
   order.push_back(n.nodeVar());
   for (auto sv: n.sepVars()) {
@@ -115,7 +115,7 @@ void postorderRecurse(const TreeDecompNode& n, VarVector& order) {
 VarVector postorderPlusClamped(const TreeDecomp& decomp) {
   VarVector order;
   for (const auto &r: decomp.roots()) {
-    postorderRecurse(r, order);
+    postorderRecurse(*r, order);
   }
   return order;
 }
@@ -132,8 +132,8 @@ BOOST_AUTO_TEST_CASE( treedecomp1 )
     BOOST_CHECK_EQUAL_COLLECTIONS(decomp.clampedVars().begin(), decomp.clampedVars().end(),
         decompData::expectedClamped1.begin(), decompData::expectedClamped1.end());
     BOOST_CHECK_EQUAL_COLLECTIONS(
-        make_transform_iterator(decomp.roots().begin(), mem_fun_ref(&TreeDecompNode::nodeVar)),
-        make_transform_iterator(decomp.roots().end(), mem_fun_ref(&TreeDecompNode::nodeVar)),
+        make_transform_iterator(decomp.roots().begin(), mem_fn(&TreeDecompNode::nodeVar)),
+        make_transform_iterator(decomp.roots().end(), mem_fn(&TreeDecompNode::nodeVar)),
         decompData::expectedRoots1.begin(), decompData::expectedRoots1.end());
 
     VarVector preorder = preorderPlusClamped(decomp);
@@ -157,8 +157,8 @@ BOOST_AUTO_TEST_CASE( treedecomp2 )
     BOOST_CHECK_EQUAL_COLLECTIONS(decomp.clampedVars().begin(), decomp.clampedVars().end(),
         decompData::expectedClamped2.begin(), decompData::expectedClamped2.end());
     BOOST_CHECK_EQUAL_COLLECTIONS(
-        make_transform_iterator(decomp.roots().begin(), mem_fun_ref(&TreeDecompNode::nodeVar)),
-        make_transform_iterator(decomp.roots().end(), mem_fun_ref(&TreeDecompNode::nodeVar)),
+        make_transform_iterator(decomp.roots().begin(), mem_fn(&TreeDecompNode::nodeVar)),
+        make_transform_iterator(decomp.roots().end(), mem_fn(&TreeDecompNode::nodeVar)),
         decompData::expectedRoots2.begin(), decompData::expectedRoots2.end());
 
     VarVector preorder = preorderPlusClamped(decomp);
