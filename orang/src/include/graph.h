@@ -22,8 +22,6 @@
 #include <set>
 #include <utility>
 
-#include <boost/foreach.hpp>
-
 #include <base.h>
 
 namespace orang {
@@ -53,7 +51,7 @@ public:
 
     Var numVars = minVars;
     adjacency_set symAdjSet;
-    BOOST_FOREACH( const adj_pair& adjPair, adjSet ) {
+    for (const auto &adjPair: adjSet) {
       if (adjPair.first != adjPair.second) {
         symAdjSet.insert(adjPair);
         symAdjSet.insert(std::make_pair(adjPair.second, adjPair.first));
@@ -67,7 +65,7 @@ public:
     Var lastI = 0;
     adjOffsets_.push_back(lastI);
 
-    BOOST_FOREACH( const adj_pair& adjPair, symAdjSet ) {
+    for (const auto &adjPair: symAdjSet) {
       while (lastI <= adjPair.first) {
         ++lastI;
         adjOffsets_.push_back(adjOffsets_.back());

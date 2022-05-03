@@ -26,7 +26,6 @@
 #include <sstream>
 #include <cmath>
 
-#include <boost/foreach.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 
 #include <base.h>
@@ -110,7 +109,7 @@ private:
 
     // Copy partial graph structure in adjSets: for every edge {v,u} in g,
     // create an arc (v,u) iff both v and u appear in varOrder and u appears later than v.
-    BOOST_FOREACH( Var v, varOrder ) {
+    for (auto v: varOrder) {
       Var vRank = varRank[v];
       for (Graph::iterator adjIter = g.adjacencyBegin(v), adjEnd = g.adjacencyEnd(v); adjIter != adjEnd; ++adjIter) {
         Var u = *adjIter;
@@ -125,7 +124,7 @@ private:
     // of each node v in varOrder
     // Also record parent information: parent is lowest rank node u over all arcs (v,u)
     VarVector pRank(parents.size(), Var(-1));
-    BOOST_FOREACH( Var v, varOrder ) {
+    for (auto v: varOrder) {
       for (VarSet::const_iterator adjIter = adjSets[v].begin(), adjEnd = adjSets[v].end(); adjIter != adjEnd; ++adjIter) {
         Var u = *adjIter;
         Var uRank = varRank[u];
@@ -157,7 +156,7 @@ public:
     roots_() {
 
     using std::vector;
-    using std::auto_ptr;
+    using std::unique_ptr;
     using std::set_intersection;
     using std::back_inserter;
     using std::ostringstream;
@@ -210,9 +209,9 @@ public:
       Var v = varOrder[i];
       Var vParent = varParents[v];
 
-      auto_ptr<TreeDecompNode> vNode( new TreeDecompNode(v) );
+      unique_ptr<TreeDecompNode> vNode( new TreeDecompNode(v) );
       double nodeWidth = log(static_cast<double>(domSizes[v]));
-      BOOST_FOREACH( Var u, adjSets[v] ) {
+      for (auto u: adjSets[v]) {
         vNode->sepVars().push_back(u);
         nodeWidth += log(static_cast<double>(domSizes[u]));
       }
@@ -225,10 +224,10 @@ public:
 
       nodes[v] = vNode.get();
       if (vParent == Var(-1)) {
-        roots_.push_back( vNode );
+        roots_.push_back( vNode.release() );
       } else {
         vNode->parent() = nodes[vParent];
-        nodes[vParent]->children().push_back( vNode );
+        nodes[vParent]->children().push_back( vNode.release() );
       }
     }
 

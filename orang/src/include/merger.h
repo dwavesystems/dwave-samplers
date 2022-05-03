@@ -26,7 +26,6 @@
 #include <functional>
 #include <utility>
 
-#include <boost/foreach.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 
 #include <base.h>
@@ -135,7 +134,7 @@ public:
     // nextDomIndex is unsigned, so things >= domSize_
     // are precisely the invalid values, regardless of dir_
     if (nextDomIndex < domSize_) {
-      BOOST_FOREACH( StepIter<typename table_type::const_iterator>& inIter, inIters_ ) {
+      for (auto &inIter: inIters_) {
         inIter += dir_;
       }
       outIndex_ += dir_;
@@ -166,7 +165,6 @@ TableMerger<T>::operator ()(
   // typedef and using declarations
 
   using std::size_t;
-  using std::auto_ptr;
   using std::vector;
   using std::find_if;
   using std::mem_fun_ref;
@@ -201,8 +199,8 @@ TableMerger<T>::operator ()(
     return t;
   }
 
-  BOOST_FOREACH( const table_type& t, make_pair(tablesBegin, tablesEnd) ) {
-    BOOST_FOREACH( const TableVar& v, t.vars() ) {
+  for (auto it = tablesBegin; it != tablesEnd; ++it) {
+    for (const auto &v: it->vars()) {
       if (v.domSize != task_.domSize(v.index)) {
         throw InvalidArgumentException("Table and Task domain sizes don't match");
       }
@@ -223,7 +221,7 @@ TableMerger<T>::operator ()(
   // output table, domain sizes, and index.
   DomIndexVector outDomSizes;
   outDomSizes.reserve(outScope.size());
-  BOOST_FOREACH( Var var, outScope ) {
+  for (auto var: outScope) {
     outDomSizes.push_back(task_.domSize(var));
   }
   table_smartptr outTable( new table_type(outScope, outDomSizes));
@@ -248,11 +246,11 @@ TableMerger<T>::operator ()(
   // First pass: initialize TableVarIter vector and determine first (ie. lowest-index) variable to process.
   Var nextVar = outScope.empty() ? Var(-1) : outScope.front();
   tablevariter_vector tableVarIters;
-  BOOST_FOREACH( const table_type& t, make_pair(tablesBegin, tablesEnd) ) {
-    inTableIters.push_back(t.begin());
-    tableVarIters.push_back(tablevariter_type(t.vars().begin(), t.vars().end(), &inTableIters.back()));
+  for (auto it = tablesBegin; it != tablesEnd; ++it) {
+    inTableIters.push_back(it->begin());
+    tableVarIters.push_back(tablevariter_type(it->vars().begin(), it->vars().end(), &inTableIters.back()));
 
-    Var tableVar0 = t.vars().empty() ? Var(-1) : t.var(0).index;
+    Var tableVar0 = it->vars().empty() ? Var(-1) : it->var(0).index;
     nextVar = tableVar0 < nextVar ? tableVar0 : nextVar;
   }
 
@@ -287,7 +285,7 @@ TableMerger<T>::operator ()(
     }
 
     // Add all inTableIters (with appropriate step sizes) for tables containing currentVar to grayVar
-    BOOST_FOREACH( tablevariter_type& tvi, tableVarIters ) {
+    for (auto &tvi: tableVarIters) {
       if (tvi.varIter != tvi.varEnd && tvi.varIter->index == currentVar) {
         grayVar->addInIter(tvi.tableIter, tvi.varIter->stepSize);
         ++tvi.varIter;
@@ -315,8 +313,8 @@ TableMerger<T>::operator ()(
     // build table of marginalized-out variable values for current setting of output variables
     do {
       mrgTable[mrgIndex] = *inTableIters.front();
-      BOOST_FOREACH( const table_const_iterator& tblIt, make_pair(inTableIters.begin() + 1, inTableIters.end()) ) {
-        mrgTable[mrgIndex] = task_type::combine(mrgTable[mrgIndex], *tblIt);
+      for (auto it = inTableIters.begin() + 1; it != inTableIters.end(); ++it) {
+        mrgTable[mrgIndex] = task_type::combine(mrgTable[mrgIndex], **it);
       }
     } while (find_if(mrgGrayVars.begin(), mrgGrayVars.end(), mem_fun_ref(&GrayVar<T>::advance)) != mrgGrayVars.end());
 

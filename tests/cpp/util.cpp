@@ -17,7 +17,6 @@
 */
 #include <algorithm>
 #include <ostream>
-#include <boost/foreach.hpp>
 #include <table.h>
 #include <graph.h>
 
@@ -57,7 +56,7 @@ std::ostream& operator<<(std::ostream& out, const Graph& g) {
 template<typename Y>
 std::ostream& operator<<(std::ostream& out, const orang::Table<Y>& t) {
   out << "Table(vars:";
-  BOOST_FOREACH( const TableVar& v, t.vars() ) {
+  for (const auto &v: t.vars()) {
     out << "<" << v.index << "," << v.domSize << "," << v.stepSize << ">";
   }
   out << " values=[";

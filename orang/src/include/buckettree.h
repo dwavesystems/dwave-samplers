@@ -23,10 +23,8 @@
 #include <iterator>
 #include <vector>
 
-#include <boost/foreach.hpp>
 #include <boost/iterator/indirect_iterator.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/scoped_ptr.hpp>
 
 #include <base.h>
 #include <exception.h>
@@ -95,7 +93,7 @@ private:
 
   void solveRecursive(const node_smartptr& n, solution_type& s) const {
     dynamic_cast<solvablemarginalizer_type&>(*n->marginalizer).solve(s);
-    BOOST_FOREACH( const node_smartptr& c, n->children ) {
+    for (const auto &c: n->children) {
       solveRecursive(c, s);
     }
   }
@@ -124,7 +122,7 @@ public:
     std::vector<value_type> rootValues;
     rootValues.reserve(decomp.roots().size());
     roots_.reserve(decomp.roots().size());
-    BOOST_FOREACH( const TreeDecompNode& dNode, decomp.roots() ) {
+    for (const auto &dNode: decomp.roots()) {
       roots_.push_back(buildNode(dNode, 0, rootValues, x0));
       if (!hasNodeTables_) {
         roots_.back()->lambdaTables.clear();
@@ -137,7 +135,7 @@ public:
     if (hasNodeTables_) {
       nodeTables_.reserve(numNodes_);
       TreeDecompNode::node_vector::const_iterator dRootsIter = decomp.roots().begin();
-      BOOST_FOREACH( node_smartptr& r, roots_ ) {
+      for (auto &r: roots_) {
         buildNodeTables(r, *dRootsIter);
         ++dRootsIter;
       }
@@ -159,7 +157,7 @@ public:
   solution_type solve() const {
     if (solvable_) {
       solution_type s = task_.initSolution(x0_);
-      BOOST_FOREACH( const node_smartptr& r, roots_ ) {
+      for (const auto &r: roots_) {
         solveRecursive(r, s);
       }
       return s;
@@ -190,14 +188,14 @@ typename BucketTree<T>::node_smartptr BucketTree<T>::buildNode(
   node_smartptr n = node_smartptr( new Node );
   n->baseTables = task_.baseTables(dNode, x0);
   n->children.reserve(dNode.children().size());
-  BOOST_FOREACH( const TreeDecompNode& cdn, dNode.children() ) {
+  for (const auto &cdn: dNode.children()) {
     n->children.push_back( buildNode(cdn, &n->lambdaTables, rootValues, x0) );
   }
 
   if (solvable_) {
     DomIndexVector inDomSizes;
     inDomSizes.reserve(dNode.sepVars().size());
-    BOOST_FOREACH( Var v, dNode.sepVars() ) {
+    for (auto v: dNode.sepVars()) {
       inDomSizes.push_back(task_.domSize(v));
     }
 

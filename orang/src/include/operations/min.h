@@ -26,7 +26,6 @@
 #include <utility>
 #include <functional>
 
-#include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <base.h>
@@ -123,7 +122,7 @@ private:
 
     typename valueindex_vector::iterator svIter = svBegin;
     DomIndex index = 0;
-    BOOST_FOREACH( const value_type& v, mrgTable ) {
+    for (const auto &v: mrgTable) {
       svIter->first = minproblem_type::combineInverse(v, minValue);
       svIter->second = index++;
       ++svIter;
@@ -142,21 +141,21 @@ private:
     solution_set& outSolSet = solSet.solutions();
     solution_compare solLess;
 
-    BOOST_FOREACH( single_solution_type sol, inSolSet ) {
+    for (auto sol: inSolSet) {
       bool added = false;
       value_type baseValue = sol.value;
 
       std::size_t svIndex = 0;
-      BOOST_FOREACH( const varstep_pair& vs, inVarsSteps_ ) {
+      for (const auto &vs: inVarsSteps_) {
         svIndex += sol.solution[vs.first] * vs.second;
       }
       svIndex *= outDomSize_;
       valueindex_iterator svBegin = solveVector_.begin() + svIndex;
       valueindex_iterator svEnd = svBegin + outDomSize_;
 
-      BOOST_FOREACH( const valueindex_pair& vip, std::make_pair(svBegin, svEnd) ) {
-        sol.solution[outVar_] = vip.second;
-        sol.value = minproblem_type::combine(baseValue, vip.first);
+      for (auto it = svBegin; it != svEnd; ++it) {
+        sol.solution[outVar_] = it->second;
+        sol.value = minproblem_type::combine(baseValue, it->first);
 
         if (outSolSet.size() < solSet.maxSolutions()) {
           outSolSet.insert(sol);

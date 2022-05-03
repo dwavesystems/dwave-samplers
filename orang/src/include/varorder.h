@@ -27,7 +27,6 @@
 #include <iterator>
 #include <limits>
 
-#include <boost/foreach.hpp>
 #include <boost/smart_ptr/scoped_ptr.hpp>
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/member.hpp>
@@ -68,9 +67,9 @@ struct Variable {
 
     const Graph& g = task.graph();
 
-    BOOST_FOREACH( Var w, std::make_pair(g.adjacencyBegin(index), g.adjacencyEnd(index)) ) {
-      if (clampRanks[w] >= 0) {
-        adjList.insert(w);
+    for (auto it = g.adjacencyBegin(index); it != g.adjacencyEnd(index); ++it) {
+      if (clampRanks[*it] >= 0) {
+        adjList.insert(*it);
       }
     }
   }
@@ -263,7 +262,7 @@ public:
   void operator()(Variable& var) const {
     var.clampValue = static_cast<double>(var.domSize) * static_cast<double>(var.adjList.size());
     double p2Cplx = var.domSize;
-    BOOST_FOREACH( Var w, var.adjList ) {
+    for (const auto &w: var.adjList) {
       p2Cplx *= varsByIndex_[w].domSize;
     }
     static const double E_LOG2 = 1.4426950408889633;
@@ -377,7 +376,7 @@ private:
   const VarContainer::index<Index>::type& varsByIndex_;
   virtual VarSet affectedVars(const Variable& var) const {
     VarSet vars = var.adjList;
-    BOOST_FOREACH( Var u, var.adjList ) {
+    for (const auto &u: var.adjList) {
       const Variable& uVar = varsByIndex_[u];
       vars.insert(uVar.adjList.begin(), uVar.adjList.end());
     }
@@ -525,11 +524,11 @@ VarVector greedyVarOrder(
 
       varsByCost.modify(pickedIter, MarkAsProcessed());
 
-      BOOST_FOREACH( Var uIndex, v.adjList ) {
+      for (const auto &uIndex: v.adjList) {
         varsByIndex.modify(varsByIndex.begin() + uIndex, elimNeighbour);
       }
 
-      BOOST_FOREACH( Var uIndex, affectedVars ) {
+      for (const auto &uIndex: affectedVars) {
         varsByIndex.modify<const UpdateVarData&>(varsByIndex.begin() + uIndex, *updateCostPtr);
       }
 
@@ -552,11 +551,11 @@ VarVector greedyVarOrder(
       varsByClamp.modify(pickedIter, MarkAsProcessed());
       ClampNeighbour clampNeighbour(v.index);
 
-      BOOST_FOREACH( Var uIndex, v.adjList ) {
+      for (const auto &uIndex: v.adjList) {
         varsByIndex.modify(varsByIndex.begin() + uIndex, clampNeighbour);
       }
 
-      BOOST_FOREACH( Var uIndex, v.adjList ) {
+      for (const auto &uIndex: v.adjList) {
         varsByIndex.modify<const UpdateVarData&>(varsByIndex.begin() + uIndex, *updateCostPtr);
       }
     }

@@ -23,8 +23,6 @@
 #include <cmath>
 #include <cstddef>
 
-#include <boost/foreach.hpp>
-
 #include <base.h>
 #include <table.h>
 #include <combine.h>
@@ -42,7 +40,7 @@ private:
     double yMax = *std::max_element(mrgTable.begin(), mrgTable.end());
     double fsum = 0.0;
 
-    BOOST_FOREACH( double y, mrgTable ) {
+    for (const auto &y: mrgTable) {
       fsum += exp(y - yMax);
     }
 
@@ -98,7 +96,7 @@ private:
     typedef std::vector<double>::const_iterator value_const_iterator;
 
     size_t n = 0;
-    BOOST_FOREACH( const varstep_pair& vs, inVarsSteps_ ) {
+    for (const auto &vs: inVarsSteps_) {
       n += s[vs.first] * vs.second;
     }
     n *= outStepSize_;

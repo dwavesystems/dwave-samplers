@@ -16,7 +16,7 @@
 # =============================================================================
 */
 #include <boost/test/unit_test.hpp>
-#include <boost/test/floating_point_comparison.hpp>
+#include <boost/test/tools/floating_point_comparison.hpp>
 
 #include <cmath>
 #include <functional>
@@ -27,7 +27,6 @@ using std::pair;
 using std::vector;
 
 #include <boost/assign/list_of.hpp>
-#include <boost/foreach.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 #include <boost/lambda/bind.hpp>
 using boost::assign::list_of;
@@ -87,35 +86,35 @@ const DomIndexVector zeroDomSizes = list_of(2).repeat(19,2)(0);
 
 void preorderRecurse(const TreeDecompNode& n, VarVector& order) {
   order.push_back(n.nodeVar());
-  BOOST_FOREACH( Var cv, n.clampedVars() ) {
+  for (auto cv: n.clampedVars()) {
     order.push_back(cv);
   }
-  BOOST_FOREACH( const TreeDecompNode& cn, n.children() ) {
+  for (const auto &cn: n.children()) {
     preorderRecurse(cn, order);
   }
 }
 
 VarVector preorderPlusClamped(const TreeDecomp& decomp) {
   VarVector order;
-  BOOST_FOREACH( const TreeDecompNode& r, decomp.roots() ) {
+  for (const auto &r: decomp.roots()) {
     preorderRecurse(r, order);
   }
   return order;
 }
 
 void postorderRecurse(const TreeDecompNode& n, VarVector& order) {
-  BOOST_FOREACH( const TreeDecompNode& cn, n.children() ) {
+  for (const auto &cn: n.children()) {
     postorderRecurse(cn, order);
   }
   order.push_back(n.nodeVar());
-  BOOST_FOREACH( Var sv, n.sepVars() ) {
+  for (auto sv: n.sepVars()) {
     order.push_back(sv);
   }
 }
 
 VarVector postorderPlusClamped(const TreeDecomp& decomp) {
   VarVector order;
-  BOOST_FOREACH( const TreeDecompNode& r, decomp.roots() ) {
+  for (const auto &r: decomp.roots()) {
     postorderRecurse(r, order);
   }
   return order;
