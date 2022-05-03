@@ -50,7 +50,7 @@ using tableAssign::domSizes;
 namespace {
 namespace testData {
 
-const vector<Table<int> > tables = list_of<Table<int> >
+vector<Table<int> > tables = list_of<Table<int> >
 ((vars =  0,  9, domSizes =  2,  3))
 ((vars =  0, 18, domSizes =  2,  2))
 ((vars =  0, 28, domSizes =  2,  3))
@@ -119,7 +119,15 @@ const vector<Table<int> > tables = list_of<Table<int> >
 ((vars = 26, 29, domSizes =  2,  1))
 ((vars = 27, 31, domSizes =  3,  2));
 
-const Task<DummyOperations> task(tables.begin(), tables.end(), DummyOperations::CtorArgs());
+const auto tablesPtr = []{
+  vector<Table<int>*> tmp;
+  for (auto &table: tables) {
+    tmp.push_back(&table);
+  }
+  return tmp;
+}();
+
+const Task<DummyOperations> task(tablesPtr.begin(), tablesPtr.end(), DummyOperations::CtorArgs());
 
 const vector<int> clampRanks = list_of<int>
 (2)(0)(2)(-1)(0)(1)(2)(1)(1)(1)(0)(1)(3)(0)(1)(3)(1)(1)(0)(1)(-1)(0)(0)(0)(0)(0)(0)(0)(1)(3)(1)(-1);
@@ -145,7 +153,7 @@ BOOST_AUTO_TEST_SUITE( varorder )
 BOOST_AUTO_TEST_CASE( emptyProblem )
 {
   FixedNumberGenerator fng(testData::fngNums);
-  const vector<Table<int> > tables;
+  const vector<Table<int>*> tables;
   Task<DummyOperations> task(tables.begin(), tables.end(), DummyOperations::CtorArgs());
   VarVector varOrder = greedyVarOrder(task, 1.0, vector<int>(), orang::greedyvarorder::MIN_DEGREE, fng, 1.0);
 

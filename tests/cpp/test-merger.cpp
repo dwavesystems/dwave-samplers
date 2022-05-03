@@ -57,6 +57,14 @@ vector<Table<int> > inTables = list_of<Table<int> >
 ((vars = 3, 4, domSizes = 2, 3, values = 6, -5, 6, -5, 8, -3))
 ((vars = 5, 6, domSizes = 4, 2, values = -6, -5, 2, -1, -3, 6, 2, 1));
 
+const auto inTablesPtr = []{
+  vector<Table<int>*> tmp;
+  for (auto &table: inTables) {
+    tmp.push_back(&table);
+  }
+  return tmp;
+}();
+
 
 VarVector outVars = list_of(0)(4)(6);
 
@@ -65,7 +73,7 @@ Table<int> expectedTable = (vars = 0, 4, 6, domSizes = 2, 3, 2,
 
 Table<int> expectedTrivialTable = (vars = none, domSizes = none, values = -20);
 
-vector<Table<int> > emptyTables;
+vector<Table<int>*> emptyTables;
 VarVector emptyOutVars;
 Table<int> expectedEmptyTrivialTable = (vars = none, domSizes = none, values = 0);
 
@@ -81,27 +89,27 @@ typedef task_type::marginalizer_smartptr marginalizer_smartptr;
 
 BOOST_AUTO_TEST_CASE( merger )
 {
-  task_type task(testData::inTables.begin(), testData::inTables.end(), 1);
+  task_type task(testData::inTablesPtr.begin(), testData::inTablesPtr.end(), 1);
   TableMerger<task_type> merge(task);
   marginalizer_smartptr marginalizer = task.marginalizer();
-  const_table_smartptr outTable = merge(testData::outVars, testData::inTables.begin(), testData::inTables.end(), *marginalizer);
+  const_table_smartptr outTable = merge(testData::outVars, testData::inTablesPtr.begin(), testData::inTablesPtr.end(), *marginalizer);
 
   BOOST_CHECK_EQUAL(*outTable, testData::expectedTable);
 }
 
 BOOST_AUTO_TEST_CASE( merge_to_nullscope )
 {
-  task_type task(testData::inTables.begin(), testData::inTables.end(), 1);
+  task_type task(testData::inTablesPtr.begin(), testData::inTablesPtr.end(), 1);
   TableMerger<task_type> merge(task);
   marginalizer_smartptr marginalizer = task.marginalizer();
-  const_table_smartptr outTable = merge(VarVector(), testData::inTables.begin(), testData::inTables.end(), *marginalizer);
+  const_table_smartptr outTable = merge(VarVector(), testData::inTablesPtr.begin(), testData::inTablesPtr.end(), *marginalizer);
 
   BOOST_CHECK_EQUAL(*outTable, testData::expectedTrivialTable);
 }
 
 BOOST_AUTO_TEST_CASE( empty_merger )
 {
-  task_type task(testData::inTables.begin(), testData::inTables.end(), 1);
+  task_type task(testData::inTablesPtr.begin(), testData::inTablesPtr.end(), 1);
   TableMerger<task_type> merge(task);
   marginalizer_smartptr marginalizer = task.marginalizer();
   const_table_smartptr outTable = merge(testData::emptyOutVars,

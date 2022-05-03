@@ -24,8 +24,6 @@
 #include <vector>
 #include <memory>
 
-#include <boost/iterator/indirect_iterator.hpp>
-
 #include <base.h>
 #include <exception.h>
 #include <table.h>
@@ -210,8 +208,7 @@ typename BucketTree<T>::node_smartptr BucketTree<T>::buildNode(
   copy(n->baseTables.begin(), n->baseTables.end(), back_inserter(inTables));
   copy(n->lambdaTables.begin(), n->lambdaTables.end(), back_inserter(inTables));
   const_table_smartptr pLambdaTable = mergeTables_(
-      dNode.sepVars(), boost::make_indirect_iterator(inTables.begin()),
-      boost::make_indirect_iterator(inTables.end()), *n->marginalizer);
+      dNode.sepVars(), inTables.begin(), inTables.end(), *n->marginalizer);
 
   if (parentTables) {
     parentTables->push_back(pLambdaTable);
@@ -273,8 +270,7 @@ void BucketTree<T>::buildNodeTables(typename BucketTree<T>::Node::smartptr& node
         }
 
         node->children[i]->piTable = merge(
-            dChildren[i]->sepVars(), boost::make_indirect_iterator(inTables.begin()),
-            boost::make_indirect_iterator(inTables.end()), *mrg);
+            dChildren[i]->sepVars(), inTables.begin(), inTables.end(), *mrg);
       }
     }
 
