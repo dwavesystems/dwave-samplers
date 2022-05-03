@@ -24,8 +24,6 @@
 #include <set>
 #include <memory>
 
-#include <boost/numeric/conversion/cast.hpp>
-
 #include <base.h>
 #include <graph.h>
 #include <treedecomp.h>
