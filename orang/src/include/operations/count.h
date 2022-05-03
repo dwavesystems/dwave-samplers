@@ -20,8 +20,6 @@
 
 #include <cmath>
 
-#include <boost/shared_ptr.hpp>
-
 #include <base.h>
 #include <exception.h>
 #include <table.h>

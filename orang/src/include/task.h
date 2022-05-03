@@ -22,8 +22,8 @@
 #include <utility>
 #include <vector>
 #include <set>
+#include <memory>
 
-#include <boost/shared_ptr.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 
 #include <base.h>
@@ -60,8 +60,8 @@ public:
   typedef typename ops_type::CtorArgs problem_ctorargs;
 
   typedef Table<value_type> table_type;
-  typedef boost::shared_ptr<const table_type> const_table_smartptr;
-  typedef boost::shared_ptr<table_type> table_smartptr;
+  typedef std::shared_ptr<const table_type> const_table_smartptr;
+  typedef std::shared_ptr<table_type> table_smartptr;
   typedef std::vector<const_table_smartptr> table_vector;
 
 private:
@@ -249,7 +249,7 @@ Task<Ops>::baseTables(
       retTables.push_back(t);
 
     } else {
-      boost::shared_ptr<table_type> newTable( new table_type(newScope, newDomSizes) );
+      std::shared_ptr<table_type> newTable( new table_type(newScope, newDomSizes) );
       typename table_type::iterator newTableIter = newTable->begin();
       vector<int> dirs(newScopeSize, 1);
       SizeVector indices(newScopeSize, 0);

@@ -26,8 +26,8 @@
 #include <utility>
 #include <iterator>
 #include <limits>
+#include <memory>
 
-#include <boost/smart_ptr/scoped_ptr.hpp>
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index/ordered_index.hpp>
@@ -453,7 +453,6 @@ VarVector greedyVarOrder(
   using std::floor;
   using std::advance;
   using std::distance;
-  using boost::scoped_ptr;
   using namespace greedyvarorder::internal;
 
   typedef VarContainer::index<Index>::type vars_by_index;
@@ -475,8 +474,8 @@ VarVector greedyVarOrder(
   vars_by_cost& varsByCost = vars.get<Cost>();
   vars_by_clamp& varsByClamp = vars.get<Clamp>();
 
-  scoped_ptr<UpdateVarData> updateCostPtr;
-  scoped_ptr<AffectedVars> affectedVarsPtr;
+  std::unique_ptr<UpdateVarData> updateCostPtr;
+  std::unique_ptr<AffectedVars> affectedVarsPtr;
   switch (h) {
     case greedyvarorder::MIN_DEGREE:
       updateCostPtr.reset( new UpdateMinDegreeVarData(varsByIndex) );

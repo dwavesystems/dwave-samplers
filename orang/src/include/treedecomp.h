@@ -25,8 +25,8 @@
 #include <vector>
 #include <sstream>
 #include <cmath>
-
-#include <boost/ptr_container/ptr_vector.hpp>
+#include <memory>
+#include <utility>
 
 #include <base.h>
 #include <exception.h>
@@ -36,7 +36,7 @@ namespace orang {
 
 class TreeDecompNode {
 public:
-  typedef boost::ptr_vector<TreeDecompNode> node_vector;
+  typedef std::vector<std::unique_ptr<TreeDecompNode>> node_vector;
 
 private:
   TreeDecompNode* parent_;
@@ -47,8 +47,8 @@ private:
 
 public:
   TreeDecompNode(Var nodeVar) :
-    parent_(0),
-    children_(0),
+    parent_(),
+    children_(),
     nodeVar_(nodeVar),
     sepVars_(),
     clampedVars_() {}
@@ -224,10 +224,10 @@ public:
 
       nodes[v] = vNode.get();
       if (vParent == Var(-1)) {
-        roots_.push_back( vNode.release() );
+        roots_.push_back(std::move(vNode));
       } else {
         vNode->parent() = nodes[vParent];
-        nodes[vParent]->children().push_back( vNode.release() );
+        nodes[vParent]->children().push_back(std::move(vNode));
       }
     }
 
