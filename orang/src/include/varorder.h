@@ -27,13 +27,7 @@
 #include <iterator>
 #include <limits>
 #include <memory>
-
-#include <boost/multi_index_container.hpp>
-#include <boost/multi_index/member.hpp>
-#include <boost/multi_index/ordered_index.hpp>
-#include <boost/multi_index/random_access_index.hpp>
-#include <boost/multi_index/tag.hpp>
-#include <boost/tuple/tuple.hpp>
+#include <cassert>
 
 #include <base.h>
 #include <exception.h>
@@ -44,6 +38,10 @@ namespace orang {
 
 namespace greedyvarorder {
 namespace internal {
+
+struct Variable;
+typedef std::shared_ptr<Variable> var_ptr;
+
 
 struct Variable {
   const Var index;
@@ -79,19 +77,19 @@ struct Variable {
         index(index0), domSize(domSize0), processed(processed0), clampRank(clampRank0), clampValue(clampValue0),
         cost(cost0), complexity(complexity0), adjList() {}
 
-  static Variable upperBound(const Variable& var) {
-    return Variable(std::numeric_limits<Var>::max(), var.domSize, var.processed, var.clampRank, var.clampValue,
-        var.cost, var.complexity);
+  static var_ptr upperBound(const Variable& var) {
+    return std::make_shared<Variable>(std::numeric_limits<Var>::max(), var.domSize, var.processed, var.clampRank, var.clampValue,
+                                      var.cost, var.complexity);
   }
 
-  static Variable complexityUpperBound(double maxComplexity) {
-    return Variable(std::numeric_limits<Var>::max(), 0.0, false, 0, 0.0,
-        std::numeric_limits<double>::infinity(), maxComplexity);
+  static var_ptr complexityUpperBound(double maxComplexity) {
+    return std::make_shared<Variable>(std::numeric_limits<Var>::max(), 0.0, false, 0, 0.0,
+                                      std::numeric_limits<double>::infinity(), maxComplexity);
   }
 
-  static Variable clampRankUpperBound(int rank) {
-    return Variable(std::numeric_limits<Var>::max(), 0.0, false, rank,
-        -std::numeric_limits<double>::infinity(), 0.0, 0.0);
+  static var_ptr clampRankUpperBound(int rank) {
+    return std::make_shared<Variable>(std::numeric_limits<Var>::max(), 0.0, false, rank,
+                                      -std::numeric_limits<double>::infinity(), 0.0, 0.0);
   }
 };
 
@@ -116,24 +114,24 @@ private:
 public:
   CostCmp(double maxComplexity) : maxComplexity_(maxComplexity) {}
 
-  bool operator()(const Variable& v1, const Variable& v2) const {
-    return !v1.processed
-        && (v2.processed
-            || (v1.complexity <= maxComplexity_
-                && (v2.complexity > maxComplexity_
-                    || v1.cost < v2.cost
-                    || (v1.cost == v2.cost && v1.index < v2.index))));
+  bool operator()(const var_ptr& v1, const var_ptr& v2) const {
+    return !v1->processed
+        && (v2->processed
+            || (v1->complexity <= maxComplexity_
+                && (v2->complexity > maxComplexity_
+                    || v1->cost < v2->cost
+                    || (v1->cost == v2->cost && v1->index < v2->index))));
   }
 };
 
 struct ClampCmp {
-  bool operator()(const Variable& v1, const Variable& v2) const {
-    return !v1.processed
-        && (v2.processed
-            || v1.clampRank < v2.clampRank
-            || (v1.clampRank == v2.clampRank
-                && (v1.clampValue > v2.clampValue
-                    || (v1.clampValue == v2.clampValue && v1.index < v2.index))));
+  bool operator()(const var_ptr& v1, const var_ptr& v2) const {
+    return !v1->processed
+        && (v2->processed
+            || v1->clampRank < v2->clampRank
+            || (v1->clampRank == v2->clampRank
+                && (v1->clampValue > v2->clampValue
+                    || (v1->clampValue == v2->clampValue && v1->index < v2->index))));
   }
 };
 
@@ -145,41 +143,72 @@ struct ClampCmp {
 //
 //===================================================================================================================
 
-struct Index {};
-struct Cost {};
-struct Clamp {};
 
-struct VarIndices : public boost::multi_index::indexed_by<
-  boost::multi_index::random_access<boost::multi_index::tag<Index> >,
-  boost::multi_index::ordered_non_unique<boost::multi_index::tag<Cost>, boost::multi_index::identity<Variable>, CostCmp>,
-  boost::multi_index::ordered_non_unique<boost::multi_index::tag<Clamp>, boost::multi_index::identity<Variable>, ClampCmp>
-> {};
-
-class VarContainer : public boost::multi_index::multi_index_container<Variable, VarIndices> {
-private:
-  typedef boost::multi_index::multi_index_container<Variable,VarIndices> base_type;
-
+class VarContainer {
 public:
-  VarContainer(
-      const TaskBase& task,
-      double maxComplexity,
-      const std::vector<int>& clampRank) :
-          base_type(
-              boost::make_tuple(
-                  boost::multi_index::multi_index_container<Variable, VarIndices>::index<Index>::type::ctor_args(),
-                  boost::make_tuple(boost::multi_index::identity<Variable>(), CostCmp(maxComplexity)),
-                  boost::multi_index::multi_index_container<Variable, VarIndices>::index<Clamp>::type::ctor_args())) {
+  std::vector<var_ptr> byIndex;
+  std::multiset<var_ptr, CostCmp> byCost;
+  std::multiset<var_ptr, ClampCmp> byClamp;
 
+  VarContainer(const TaskBase& task, double maxComplexity, const std::vector<int>& clampRank)
+    : byCost(CostCmp(maxComplexity)) {
     const Graph& g = task.graph();
     Var numVertices = g.numVertices();
 
-    index<Index>::type& thisByIndex = get<Index>();
-
     for (Var v = 0; v < numVertices; ++v) {
-      Variable var(v, task, clampRank);
-      thisByIndex.push_back(var);
+      add(std::make_shared<Variable>(v, task, clampRank));
     }
   }
+
+  void add(var_ptr var) {
+    byIndex.push_back(var);
+    byCost.insert(var);
+    byClamp.insert(var);
+  }
+
+  template<typename F>
+  void modifyByIndex(std::vector<var_ptr>::iterator it, F& func) {
+    func(**it);
+
+    auto pos = find(byCost.begin(), byCost.end(), *it);
+    assert(pos != byCost.end());
+    byCost.erase(pos);
+    byCost.insert(*it);
+
+    pos = find(byClamp.begin(), byClamp.end(), *it);
+    assert(pos != byClamp.end());
+    byClamp.erase(pos);
+    byClamp.insert(*it);
+  }
+
+  template<typename F>
+  void modifyByCost(std::multiset<var_ptr, CostCmp>::iterator it, F func) {
+    auto pos_index = find(byIndex.begin(), byIndex.end(), *it);
+    func(**pos_index);
+
+    byCost.erase(it);
+    byCost.insert(*pos_index);
+
+    auto pos = find(byClamp.begin(), byClamp.end(), *it);
+    assert(pos != byClamp.end());
+    byClamp.erase(pos);
+    byClamp.insert(*pos_index);
+  }
+
+  template<typename F>
+  void modifyByClamp(std::multiset<var_ptr, ClampCmp>::iterator it, F func) {
+    auto pos_index = find(byIndex.begin(), byIndex.end(), *it);
+    func(**pos_index);
+
+    byClamp.erase(it);
+    byClamp.insert(*pos_index);
+
+    auto pos = find(byCost.begin(), byCost.end(), *it);
+    assert(pos != byCost.end());
+    byCost.erase(pos);
+    byCost.insert(*pos_index);
+  }
+
 };
 
 
@@ -253,17 +282,17 @@ private:
   virtual void updateCost(Variable& var) const = 0;
 
 protected:
-  const VarContainer::index<Index>::type& varsByIndex_;
+  const std::vector<var_ptr>& varsByIndex_;
 
 public:
-  UpdateVarData(const VarContainer::index<Index>::type& varsByIndex) : varsByIndex_(varsByIndex) {}
+  UpdateVarData(const std::vector<var_ptr>& varsByIndex) : varsByIndex_(varsByIndex) {}
   virtual ~UpdateVarData() {}
 
   void operator()(Variable& var) const {
     var.clampValue = static_cast<double>(var.domSize) * static_cast<double>(var.adjList.size());
     double p2Cplx = var.domSize;
     for (const auto &w: var.adjList) {
-      p2Cplx *= varsByIndex_[w].domSize;
+      p2Cplx *= varsByIndex_[w]->domSize;
     }
     static const double E_LOG2 = 1.4426950408889633;
     var.complexity = log(p2Cplx) * E_LOG2;
@@ -277,7 +306,7 @@ private:
     var.cost = static_cast<double>(var.adjList.size());
   }
 public:
-  UpdateMinDegreeVarData(const VarContainer::index<Index>::type& varsByIndex) : UpdateVarData(varsByIndex) {}
+  UpdateMinDegreeVarData(std::vector<var_ptr>& varsByIndex) : UpdateVarData(varsByIndex) {}
 };
 
 class UpdateWeightedMinDegreeVarData : public UpdateVarData {
@@ -286,7 +315,7 @@ private:
     var.cost = var.clampValue;
   }
 public:
-  UpdateWeightedMinDegreeVarData(const VarContainer::index<Index>::type& varsByIndex) : UpdateVarData(varsByIndex) {}
+  UpdateWeightedMinDegreeVarData(const std::vector<var_ptr>& varsByIndex) : UpdateVarData(varsByIndex) {}
 };
 
 class UpdateMinFillVarData : public UpdateVarData {
@@ -296,9 +325,9 @@ private:
     for (VarSet::const_iterator vAdjIter = var.adjList.begin(), vAdjEnd = var.adjList.end();
         vAdjIter != vAdjEnd; ++vAdjIter) {
       const Var u = *vAdjIter;
-      const Variable& uVar = varsByIndex_[u];
-      VarSet::const_iterator uAdjIter = uVar.adjList.upper_bound(u);
-      VarSet::const_iterator uAdjEnd = uVar.adjList.end();
+      const Variable* uVar = varsByIndex_[u].get();
+      VarSet::const_iterator uAdjIter = uVar->adjList.upper_bound(u);
+      VarSet::const_iterator uAdjEnd = uVar->adjList.end();
       VarSet::const_iterator vAdjIter2 = vAdjIter;
       ++vAdjIter2;
       while (vAdjIter2 != vAdjEnd) {
@@ -315,7 +344,7 @@ private:
     }
   }
 public:
-  UpdateMinFillVarData(const VarContainer::index<Index>::type& varsByIndex) : UpdateVarData(varsByIndex) {}
+  UpdateMinFillVarData(const std::vector<var_ptr>& varsByIndex) : UpdateVarData(varsByIndex) {}
 };
 
 class UpdateWeightedMinFillVarData : public UpdateVarData {
@@ -325,15 +354,15 @@ private:
     for (VarSet::const_iterator vAdjIter = var.adjList.begin(), vAdjEnd = var.adjList.end();
         vAdjIter != vAdjEnd; ++vAdjIter) {
       const Var u = *vAdjIter;
-      const Variable& uVar = varsByIndex_[u];
-      VarSet::const_iterator uAdjIter = uVar.adjList.upper_bound(u);
-      VarSet::const_iterator uAdjEnd = uVar.adjList.end();
+      const Variable* uVar = varsByIndex_[u].get();
+      VarSet::const_iterator uAdjIter = uVar->adjList.upper_bound(u);
+      VarSet::const_iterator uAdjEnd = uVar->adjList.end();
       VarSet::const_iterator vAdjIter2 = vAdjIter;
       ++vAdjIter2;
       double cost = 0.0;
       while (vAdjIter2 != vAdjEnd) {
         if (uAdjIter == uAdjEnd || *vAdjIter2 < *uAdjIter) {
-          cost += varsByIndex_[*vAdjIter2].domSize;
+          cost += varsByIndex_[*vAdjIter2]->domSize;
           ++vAdjIter2;
         } else if (*uAdjIter < *vAdjIter2) {
           ++uAdjIter;
@@ -342,11 +371,11 @@ private:
           ++uAdjIter;
         }
       }
-      var.cost += uVar.domSize * cost;
+      var.cost += uVar->domSize * cost;
     }
   }
 public:
-  UpdateWeightedMinFillVarData(const VarContainer::index<Index>::type& varsByIndex) : UpdateVarData(varsByIndex) {}
+  UpdateWeightedMinFillVarData(const std::vector<var_ptr>& varsByIndex) : UpdateVarData(varsByIndex) {}
 };
 
 
@@ -373,19 +402,19 @@ private:
 
 class MinFillAffectedVars : public AffectedVars {
 private:
-  const VarContainer::index<Index>::type& varsByIndex_;
+  const std::vector<var_ptr>& varsByIndex_;
   virtual VarSet affectedVars(const Variable& var) const {
     VarSet vars = var.adjList;
     for (const auto &u: var.adjList) {
-      const Variable& uVar = varsByIndex_[u];
-      vars.insert(uVar.adjList.begin(), uVar.adjList.end());
+      const Variable* uVar = varsByIndex_[u].get();
+      vars.insert(uVar->adjList.begin(), uVar->adjList.end());
     }
     vars.erase(var.index);
     return vars;
   }
 
 public:
-  MinFillAffectedVars(const VarContainer& varContainer) : varsByIndex_(varContainer.get<Index>()) {}
+  MinFillAffectedVars(const VarContainer& varContainer) : varsByIndex_(varContainer.byIndex) {}
 };
 
 
@@ -455,12 +484,6 @@ VarVector greedyVarOrder(
   using std::distance;
   using namespace greedyvarorder::internal;
 
-  typedef VarContainer::index<Index>::type vars_by_index;
-  typedef VarContainer::index<Cost>::type vars_by_cost;
-  typedef VarContainer::index<Clamp>::type vars_by_clamp;
-  typedef vars_by_cost::iterator cost_iterator;
-  typedef vars_by_clamp::iterator clamp_iterator;
-
   if (task.numVars() != clampRank.size()) {
     throw InvalidArgumentException("clampRank size must equal the number of variables in task");
   }
@@ -470,92 +493,91 @@ VarVector greedyVarOrder(
   }
 
   VarContainer vars(task, maxComplexity, clampRank);
-  vars_by_index& varsByIndex = vars.get<Index>();
-  vars_by_cost& varsByCost = vars.get<Cost>();
-  vars_by_clamp& varsByClamp = vars.get<Clamp>();
 
   std::unique_ptr<UpdateVarData> updateCostPtr;
   std::unique_ptr<AffectedVars> affectedVarsPtr;
   switch (h) {
     case greedyvarorder::MIN_DEGREE:
-      updateCostPtr.reset( new UpdateMinDegreeVarData(varsByIndex) );
+      updateCostPtr.reset( new UpdateMinDegreeVarData(vars.byIndex) );
       affectedVarsPtr.reset( new MinDegreeAffectedVars() );
       break;
     case greedyvarorder::WEIGHTED_MIN_DEGREE:
-      updateCostPtr.reset( new UpdateWeightedMinDegreeVarData(varsByIndex) );
+      updateCostPtr.reset( new UpdateWeightedMinDegreeVarData(vars.byIndex) );
       affectedVarsPtr.reset( new MinDegreeAffectedVars() );
       break;
     case greedyvarorder::MIN_FILL:
-      updateCostPtr.reset( new UpdateMinFillVarData(varsByIndex) );
+      updateCostPtr.reset( new UpdateMinFillVarData(vars.byIndex) );
       affectedVarsPtr.reset( new MinFillAffectedVars(vars) );
       break;
     case greedyvarorder::WEIGHTED_MIN_FILL:
-      updateCostPtr.reset( new UpdateWeightedMinFillVarData(varsByIndex) );
+      updateCostPtr.reset( new UpdateWeightedMinFillVarData(vars.byIndex) );
       affectedVarsPtr.reset( new MinFillAffectedVars(vars) );
       break;
     default:
       throw InvalidArgumentException("Invalid heuristic");
   }
 
-  for (vars_by_index::iterator iter = varsByIndex.begin(), end = varsByIndex.end(); iter != end; ++iter) {
-    varsByIndex.modify<const UpdateVarData&>(iter, *updateCostPtr);
+  for (auto iter = vars.byIndex.begin(); iter != vars.byIndex.end(); ++iter) {
+    vars.modifyByIndex(iter, *updateCostPtr);
   }
 
   VarVector varOrder;
   int lastClampRank = -1;
-  const Variable complexityUpper = Variable::complexityUpperBound(maxComplexity);
+  const var_ptr complexityUpper = Variable::complexityUpperBound(maxComplexity);
 
   for (;;) {
 
-    cost_iterator minCostLower = varsByCost.begin();
-    if (minCostLower->processed) {
+    auto minCostLower = vars.byCost.begin();
+    if ((*minCostLower)->processed) {
       break;
     }
 
-    if (minCostLower->complexity <= maxComplexity) {
-      cost_iterator pickedIter = selectVar(minCostLower, varsByCost.upper_bound( Variable::upperBound(*minCostLower)),
-          varsByCost.upper_bound(complexityUpper), rng, selectionScale);
+    if ((*minCostLower)->complexity <= maxComplexity) {
+      auto pickedIter = selectVar(minCostLower, vars.byCost.upper_bound( Variable::upperBound(**minCostLower)),
+          vars.byCost.upper_bound(complexityUpper), rng, selectionScale);
 
-      const Variable& v = *pickedIter;
+      const Variable& v = **pickedIter;
       varOrder.push_back(v.index);
       VarSet affectedVars = (*affectedVarsPtr)(v);
       ElimNeighbour elimNeighbour(v.index, v.adjList);
 
-      varsByCost.modify(pickedIter, MarkAsProcessed());
+      vars.modifyByCost(pickedIter, MarkAsProcessed());
 
       for (const auto &uIndex: v.adjList) {
-        varsByIndex.modify(varsByIndex.begin() + uIndex, elimNeighbour);
+        vars.modifyByIndex(vars.byIndex.begin() + uIndex, elimNeighbour);
       }
 
       for (const auto &uIndex: affectedVars) {
-        varsByIndex.modify<const UpdateVarData&>(varsByIndex.begin() + uIndex, *updateCostPtr);
+        vars.modifyByIndex(vars.byIndex.begin() + uIndex, *updateCostPtr);
       }
 
     } else {
       if (lastClampRank >= 0) {
-        clamp_iterator clampIter = varsByClamp.upper_bound( Variable::clampRankUpperBound(lastClampRank) );
-        clamp_iterator clampEnd = varsByClamp.end();
-        while (clampIter != clampEnd && !clampIter->processed) {
-          clamp_iterator here = clampIter++;
-          varsByClamp.modify(here, DecrementClampRank());
+        auto clampIter = vars.byClamp.upper_bound( Variable::clampRankUpperBound(lastClampRank) );
+        auto clampEnd = vars.byClamp.end();
+        while (clampIter != clampEnd && !(*clampIter)->processed) {
+          auto here = clampIter++;
+          vars.modifyByClamp(here, DecrementClampRank());
         }
       }
 
-      clamp_iterator clampLower = varsByClamp.begin();
-      clamp_iterator pickedIter = selectVar(clampLower, varsByClamp.upper_bound( Variable::upperBound(*clampLower) ),
-          varsByClamp.upper_bound( Variable::clampRankUpperBound(clampLower->clampRank) ), rng, selectionScale);
+      auto clampLower = vars.byClamp.begin();
+      auto pickedIter = selectVar(clampLower,
+                                  vars.byClamp.upper_bound( Variable::upperBound(**clampLower) ),
+                                  vars.byClamp.upper_bound( Variable::clampRankUpperBound((*clampLower)->clampRank) ),
+                                  rng, selectionScale);
 
-      const Variable& v = *pickedIter;
+      const Variable& v = **pickedIter;
       lastClampRank = v.clampRank;
-      varsByClamp.modify(pickedIter, MarkAsProcessed());
+      vars.modifyByClamp(pickedIter, MarkAsProcessed());
       ClampNeighbour clampNeighbour(v.index);
 
       for (const auto &uIndex: v.adjList) {
-        varsByIndex.modify(varsByIndex.begin() + uIndex, clampNeighbour);
+        vars.modifyByIndex(vars.byIndex.begin() + uIndex, clampNeighbour);
       }
 
       for (const auto &uIndex: v.adjList) {
-        varsByIndex.modify<const UpdateVarData&>(varsByIndex.begin() + uIndex, *updateCostPtr);
+        vars.modifyByIndex(vars.byIndex.begin() + uIndex, *updateCostPtr);
       }
     }
   }
