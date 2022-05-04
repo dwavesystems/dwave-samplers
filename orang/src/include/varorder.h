@@ -144,6 +144,15 @@ struct ClampCmp {
 //===================================================================================================================
 
 
+/*
+ // * Container of variables that provides multiple modes of access.  Random
+ // * access is provided through a vector, while two sortings are also
+ // * maintained through multisets.  Each internal container stores smart
+ // * pointers to Variable instances.  Functions are provided for modifying an
+ // * element specified by an iterator of any particular container.  Internally,
+ // * modification is done by removing and adding back elements to the
+ // * multisets, to preserve the order.
+ */
 class VarContainer {
 public:
   std::vector<var_ptr> byIndex;
