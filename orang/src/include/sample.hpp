@@ -17,11 +17,10 @@
 #include <map>
 #include <utility>
 #include <vector>
+#include <random>
 
 #include <cstddef>
 #include <cstdlib>
-
-#include <boost/random.hpp>
 
 #include <base.h>
 #include <table.h>
@@ -52,7 +51,19 @@ using orang::TableMerger;
 
 namespace {
 
-typedef boost::variate_generator<boost::mt19937&, boost::uniform_01<> > Rng;
+class Rng {
+  std::mt19937 engine_;
+  std::uniform_real_distribution<> distribution_;
+
+public:
+  Rng(std::mt19937& engine) :
+    engine_(engine) {}
+
+  double operator()() {
+    return distribution_(engine_);
+  }
+};
+
 typedef orang::Task<orang::LogSumProductOperations<Rng> > SampleTask;
 typedef std::vector<orang::Table<double>::smartptr> Tables;
 
@@ -246,8 +257,8 @@ void sampleBQM(
   double** pair_mrg_data, int* pair_mrg_rows, int* pair_mrg_cols,
   int** pair_data, int* pair_rows, int* pair_cols
 ) {
-    boost::mt19937 rng_engine(randomSeed(seed));
-    Rng rng(rng_engine, boost::uniform_01<>());
+    std::mt19937 engine(randomSeed(seed));
+    Rng rng(engine);
 
     vector<Table<double>::smartptr> tables = getTables(bqm, beta, low);
 
