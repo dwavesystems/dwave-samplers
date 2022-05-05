@@ -21,7 +21,6 @@ jobs:
       <<: *global-environment
       CIBW_PROJECT_REQUIRES_PYTHON: ~=<< parameters.python-version>>
       CIBW_ARCHS_LINUX: x86_64
-      CIBW_BEFORE_BUILD_LINUX: yum install -y boost-devel
 
     steps:
       - checkout
@@ -66,7 +65,6 @@ jobs:
       <<: *global-environment
       CIBW_PROJECT_REQUIRES_PYTHON: ~=<< parameters.python-version>>
       CIBW_ARCHS_LINUX: aarch64
-      CIBW_BEFORE_BUILD_LINUX: yum install -y boost-devel
 
     steps:
       - checkout
@@ -90,7 +88,6 @@ jobs:
       <<: *global-environment
       CIBW_PROJECT_REQUIRES_PYTHON: ~=<< parameters.python-version>>
       CIBW_ARCHS_MACOS: << parameters.cibw-arch >>
-      CIBW_BEFORE_BUILD_MACOS: brew install boost
 
     steps:
       - checkout
@@ -131,10 +128,6 @@ jobs:
       <<: *global-environment
       CIBW_PROJECT_REQUIRES_PYTHON: ~=<< parameters.python-version>>
       CIBW_ARCHS_WINDOWS: AMD64
-      CIBW_BEFORE_BUILD_WINDOWS: nuget install boost -ExcludeVersion -OutputDirectory .
-      CIBW_ENVIRONMENT_WINDOWS: >
-        INCLUDE="$INCLUDE;boost\\lib\\native\\include"
-
 
     steps:
       - checkout
@@ -326,10 +319,6 @@ jobs:
             python -m venv env
             . env/bin/activate
             pip install -r requirements.txt -r tests/requirements.txt
-      - run: &install-boost-linux-template
-          name: install boost
-          command: |
-            sudo apt-get install libboost-dev
       - run: &unix-build-extensions
           name: build
           command: |
@@ -355,10 +344,6 @@ jobs:
       - attach_workspace:
           at: dist
       - run:
-          name: install boost
-          command: |
-            sudo apt-get install libboost-dev
-      - run:
           name: install from sdist
           command: |
             python -m venv env
@@ -378,7 +363,6 @@ jobs:
 
     steps:
       - checkout
-      - run: *install-boost-linux-template
       - run:
           name: install doc dependencies
           command: |

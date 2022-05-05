@@ -43,12 +43,6 @@ Installation
 
 .. installation-start-marker
 
-Boost is required to build.  On Ubuntu, you can install Boost like this:
-
-.. code-block:: bash
-    
-    sudo apt-get install libboost-dev
-
 To build from source:
 
 .. code-block:: bash
