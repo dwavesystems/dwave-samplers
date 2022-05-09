@@ -34,8 +34,8 @@ python_requires = '>=3.7'
 # add __version__, __author__, __authoremail__, __description__ to this namespace
 exec(open("./orang/package_info.py").read())
 
-install_requires = ['numpy>=1.15.0,<2.0.0',
-                    'dimod>=0.8.0,<0.11.0',
+install_requires = ['numpy>=1.21.0,<2.0.0',
+                    'dimod>=0.11.0,<0.12.0',
                     'dwave_networkx>=0.7.0,<0.9.0',
                     ]
 
