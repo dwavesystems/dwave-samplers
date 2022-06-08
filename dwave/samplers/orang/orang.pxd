@@ -1,4 +1,7 @@
-# Copyright 2022 D-Wave Systems Inc.
+# distutils: language = c++
+# cython: language_level = 3
+
+# Copyright 2019 D-Wave Systems Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,24 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from Cython.Build import cythonize
-from setuptools import setup
+cimport numpy as np
 
-import dimod
-import numpy
+ctypedef double energies_type
+ctypedef int samples_type
 
-
-setup(
-    ext_modules=cythonize(
-        ['dwave/samplers/test.pyx',
-         'dwave/samplers/greedy/descent.pyx',
-         'dwave/samplers/orang/sample.pyx',
-         'dwave/samplers/orang/solve.pyx',
-         ],
-        ),
-    include_dirs=[
-        dimod.get_include(),
-        numpy.get_include(),
-        ],
-
-    )
+cdef extern from "numpy/arrayobject.h":
+    void PyArray_ENABLEFLAGS(np.ndarray arr, int flags)
