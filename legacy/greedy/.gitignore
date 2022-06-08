@@ -1,0 +1,22 @@
+__pycache__/
+*.py[cod]
+*.so
+*.out
+
+.coverage
+htmlcov/
+coverage.xml
+
+env/
+build/
+dist/
+distotheque/
+wheels/
+wheelhouse/
+docs/**/generated/
+
+greedy/descent.cpp
+
+# benchmarking
+.asv
+.eggs
