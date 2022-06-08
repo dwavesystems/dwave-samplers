@@ -20,6 +20,6 @@ jobs:
       - name: Test
         run: |
           pip install -U pip setuptools
-          pip install -r requirements.txt
+          pip install -r requirements.txt -r tests/requirements.txt
           python setup.py build_ext --inplace
           python -m unittest
