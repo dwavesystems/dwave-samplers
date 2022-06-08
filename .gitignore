@@ -106,6 +106,3 @@ venv.bak/
 
 # mypy
 .mypy_cache/
-
-# cython files
-dwave/samplers/*.cpp
