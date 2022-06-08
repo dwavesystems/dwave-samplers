@@ -1,4 +1,4 @@
-# Copyright 2022 D-Wave Systems Inc.
+# Copyright 2019 D-Wave Systems Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,20 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from Cython.Build import cythonize
-from setuptools import setup
+from libcpp cimport bool
+from libcpp.vector cimport vector
 
-import numpy
+cdef extern from "descent.h":
 
-
-setup(
-    ext_modules=cythonize(
-        ['dwave/samplers/test.pyx',
-         'dwave/samplers/greedy/descent.pyx',
-         ],
-        ),
-    include_dirs=[
-        numpy.get_include(),
-        ],
-
-    )
+    unsigned int steepest_gradient_descent(
+        char* states,
+        double* energies,
+        unsigned* num_steps,
+        const int num_samples,
+        const vector[double]& linear_biases,
+        const vector[int]& coupler_starts,
+        const vector[int]& coupler_ends,
+        const vector[double]& coupler_weights,
+        bool large_sparse_opt
+    ) nogil
