@@ -12,6 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from Cython.Build import cythonize
 from setuptools import setup
 
-setup()
+import numpy
+
+
+setup(
+    ext_modules=cythonize(
+        ['dwave/samplers/test.pyx',
+         ],
+        ),
+    include_dirs=[
+        numpy.get_include(),
+        ],
+
+    )
