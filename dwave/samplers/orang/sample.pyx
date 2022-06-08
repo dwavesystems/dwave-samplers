@@ -1,5 +1,6 @@
 # distutils: language = c++
 # cython: language_level = 3
+# distutils: include_dirs = dwave/samplers/orang/src/include/
 #
 # Copyright 2019 D-Wave Systems Inc.
 #
@@ -27,7 +28,7 @@ cimport numpy as np
 from dimod cimport cyBQM_float64
 from dimod.libcpp cimport cppBinaryQuadraticModel
 
-from orang.orang cimport samples_type, PyArray_ENABLEFLAGS
+from dwave.samplers.orang.orang cimport samples_type, PyArray_ENABLEFLAGS
 
 cdef extern from "src/include/sample.hpp":
     void sampleBQM[V, B](cppBinaryQuadraticModel[B, V]& refBQM,

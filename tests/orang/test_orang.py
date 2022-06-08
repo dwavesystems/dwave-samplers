@@ -18,8 +18,8 @@ import dimod
 import numpy as np
 import dwave_networkx as dnx
 
-from orang.solve import solve_bqm_wrapper
-from orang.sample import sample_bqm_wrapper
+from dwave.samplers.orang.solve import solve_bqm_wrapper
+from dwave.samplers.orang.sample import sample_bqm_wrapper
 
 class TestWrappers(unittest.TestCase):
     def test_single_interaction_spin(self):

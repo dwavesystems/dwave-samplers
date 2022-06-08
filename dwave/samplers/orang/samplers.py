@@ -19,8 +19,8 @@ from dimod.typing import Variable
 import dwave_networkx as dnx
 import numpy as np
 
-from orang.sample import sample_bqm_wrapper
-from orang.solve import solve_bqm_wrapper, samples_dtype, energies_dtype
+from dwave.samplers.orang.sample import sample_bqm_wrapper
+from dwave.samplers.orang.solve import solve_bqm_wrapper, samples_dtype, energies_dtype
 
 __all__ = ['OrangSolver', 'OrangSampler']
 

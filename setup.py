@@ -15,6 +15,7 @@
 from Cython.Build import cythonize
 from setuptools import setup
 
+import dimod
 import numpy
 
 
@@ -22,9 +23,12 @@ setup(
     ext_modules=cythonize(
         ['dwave/samplers/test.pyx',
          'dwave/samplers/greedy/descent.pyx',
+         'dwave/samplers/orang/sample.pyx',
+         'dwave/samplers/orang/solve.pyx',
          ],
         ),
     include_dirs=[
+        dimod.get_include(),
         numpy.get_include(),
         ],
 

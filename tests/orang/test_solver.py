@@ -18,7 +18,7 @@ import unittest
 
 import dimod
 
-from orang import OrangSolver
+from dwave.samplers.orang import OrangSolver
 
 
 class TestConstruction(unittest.TestCase):

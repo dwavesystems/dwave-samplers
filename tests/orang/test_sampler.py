@@ -21,7 +21,7 @@ import dimod
 import numpy as np
 import networkx as nx
 
-from orang import OrangSampler
+from dwave.samplers.orang import OrangSampler
 
 
 class TestConstruction(unittest.TestCase):
