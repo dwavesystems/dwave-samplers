@@ -17,7 +17,7 @@ import unittest
 import numpy as np
 import dimod
 
-from greedy.descent import steepest_gradient_descent
+from dwave.samplers.greedy.descent import steepest_gradient_descent
 
 
 class SteepestGradientDescentCython(unittest.TestCase):

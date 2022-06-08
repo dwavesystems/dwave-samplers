@@ -17,7 +17,7 @@
 #include <vector>
 #include <cassert>
 #include <iostream>
-#include "../greedy/src/descent.h"
+#include "../dwave/samplers/greedy/src/descent.h"
 
 #define len(arr) (sizeof(arr) / sizeof((arr)[0]))
 

@@ -1,4 +1,4 @@
-# Copyright 2022 D-Wave Systems Inc.
+# Copyright 2019 D-Wave Systems Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,20 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from Cython.Build import cythonize
-from setuptools import setup
+from dwave.samplers.greedy.sampler import *
+import dwave.samplers.greedy.sampler
 
-import numpy
-
-
-setup(
-    ext_modules=cythonize(
-        ['dwave/samplers/test.pyx',
-         'dwave/samplers/greedy/descent.pyx',
-         ],
-        ),
-    include_dirs=[
-        numpy.get_include(),
-        ],
-
-    )
+from dwave.samplers.greedy.composite import *
+import dwave.samplers.greedy.composite

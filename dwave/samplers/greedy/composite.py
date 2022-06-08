@@ -17,7 +17,7 @@ samples.
 """
 
 import dimod
-import greedy
+import dwave.samplers.greedy
 
 __all__ = ['SteepestDescentComposite']
 

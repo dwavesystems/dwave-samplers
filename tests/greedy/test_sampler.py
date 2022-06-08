@@ -20,7 +20,7 @@ from parameterized import parameterized, parameterized_class
 import dimod
 from dimod.testing.sampler import BQM_SUBCLASSES
 
-from greedy.sampler import SteepestDescentSampler
+from dwave.samplers.greedy.sampler import SteepestDescentSampler
 
 
 BQM_CLASSES = [(cls, ) for cls in BQM_SUBCLASSES]

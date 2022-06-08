@@ -19,7 +19,7 @@ from numbers import Integral
 import dimod
 import numpy as np
 
-from greedy.descent import steepest_gradient_descent
+from dwave.samplers.greedy.descent import steepest_gradient_descent
 
 __all__ = ["SteepestDescentSolver", "SteepestDescentSampler"]
 

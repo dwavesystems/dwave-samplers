@@ -1,4 +1,0 @@
-coverage[toml]
-codecov
-parameterized
-dwave-system>=1.0.0

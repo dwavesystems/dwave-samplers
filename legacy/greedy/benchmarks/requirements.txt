@@ -1,5 +1,0 @@
--r ../requirements.txt
-
-asv
-virtualenv
-networkx
