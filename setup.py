@@ -51,8 +51,7 @@ class build_ext_with_args(build_ext):
 setup(
     cmdclass={'build_ext': build_ext_with_args},
     ext_modules=cythonize(
-        ['dwave/samplers/test.pyx',
-         'dwave/samplers/greedy/descent.pyx',
+        ['dwave/samplers/greedy/descent.pyx',
          'dwave/samplers/orang/sample.pyx',
          'dwave/samplers/orang/solve.pyx',
          'dwave/samplers/tabu/tabu_search.pyx',
