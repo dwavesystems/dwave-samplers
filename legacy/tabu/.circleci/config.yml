@@ -1,0 +1,147 @@
+version: 2.1
+
+parameters:
+  package:
+    type: string
+    default: dwave-tabu
+
+orbs:
+  ocean: dwave/ocean@1.4
+
+environment:
+  PIP_PROGRESS_BAR: 'off'
+
+jobs:
+  test-cpp:
+    docker:
+      # just use a python image, all we really want is debian
+      - image: circleci/python:3.8-buster
+
+    steps:
+      - checkout
+      - run:
+          name: Run C++ tests
+          command: |
+            make -C testscpp/ --always-make
+
+workflows:
+  build-test-deploy:
+    jobs:
+      - ocean/build-sdist:
+          filters: &always-run  # required because it's indirectly required by the deploy job that runs on tags only
+            tags:
+              only: /.*/
+
+      - ocean/build-manylinux-wheel:
+          name: build-<< matrix.manylinux-tag >>_<< matrix.manylinux-arch >>-py<< matrix.python-version >>
+          matrix:
+            parameters:
+              manylinux-tag: ["manylinux1", "manylinux2014"]
+              manylinux-arch: ["x86_64"]
+              python-version: &python-versions ["3.7.9", "3.8.9", "3.9.4", "3.10.0"]
+            exclude:
+              # py310 not available in manylinux1_x86_64
+              - manylinux-tag: "manylinux1"
+                manylinux-arch: "x86_64"
+                python-version: "3.10.0"
+          filters:
+            <<: *always-run
+
+      - ocean/cibw-build-linux-aarch64-wheel:
+          name: build-<< matrix.manylinux-tag >>_aarch64-py<< matrix.python-version >>
+          matrix:
+            parameters:
+              manylinux-tag: ["manylinux2014"]
+              python-version: *python-versions
+          filters:
+            <<: *always-run
+
+      - ocean/test-linux-from-dist:
+          name: test-linux-py<< matrix.python-version >>|<< matrix.constraints >>
+          requires:
+            - ocean/build-sdist
+            - ocean/build-manylinux-wheel
+            - test-cpp
+          matrix:
+            parameters:
+              python-version: *python-versions
+              package: [<< pipeline.parameters.package >>]
+              constraints: ["dimod~=0.9.0", "dimod~=0.10.0", "dimod~=0.11.0"]
+            exclude:
+              # dimod < 0.10 not supported on py310
+              - python-version: "3.10.0"
+                package: << pipeline.parameters.package >>
+                constraints: "dimod~=0.9.0"
+          filters:
+            <<: *always-run
+
+      - test-cpp:
+          filters:
+            <<: *always-run
+
+      - ocean/test-docs:
+          name: test-docs
+          requires:
+            - ocean/build-sdist
+            - ocean/build-manylinux-wheel
+          matrix:
+            parameters:
+              package: [<< pipeline.parameters.package >>]
+          filters:
+            <<: *always-run
+
+      - ocean/cibw-build-macos-wheel:
+          name: build-macos-py<< matrix.python-version >>
+          matrix:
+            parameters:
+              python-version: *python-versions
+              cibw-archs: ["x86_64 universal2"]
+          filters:
+            <<: *always-run
+
+      - ocean/test-macos-from-dist:
+          name: test-macos-py<< matrix.python-version >>
+          requires:
+            - ocean/build-sdist
+            - ocean/cibw-build-macos-wheel
+            - test-cpp
+          matrix:
+            parameters:
+              python-version: *python-versions
+              xcode: ["13.2.0"]
+              package: [<< pipeline.parameters.package >>]
+          filters:
+            <<: *always-run
+
+      - ocean/build-windows-wheel:
+          name: build-win-<< matrix.python-arch >>-py<< matrix.python-version >>
+          matrix:
+            parameters:
+              python-version: *python-versions
+              python-arch: &python-archs-win [""]
+          filters:
+            <<: *always-run
+
+      - ocean/test-windows-from-dist:
+          name: test-win-<< matrix.python-arch >>-py<< matrix.python-version >>
+          requires:
+            - ocean/build-windows-wheel
+          matrix:
+            parameters:
+              python-version: *python-versions
+              python-arch: *python-archs-win
+              package: [<< pipeline.parameters.package >>]
+          filters:
+            <<: *always-run
+
+      - ocean/pypi-deploy:
+          requires:
+            - ocean/test-linux-from-dist
+            - ocean/test-macos-from-dist
+            - ocean/test-windows-from-dist
+            - ocean/test-docs
+          filters:
+            tags:
+              only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
+            branches:
+              ignore: /.*/
