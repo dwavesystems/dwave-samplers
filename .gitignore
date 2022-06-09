@@ -109,3 +109,4 @@ venv.bak/
 
 # cython files
 dwave/samplers/test.cpp
+dwave/samplers/tabu/tabu_search.cpp

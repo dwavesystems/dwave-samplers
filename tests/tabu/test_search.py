@@ -20,8 +20,8 @@ from concurrent.futures import ThreadPoolExecutor, wait
 import dimod
 import numpy as np
 
-import tabu
-from tabu.utils import tictoc
+import dwave.samplers.tabu as tabu
+from dwave.samplers.tabu.utils import tictoc
 
 
 class TestTabuSearch(unittest.TestCase):

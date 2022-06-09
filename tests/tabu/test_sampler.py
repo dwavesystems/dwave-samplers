@@ -19,8 +19,8 @@ import unittest
 import dimod
 import numpy as np
 
-import tabu
-from tabu.utils import tictoc
+import dwave.samplers.tabu as tabu
+from dwave.samplers.tabu.utils import tictoc
 
 
 @dimod.testing.load_sampler_bqm_tests(tabu.TabuSampler)

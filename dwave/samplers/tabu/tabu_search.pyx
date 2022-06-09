@@ -1,6 +1,6 @@
 # distutils: language = c++
-# distutils: include_dirs = tabu/src/
-# distutils: sources = tabu/src/tabu_search.cpp
+# distutils: include_dirs = dwave/samplers/tabu/src/
+# distutils: sources = dwave/samplers/tabu/src/tabu_search.cpp dwave/samplers/tabu/src/tabu_utils.cpp dwave/samplers/tabu/src/bqp.cpp
 
 # Copyright 2020 D-Wave Systems Inc.
 #
@@ -20,13 +20,13 @@ from libcpp.vector cimport vector
 from libc.time cimport time
 import numpy as np
 
-cimport tabu
+cimport dwave.samplers.tabu.tabu
 
 
 cdef class TabuSearch:
     """Wraps the class `TabuSearch` from `src/tabu_search.cpp`."""
 
-    cdef tabu.TabuSearch *c_tabu
+    cdef dwave.samplers.tabu.tabu.TabuSearch *c_tabu
 
     def __cinit__(self,
                   object Q,
@@ -53,7 +53,7 @@ cdef class TabuSearch:
             initVec.push_back(initial[i])
 
         with nogil:
-            self.c_tabu = new tabu.TabuSearch(
+            self.c_tabu = new dwave.samplers.tabu.tabu.TabuSearch(
                 Qvec, initVec, tenure, timeout, numRestarts, _seed, _energyThreshold)
 
     def __dealloc__(self):

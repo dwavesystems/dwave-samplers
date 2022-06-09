@@ -17,7 +17,7 @@
 import numpy as np
 import dimod
 
-from tabu import TabuSearch
+from dwave.samplers.tabu import TabuSearch
 
 __all__ = ["TabuSampler"]
 

@@ -12,10 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__package_name__ = 'dwave-tabu'
-__version__ = '0.4.5'
-
 __all__ = ['TabuSearch', 'TabuSampler']
 
-from tabu.tabu_search import TabuSearch
-from tabu.sampler import TabuSampler
+from dwave.samplers.tabu.tabu_search import TabuSearch
+from dwave.samplers.tabu.sampler import TabuSampler

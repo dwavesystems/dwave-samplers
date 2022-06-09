@@ -17,7 +17,7 @@
 #include <limits>
 
 #include "common.h"
-#include "utils.h"
+#include "tabu_utils.h"
 
 using std::vector;
 using std::size_t;

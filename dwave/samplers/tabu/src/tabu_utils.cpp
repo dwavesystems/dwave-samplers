@@ -12,11 +12,30 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef _UTILS_H_
+#include "tabu_utils.h"
 
-#define _UTILS_H_
+#include "common.h"
 
-// High-precision per-thread monotonic clock value expressed in milliseconds
-long long realtime_clock();
+#if defined(_WIN32) || defined(_WIN64)
+
+#include <Windows.h>
+
+long long realtime_clock() {
+    LARGE_INTEGER frequency;
+    LARGE_INTEGER now;
+
+    QueryPerformanceFrequency(&frequency);
+    QueryPerformanceCounter(&now);
+
+    return (long long)(1000.0 * now.QuadPart / frequency.QuadPart);
+}
+
+#else
+
+long long realtime_clock() {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+}
 
 #endif
