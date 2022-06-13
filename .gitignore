@@ -110,6 +110,8 @@ venv.bak/
 # cython files
 dwave/samplers/greedy/*.cpp
 dwave/samplers/greedy/*.html
+dwave/samplers/neal/*.cpp
+dwave/samplers/neal/*.html
 dwave/samplers/orang/*.cpp
 dwave/samplers/orang/*.html
 dwave/samplers/tabu/*.cpp
