@@ -3,23 +3,67 @@ name: Test
 on: [push, pull_request]
 
 jobs:
-  test-linux:
-    name: Run unittests
-    runs-on: ubuntu-latest
-
+  build-wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        os: [ubuntu-20.04, windows-2019, macos-10.15]
+      fail-fast: false
 
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v3
+
+      # todo: this is not needed yet, but might as well leave it here for later
+      - name: Set up QEMU
+        if: runner.os == 'Linux'
+        uses: docker/setup-qemu-action@v1
+        with:
+          platforms: all
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.6.1
+        env:
+          CIBW_ARCHS_MACOS: x86_64  # todo: universal2 for deploy
+          CIBW_ARCHS_LINUX: x86_64  # todo: aarch64 for deploy
+          CIBW_ARCHS_WINDOWS: AMD64
+          CIBW_BUILD_VERBOSITY: 1
+          CIBW_SKIP: pp* *musllinux*
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: wheels
+          path: ./wheelhouse/*.whl
+
+  test:
+    needs: build-wheels
+    name: Run unittests on ${{ matrix.os }} with Python  ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, windows-2019, macos-10.15]
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+        with:
+          name: wheels
+          path: ./dist/
+      - uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Test
+      - name: install
+        # todo: matrix of numpy versions
         run: |
           pip install -U pip setuptools
-          pip install -r requirements.txt -r tests/requirements.txt
-          python setup.py build_ext --inplace
+          pip install -r tests/requirements.txt
+          # (1) install dwave-samplers only (no deps) from local dist
+          pip install --no-index --find-links=dist --only-binary=dwave-samplers dwave-samplers --no-deps
+          # (2) install deps only from pypi
+          pip install --find-links=dist --only-binary=:all: dwave-samplers
+      - name: test
+        run: |
+          cd tests/
           python -m unittest
