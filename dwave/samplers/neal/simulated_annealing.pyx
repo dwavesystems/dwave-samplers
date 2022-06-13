@@ -1,4 +1,7 @@
 # distutils: language=c++
+# distutils: include_dirs = dwave/samplers/neal/src/
+# distutils: sources = dwave/samplers/neal/src/cpu_sa.cpp
+
 # Copyright 2018 D-Wave Systems Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,8 +15,6 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
-#
-# =============================================================================
 
 from libcpp cimport bool
 from libcpp.vector cimport vector

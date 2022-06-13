@@ -26,7 +26,7 @@ from collections import defaultdict
 import dimod
 import numpy as np
 
-import neal.simulated_annealing as sa
+import dwave.samplers.neal.simulated_annealing as sa
 
 import warnings
 

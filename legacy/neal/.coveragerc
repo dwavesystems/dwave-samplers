@@ -1,6 +1,0 @@
-[run]
-source = neal
-
-[report]
-exclude_lines:
-    pragma: no cover

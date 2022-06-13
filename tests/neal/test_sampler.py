@@ -22,8 +22,8 @@ import warnings
 
 import dimod
 
-import neal
-from neal import Neal
+import dwave.samplers.neal as neal
+from dwave.samplers.neal import Neal
 
 class TestSchedules(unittest.TestCase):
     def test_schedules(self):

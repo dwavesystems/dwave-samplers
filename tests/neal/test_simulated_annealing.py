@@ -22,7 +22,7 @@ from copy import deepcopy
 
 import numpy as np
 
-from neal.simulated_annealing import simulated_annealing
+from dwave.samplers.neal.simulated_annealing import simulated_annealing
 
 
 try:
