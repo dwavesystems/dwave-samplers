@@ -52,10 +52,9 @@ setup(
     cmdclass={'build_ext': build_ext_with_args},
     ext_modules=cythonize(
         ['dwave/samplers/greedy/descent.pyx',
-         'dwave/samplers/orang/sample.pyx',
-         'dwave/samplers/orang/solve.pyx',
          'dwave/samplers/sa/*.pyx',
          'dwave/samplers/tabu/tabu_search.pyx',
+         'dwave/samplers/tree/*.pyx',
          ],
         ),
     include_dirs=[
