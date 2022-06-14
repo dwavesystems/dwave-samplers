@@ -11,12 +11,7 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
-#
-# ================================================================================================
-"""
-A dimod :term:`sampler` that uses the simulated annealing algorithm.
 
-"""
 import math
 
 from numbers import Integral
@@ -26,7 +21,7 @@ from collections import defaultdict
 import dimod
 import numpy as np
 
-import dwave.samplers.neal.simulated_annealing as sa
+from dwave.samplers.sa.simulated_annealing import simulated_annealing
 
 import warnings
 
@@ -334,7 +329,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                 else:
                     raise ValueError("Beta schedule type {} not implemented".format(beta_schedule_type))
         # run the simulated annealing algorithm
-        samples, energies = sa.simulated_annealing(
+        samples, energies = simulated_annealing(
             num_reads, ldata, irow, icol, qdata,
             num_sweeps_per_beta, beta_schedule,
             seed, initial_states_array, interrupt_function)

@@ -1,6 +1,7 @@
-# distutils: language=c++
-# distutils: include_dirs = dwave/samplers/neal/src/
-# distutils: sources = dwave/samplers/neal/src/cpu_sa.cpp
+# distutils: language = c++
+# distutils: include_dirs = dwave/samplers/sa/src/
+# distutils: sources = dwave/samplers/sa/src/cpu_sa.cpp
+# cython: language_level = 3
 
 # Copyright 2018 D-Wave Systems Inc.
 #

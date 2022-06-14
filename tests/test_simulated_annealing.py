@@ -11,25 +11,17 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
-#
-# ================================================================================================
 
 import time
 import unittest
 import contextlib
 from concurrent.futures import ThreadPoolExecutor, wait
 from copy import deepcopy
+from time import perf_counter
 
 import numpy as np
 
-from dwave.samplers.neal.simulated_annealing import simulated_annealing
-
-
-try:
-    perf_counter = time.perf_counter
-except AttributeError:  # pragma: no cover
-    # python 2
-    perf_counter = time.time
+from dwave.samplers.sa.simulated_annealing import simulated_annealing
 
 
 @contextlib.contextmanager
