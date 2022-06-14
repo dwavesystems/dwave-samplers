@@ -52,9 +52,9 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
     Examples:
         Solve a simple Ising problem:
 
-        >>> import greedy
+        >>> from dwave.samplers import SteepestDescentSampler
         ...
-        >>> sampler = greedy.SteepestDescentSampler()
+        >>> sampler = SteepestDescentSampler()
         >>> samples = sampler.sample_ising({0: 2, 1: 2}, {(0, 1): -1})
         ...
         >>> print(samples)      # doctest: +SKIP
@@ -186,8 +186,8 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
             >>> import dimod
             >>> bqm = dimod.BQM.from_ising({}, {'ab': 1})
             ...
-            >>> import greedy
-            >>> sampler = greedy.SteepestDescentSampler()
+            >>> from dwave.samplers import SteepestDescentSampler
+            >>> sampler = SteepestDescentSampler()
             ...
             >>> samples = sampler.sample(bqm)
             >>> samples.first.energy
@@ -198,7 +198,7 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
             random state:
 
             >>> bqm = dimod.BQM.from_ising({}, {'ab': 1})
-            >>> sampler = greedy.SteepestDescentSampler()
+            >>> sampler = SteepestDescentSampler()
             ...
             >>> samples = sampler.sample(bqm, num_reads=10**6)
             >>> print(samples.aggregate())      # doctest: +SKIP
@@ -212,7 +212,7 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
             global minimum at ``(-1,-1)``:
 
             >>> bqm = dimod.BQM.from_ising({'x': 2, 'y': 2}, {'xy': -1})
-            >>> sampler = greedy.SteepestDescentSampler()
+            >>> sampler = SteepestDescentSampler()
             ...
             >>> samples = sampler.sample(bqm, initial_states=([1, 1], 'xy'), num_reads=3)
             >>> print(samples)      # doctest: +SKIP

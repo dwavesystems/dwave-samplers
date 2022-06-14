@@ -20,13 +20,13 @@ import warnings
 
 import dimod
 
-import dwave.samplers.sa as neal
-from dwave.samplers.sa import Neal
+import dwave.samplers.sa as sa
+from dwave.samplers.sa import SimulatedAnnealingSampler
 
 
 class TestSchedules(unittest.TestCase):
     def test_schedules(self):
-        sampler = Neal()
+        sampler = SimulatedAnnealingSampler()
         num_vars = 40
         h = {v: -1 for v in range(num_vars)}
         J = {(u, v): -1 for u in range(num_vars) for v in range(u, num_vars) if u != v}
@@ -46,7 +46,7 @@ class TestSchedules(unittest.TestCase):
             sampler.sample_ising(h, J, num_reads=num_reads, beta_schedule_type='asd')
 
     def test_custom_schedule(self):
-        sampler = Neal()
+        sampler = SimulatedAnnealingSampler()
         num_vars = 40
         h = {v: -1 for v in range(num_vars)}
         J = {(u, v): -1 for u in range(num_vars) for v in range(u, num_vars) if u != v}
@@ -62,15 +62,15 @@ class TestSchedules(unittest.TestCase):
             
         resp = sampler.sample_ising(h, J, num_reads=num_reads, beta_schedule_type='custom',beta_schedule=[0.1,1])
         
-class TestSimulatedAnnealingSampler(unittest.TestCase):
+class TestSimulatedAnsaingSampler(unittest.TestCase):
     def test_instantiation(self):
-        sampler = Neal()
+        sampler = SimulatedAnnealingSampler()
         dimod.testing.assert_sampler_api(sampler)
 
     def test_one_node_beta_range(self):
         h = {'a': -1}
         bqm = dimod.BinaryQuadraticModel(h, {}, 0, dimod.SPIN)
-        response = Neal().sample(bqm)
+        response = SimulatedAnnealingSampler().sample(bqm)
         hot_beta, cold_beta = response.info['beta_range']
 
         # Check beta values
@@ -82,7 +82,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
     def test_one_edge_beta_range(self):
         J = {('a', 'b'): 1}
         bqm = dimod.BinaryQuadraticModel({}, J, 0, dimod.BINARY)
-        response = Neal().sample(bqm)
+        response = SimulatedAnnealingSampler().sample(bqm)
         hot_beta, cold_beta = response.info['beta_range']
 
         # Check beta values
@@ -95,7 +95,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
         h = {'a': 0, 'b': -1}
         J = {('a', 'b'): -1}
 
-        resp = Neal().sample_ising(h, J)
+        resp = SimulatedAnnealingSampler().sample_ising(h, J)
 
         row, col = resp.record.sample.shape
 
@@ -104,7 +104,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
 
     def test_sample_qubo(self):
         Q = {(0, 1): 1}
-        resp = Neal().sample_qubo(Q)
+        resp = SimulatedAnnealingSampler().sample_qubo(Q)
 
         row, col = resp.record.sample.shape
 
@@ -112,7 +112,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
         self.assertIs(resp.vartype, dimod.BINARY)  # should be qubo
 
     def test_basic_response(self):
-        sampler = Neal()
+        sampler = SimulatedAnnealingSampler()
         h = {'a': 0, 'b': -1}
         J = {('a', 'b'): -1}
         response = sampler.sample_ising(h, J)
@@ -120,7 +120,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
         self.assertIsInstance(response, dimod.SampleSet, "Sampler returned an unexpected response type")
 
     def test_num_reads(self):
-        sampler = Neal()
+        sampler = SimulatedAnnealingSampler()
 
         h = {}
         J = {('a', 'b'): .5, (0, 'a'): -1, (1, 'b'): 0.0}
@@ -141,7 +141,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
                 sampler.sample_ising(h, J, num_reads=bad_num_reads)
 
     def test_empty_problem(self):
-        sampler = Neal()
+        sampler = SimulatedAnnealingSampler()
         h = {'a': 0, 'b': -1}
         J = {('a', 'b'): -1}
         eh, eJ = {}, {}
@@ -153,7 +153,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
                 r = sampler.sample_ising(_h, _J)
 
     def test_seed(self):
-        sampler = Neal()
+        sampler = SimulatedAnnealingSampler()
         num_vars = 40
         h = {v: -1 for v in range(num_vars)}
         J = {(u, v): -1 for u in range(num_vars) for v in range(u, num_vars) if u != v}
@@ -184,7 +184,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
             all_samples.append(samples0)
 
     def test_disconnected_problem(self):
-        sampler = Neal()
+        sampler = SimulatedAnnealingSampler()
         h = {}
         J = {
                 # K_3
@@ -208,7 +208,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
 
 
     def test_interrupt_error(self):
-        sampler = Neal()
+        sampler = SimulatedAnnealingSampler()
         num_vars = 40
         h = {v: -1 for v in range(num_vars)}
         J = {(u, v): -1 for u in range(num_vars) for v in range(u, num_vars) if u != v}
@@ -225,7 +225,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
         bqm = dimod.BinaryQuadraticModel.from_ising({}, {'ab': 1, 'bc': 1, 'ca': 1})
         initial_states = dimod.SampleSet.from_samples_bqm({'a': 1, 'b': -1, 'c': 1}, bqm)
 
-        response = Neal().sample(bqm, initial_states=initial_states, num_reads=1)
+        response = SimulatedAnnealingSampler().sample(bqm, initial_states=initial_states, num_reads=1)
 
         self.assertEqual(len(response), 1)
         self.assertEqual(response.first.energy, -1)
@@ -234,7 +234,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
         bqm = dimod.BinaryQuadraticModel.from_ising({}, {'ab': -1, 'bc': 1, 'ac': 1})
         init = dimod.SampleSet.from_samples_bqm([{'a': 1, 'b': 1, 'c': 1},
                                                  {'a': -1, 'b': -1, 'c': -1}], bqm)
-        sampler = Neal()
+        sampler = SimulatedAnnealingSampler()
 
         # 2 fixed initial state, 8 random
         resp = sampler.sample(bqm, initial_states=init, num_reads=10)
@@ -298,7 +298,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
         bqm = dimod.BinaryQuadraticModel.from_ising({}, {'ab': -1, 'bc': 1, 'ac': 1})
         init = dimod.SampleSet.from_samples_bqm([{'a': 1, 'b': 1, 'c': 1},
                                                  {'a': -1, 'b': -1, 'c': -1}], bqm)
-        sampler = Neal()
+        sampler = SimulatedAnnealingSampler()
 
         # default num_reads == 1
         self.assertEqual(len(sampler.sample(bqm)), 1)
@@ -320,30 +320,30 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
 class TestDefaultBetaRange(unittest.TestCase):
     def test_empty_problem(self):
         #Values have no impact on behaviour, but should conform to documented structure
-        beta_range = neal.sampler._default_ising_beta_range({}, {})
+        beta_range = sa.sampler._default_ising_beta_range({}, {})
         self.assertTrue(len(beta_range)==2 and min(beta_range)>= 0)
 
     def test_single_variable_ising_problem(self):
-        h1, c1 = neal.sampler._default_ising_beta_range({'a': 0.1}, {})
-        h2, c2 = neal.sampler._default_ising_beta_range({'a': 1}, {})
-        h3, c3 = neal.sampler._default_ising_beta_range({'a': 10}, {})
+        h1, c1 = sa.sampler._default_ising_beta_range({'a': 0.1}, {})
+        h2, c2 = sa.sampler._default_ising_beta_range({'a': 1}, {})
+        h3, c3 = sa.sampler._default_ising_beta_range({'a': 10}, {})
 
         self.assertTrue(h1 > h2 > h3)
         self.assertTrue(c1 > c2 > c3)
         self.assertTrue(h1 < c1 and h2 < c2 and h3 < c3)
 
     def test_single_coupling_ising_problem(self):
-        h1, c1 = neal.sampler._default_ising_beta_range({}, {'ab': 0.1})
-        h2, c2 = neal.sampler._default_ising_beta_range({}, {'ab': 1})
-        h3, c3 = neal.sampler._default_ising_beta_range({}, {'ab': 10})
+        h1, c1 = sa.sampler._default_ising_beta_range({}, {'ab': 0.1})
+        h2, c2 = sa.sampler._default_ising_beta_range({}, {'ab': 1})
+        h3, c3 = sa.sampler._default_ising_beta_range({}, {'ab': 10})
         self.assertTrue(h1 > h2 > h3)
         self.assertTrue(c1 > c2 > c3)
         self.assertTrue(h1 < c1 and h2 < c2 and h3 < c3)
 
     def test_bias_coupling_ranges(self):
-        h1, c1 = neal.sampler._default_ising_beta_range({'a': 1}, {'ab': 1})
-        h2, c2 = neal.sampler._default_ising_beta_range({'a': 10}, {'ab': 1})
-        h3, c3 = neal.sampler._default_ising_beta_range({'a': 10}, {'ab': 10})
+        h1, c1 = sa.sampler._default_ising_beta_range({'a': 1}, {'ab': 1})
+        h2, c2 = sa.sampler._default_ising_beta_range({'a': 10}, {'ab': 1})
+        h3, c3 = sa.sampler._default_ising_beta_range({'a': 10}, {'ab': 10})
 
         self.assertTrue(h1 > h2 > h3)
         self.assertTrue(c1 == c2 > c3)
@@ -351,12 +351,12 @@ class TestDefaultBetaRange(unittest.TestCase):
 
     def test_default_beta_range(self):
         bqm = dimod.BinaryQuadraticModel.from_ising({'a': 1}, {'bc': 1})
-        self.assertEqual(neal.default_beta_range(bqm),
-                         neal.default_beta_range(bqm.binary))
+        self.assertEqual(sa.sampler.default_beta_range(bqm),
+                         sa.sampler.default_beta_range(bqm.binary))
         
     def test_scale_T_with_N(self):
-        res1 = neal.sampler._default_ising_beta_range({x: 1 for x in range(10)}, {}, scale_T_with_N=False)
-        res2 = neal.sampler._default_ising_beta_range({x: 1 for x in range(10)}, {}, scale_T_with_N=True)
+        res1 = sa.sampler._default_ising_beta_range({x: 1 for x in range(10)}, {}, scale_T_with_N=False)
+        res2 = sa.sampler._default_ising_beta_range({x: 1 for x in range(10)}, {}, scale_T_with_N=True)
         #2 gaps of 2, should indicate lower end temperature:
 
         self.assertTrue(res1[1] > res1[0] and res1[0]>0)
@@ -365,8 +365,8 @@ class TestDefaultBetaRange(unittest.TestCase):
         self.assertTrue(res2[1] > res1[1])
 
     def test_max_single_qubit_excitation_rate(self):
-        res1 = neal.sampler._default_ising_beta_range({x: 1 for x in range(10)}, {}, max_single_qubit_excitation_rate=0.01)
-        res2 = neal.sampler._default_ising_beta_range({x: 1 for x in range(10)}, {}, max_single_qubit_excitation_rate=0.0001)
+        res1 = sa.sampler._default_ising_beta_range({x: 1 for x in range(10)}, {}, max_single_qubit_excitation_rate=0.01)
+        res2 = sa.sampler._default_ising_beta_range({x: 1 for x in range(10)}, {}, max_single_qubit_excitation_rate=0.0001)
         #Lower rate should indicate lower end temperature:
         self.assertTrue(res1[1] > res1[0] and res1[0]>0)
         self.assertTrue(res2[1] > res2[0] and res2[0]>0)
@@ -450,7 +450,7 @@ class TestHeuristicResponse(unittest.TestCase):
         optimal_energy = jss_bqm.energy(optimal_solution) # Evaluates to 0.5
 
         # Get heuristic solution
-        sampler = Neal()
+        sampler = SimulatedAnnealingSampler()
         response = sampler.sample(jss_bqm, beta_schedule_type="linear", num_reads=10)
         _, response_energy, _ = next(response.data())
 
@@ -472,7 +472,7 @@ class TestHeuristicResponse(unittest.TestCase):
         J = {e: np_rand.choice((-1, 1)) for e in get_cubic_lattice_edges(12)}
 
         # Solve ising problem
-        sampler = Neal()
+        sampler = SimulatedAnnealingSampler()
         response = sampler.sample_ising({}, J, beta_schedule_type="geometric", num_reads=10)
         _, response_energy, _ = next(response.data())
 

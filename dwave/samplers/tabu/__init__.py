@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__all__ = ['TabuSearch', 'TabuSampler']
+__all__ = ['TabuSampler']
 
 from dwave.samplers.tabu.tabu_search import TabuSearch
 from dwave.samplers.tabu.sampler import TabuSampler

@@ -25,10 +25,15 @@ __all__ = ["TabuSampler"]
 class TabuSampler(dimod.Sampler, dimod.Initialized):
     """A tabu-search sampler.
 
+    Implements the `MST2 multistart tabu search algorithm
+    <https://link.springer.com/article/10.1023/B:ANOR.0000039522.58036.68>`_
+    for quadratic unconstrained binary optimization (QUBO) problems
+    with a :std:doc:`dimod <oceandocs:docs_dimod/sdk_index>` Python wrapper.
+
     Examples:
         This example solves a two-variable Ising model.
 
-        >>> from tabu import TabuSampler
+        >>> from dwave.samplers import TabuSampler
         >>> samples = TabuSampler().sample_ising({'a': -0.5, 'b': 1.0}, {'ab': -1})
         >>> list(samples.data()) # doctest: +SKIP
         [Sample(sample={'a': -1, 'b': -1}, energy=-1.5, num_occurrences=1)]
@@ -119,8 +124,8 @@ class TabuSampler(dimod.Sampler, dimod.Initialized):
             >>> import dimod
             >>> bqm = dimod.BQM.from_ising({}, {'ab': 1})
 
-            >>> import tabu
-            >>> sampler = tabu.TabuSampler()
+            >>> from dwave.samplers import TabuSampler
+            >>> sampler = TabuSampler()
 
             >>> samples = sampler.sample(bqm)
             >>> samples.record[0].energy

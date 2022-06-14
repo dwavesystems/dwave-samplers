@@ -25,19 +25,33 @@ from dwave.samplers.sa.simulated_annealing import simulated_annealing
 
 import warnings
 
-__all__ = ["Neal", "SimulatedAnnealingSampler", "default_beta_range"]
+__all__ = ["Neal", "SimulatedAnnealingSampler"]
 
 
 class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
     """Simulated annealing sampler.
+
+    An implementation of a simulated annealing sampler.
+
+    A simulated annealing sampler can be used for approximate Boltzmann sampling or
+    heuristic optimization. This implementation approaches the equilibrium
+    distribution by performing updates at a sequence of increasing beta values,
+    ``beta_schedule``, terminating at the target beta. Each spin is updated once
+    in a fixed order per point in the beta_schedule according to a Metropolis-
+    Hastings update. When beta is large the target distribution concentrates, at
+    equilibrium, over ground states of the model. Samples are guaranteed to match
+    the equilibrium for long 'smooth' beta schedules.
+
+    For more information, see Kirkpatrick, S.; Gelatt Jr, C. D.; Vecchi, M. P.
+    (1983). "Optimization by Simulated Annealing". Science. 220 (4598): 671–680
 
     Also aliased as :class:`.Neal`.
 
     Examples:
         This example solves a simple Ising problem.
 
-        >>> import neal
-        >>> sampler = neal.SimulatedAnnealingSampler()
+        >>> from dwave.samplers import SimulatedAnnealingSampler
+        >>> sampler = SimulatedAnnealingSampler()
         >>> h = {'a': 0.0, 'b': 0.0, 'c': 0.0}
         >>> J = {('a', 'b'): 1.0, ('b', 'c'): 1.0, ('a', 'c'): 1.0}
         >>> sampleset = sampler.sample_ising(h, J, num_reads=10)
@@ -57,8 +71,8 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
     Examples:
         This example looks at a sampler's parameters and some of their values.
 
-        >>> import neal
-        >>> sampler = neal.SimulatedAnnealingSampler()
+        >>> from dwave.samplers import SimulatedAnnealingSampler
+        >>> sampler = SimulatedAnnealingSampler()
         >>> for kwarg in sorted(sampler.parameters):
         ...     print(kwarg)
         beta_range
@@ -83,8 +97,8 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
     Examples:
         This example looks at the values set for a sampler property.
 
-        >>> import neal
-        >>> sampler = neal.SimulatedAnnealingSampler()
+        >>> from dwave.samplers import SimulatedAnnealingSampler
+        >>> sampler = SimulatedAnnealingSampler()
         >>> sampler.properties['beta_schedule_options']
         ('linear', 'geometric', 'custom')
 
@@ -203,9 +217,9 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
             with some different input parameters.
 
             >>> import dimod
-            >>> import neal
+            >>> from dwave.samplers import SimulatedAnnealingSampler
             ...
-            >>> sampler = neal.SimulatedAnnealingSampler()
+            >>> sampler = SimulatedAnnealingSampler()
             >>> bqm = dimod.BinaryQuadraticModel({'a': .5, 'b': -.5}, 
             ...                                  {('a', 'b'): -1}, 0.0, 
             ...                                  dimod.SPIN)

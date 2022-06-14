@@ -98,16 +98,16 @@ workflows:
       #     filters:
       #       <<: *always-run
 
-      # - ocean/test-docs:
-      #     name: test-docs
-      #     requires:
-      #       - ocean/build-sdist
-      #       - ocean/build-manylinux-wheel
-      #     matrix:
-      #       parameters:
-      #         package: [<< pipeline.parameters.package >>]
-      #     filters:
-      #       <<: *always-run
+      - ocean/test-docs:
+          name: test-docs
+          requires:
+            - ocean/build-sdist
+            - ocean/build-manylinux-wheel
+          matrix:
+            parameters:
+              package: [<< pipeline.parameters.package >>]
+          filters:
+            <<: *always-run
 
       - ocean/cibw-build-macos-wheel:
           name: build-macos-py<< matrix.python-version >>
@@ -157,7 +157,7 @@ workflows:
             - ocean/test-linux-from-dist
             - ocean/test-macos-from-dist
             - ocean/test-windows-from-dist
-            # - ocean/test-docs
+            - ocean/test-docs
             # - test-install
           filters:
             tags:

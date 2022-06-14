@@ -34,7 +34,8 @@ class TreeDecompositionSolver(dimod.Sampler):
     Examples:
         Create a solver:
 
-        >>> solver = orang.OrangSolver()
+        >>> from dwave.samplers import TreeDecompositionSolver
+        >>> solver = TreeDecompositionSolver()
 
         Create a simple Ising problem:
 
@@ -183,7 +184,8 @@ class TreeDecompositionSampler(dimod.Sampler):
     Examples:
         Create a sampler:
 
-        >>> sampler = orang.OrangSampler()
+        >>> from dwave.samplers import TreeDecompositionSampler
+        >>> sampler = TreeDecompositionSampler()
 
         Create a simple Ising problem:
 
