@@ -91,12 +91,12 @@ workflows:
           filters:
             <<: *always-run
 
-      - test-install:
-          requires:
-            - ocean/build-sdist
-            - ocean/build-manylinux-wheel
-          filters:
-            <<: *always-run
+      # - test-install:
+      #     requires:
+      #       - ocean/build-sdist
+      #       - ocean/build-manylinux-wheel
+      #     filters:
+      #       <<: *always-run
 
       # - ocean/test-docs:
       #     name: test-docs
@@ -158,7 +158,7 @@ workflows:
             - ocean/test-macos-from-dist
             - ocean/test-windows-from-dist
             # - ocean/test-docs
-            - test-install
+            # - test-install
           filters:
             tags:
               only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
