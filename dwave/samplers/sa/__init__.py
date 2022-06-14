@@ -12,5 +12,5 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from dwave.samplers.neal.sampler import *
-import dwave.samplers.neal.sampler
+from dwave.samplers.sa.sampler import *
+import dwave.samplers.sa.sampler
