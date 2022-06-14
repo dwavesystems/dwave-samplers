@@ -1,2 +1,2 @@
 include pyproject.toml
-recursive-include dwave/samplers/ *.h *.hpp *.pyx *.pxd *.pxi
+recursive-include dwave/samplers/ *.cpp *.h *.hpp *.pyx *.pxd *.pxi
