@@ -21,12 +21,12 @@ import dimod
 import numpy as np
 import networkx as nx
 
-from dwave.samplers.orang import OrangSampler
+from dwave.samplers.tree import TreeDecompositionSampler
 
 
 class TestConstruction(unittest.TestCase):
     def test_construction(self):
-        sampler = OrangSampler()
+        sampler = TreeDecompositionSampler()
         dimod.testing.assert_sampler_api(sampler)
 
         # check that the args exposed by parameters is consistent with the
@@ -37,18 +37,18 @@ class TestConstruction(unittest.TestCase):
 
         self.assertEqual(sampler.properties, {'max_treewidth': 25})
 
-@dimod.testing.load_sampler_bqm_tests(OrangSampler())
+@dimod.testing.load_sampler_bqm_tests(TreeDecompositionSampler())
 class TestSample(unittest.TestCase):
     def test_empty(self):
         bqm = dimod.BinaryQuadraticModel.empty(dimod.SPIN)
 
-        sampleset = OrangSampler().sample(bqm)
+        sampleset = TreeDecompositionSampler().sample(bqm)
         dimod.testing.assert_response_energies(sampleset, bqm)
 
     def test_empty_num_reads(self):
         bqm = dimod.BinaryQuadraticModel.empty(dimod.SPIN)
 
-        sampleset = OrangSampler().sample(bqm, num_reads=10)
+        sampleset = TreeDecompositionSampler().sample(bqm, num_reads=10)
         self.assertEqual(len(sampleset), 10)
         dimod.testing.assert_response_energies(sampleset, bqm)
 
@@ -56,8 +56,8 @@ class TestSample(unittest.TestCase):
         bqm_empty = dimod.BinaryQuadraticModel.empty(dimod.BINARY)
         bqm = dimod.BinaryQuadraticModel.from_qubo({(0, 0): -1, (0, 1): 1})
 
-        sampleset_empty = OrangSampler().sample(bqm_empty)
-        sampleset = OrangSampler().sample(bqm)
+        sampleset_empty = TreeDecompositionSampler().sample(bqm_empty)
+        sampleset = TreeDecompositionSampler().sample(bqm)
 
         self.assertEqual(sampleset_empty.record.sample.dtype,
                          sampleset.record.sample.dtype)
@@ -68,8 +68,8 @@ class TestSample(unittest.TestCase):
         bqm_empty = dimod.BinaryQuadraticModel.empty(dimod.BINARY)
         bqm = dimod.BinaryQuadraticModel.from_qubo({(0, 0): -1, (0, 1): 1})
 
-        sampleset_empty = OrangSampler().sample(bqm_empty)
-        sampleset = OrangSampler().sample(bqm)
+        sampleset_empty = TreeDecompositionSampler().sample(bqm_empty)
+        sampleset = TreeDecompositionSampler().sample(bqm)
 
         self.assertEqual(set(sampleset.info), set(sampleset_empty.info))
 
@@ -77,15 +77,15 @@ class TestSample(unittest.TestCase):
         bqm_empty = dimod.BinaryQuadraticModel.empty(dimod.BINARY)
         bqm = dimod.BinaryQuadraticModel.from_qubo({(0, 0): -1, (0, 1): 1})
 
-        sampleset_empty = OrangSampler().sample(bqm_empty, marginals=True)
-        sampleset = OrangSampler().sample(bqm, marginals=True)
+        sampleset_empty = TreeDecompositionSampler().sample(bqm_empty, marginals=True)
+        sampleset = TreeDecompositionSampler().sample(bqm, marginals=True)
 
         self.assertEqual(set(sampleset.info), set(sampleset_empty.info))
 
     def test_single_variable(self):
         bqm = dimod.BinaryQuadraticModel.from_ising({'a': -1}, {})
 
-        samples = OrangSampler().sample(bqm, num_reads=1)
+        samples = TreeDecompositionSampler().sample(bqm, num_reads=1)
 
         self.assertEqual(len(samples), 1)
         dimod.testing.assert_response_energies(samples, bqm)
@@ -93,7 +93,7 @@ class TestSample(unittest.TestCase):
     def test_single_interaction(self):
         bqm = dimod.BinaryQuadraticModel.from_ising({'a': -1}, {'ab': 1})
 
-        samples = OrangSampler().sample(bqm, num_reads=1)
+        samples = TreeDecompositionSampler().sample(bqm, num_reads=1)
 
         self.assertEqual(len(samples), 1)
         dimod.testing.assert_response_energies(samples, bqm)
@@ -101,7 +101,7 @@ class TestSample(unittest.TestCase):
     def test_larger_problem(self):
         bqm = dimod.BinaryQuadraticModel.from_ising({'a': -1}, {'ab': 1, 'bc': -1, 'cd': +1})
 
-        samples = OrangSampler().sample(bqm, num_reads=1)
+        samples = TreeDecompositionSampler().sample(bqm, num_reads=1)
 
         self.assertEqual(len(samples), 1)
         dimod.testing.assert_response_energies(samples, bqm)
@@ -115,7 +115,7 @@ class TestMarginals:
 
         # dev note: when migrating to python 3.4+ these should become subtests
         for beta in [.5, 1., 1.5, 2]:
-            sampleset = OrangSampler().sample(bqm,
+            sampleset = TreeDecompositionSampler().sample(bqm,
                                               marginals=True, num_reads=10,
                                               beta=beta)
 
@@ -144,7 +144,7 @@ class TestMarginals:
 
         # dev note: when migrating to python 3.4+ these should become subtests
         for beta in [.5, 1., 1.5, 2]:
-            sampleset = OrangSampler().sample(bqm,
+            sampleset = TreeDecompositionSampler().sample(bqm,
                                               marginals=True, num_reads=1,
                                               beta=beta)
 
@@ -165,7 +165,7 @@ class TestMarginals:
         # dev note: when migrating to python 3.4+ these should become subtests
         for beta in [.5, 1., 1.5, 2]:
             # we only need one sample to get the marginals
-            single_sample = OrangSampler().sample(bqm,
+            single_sample = TreeDecompositionSampler().sample(bqm,
                                                   marginals=True, num_reads=1,
                                                   beta=beta)
 
@@ -173,7 +173,7 @@ class TestMarginals:
 
             n = 22500
 
-            sampleset = OrangSampler().sample(bqm, marginals=True, num_reads=n,
+            sampleset = TreeDecompositionSampler().sample(bqm, marginals=True, num_reads=n,
                                               beta=beta)
 
             for v, p in variable_marginals.items():
@@ -187,7 +187,7 @@ class TestMarginals:
         exact = dimod.ExactSolver().sample(bqm)
 
         for beta in [.5, 1., 1.5, 2]:
-            sampleset = OrangSampler().sample(self.bqm, num_reads=1, beta=beta,
+            sampleset = TreeDecompositionSampler().sample(self.bqm, num_reads=1, beta=beta,
                                               marginals=True)
 
             logZ = sampleset.info['log_partition_function']

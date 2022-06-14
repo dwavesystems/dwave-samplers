@@ -19,13 +19,13 @@ from dimod.typing import Variable
 import dwave_networkx as dnx
 import numpy as np
 
-from dwave.samplers.orang.sample import sample_bqm_wrapper
-from dwave.samplers.orang.solve import solve_bqm_wrapper, samples_dtype, energies_dtype
+from dwave.samplers.tree.sample import sample_bqm_wrapper
+from dwave.samplers.tree.solve import solve_bqm_wrapper, samples_dtype, energies_dtype
 
-__all__ = ['OrangSolver', 'OrangSampler']
+__all__ = ['TreeDecompositionSolver', 'TreeDecompositionSampler']
 
 
-class OrangSolver(dimod.Sampler):
+class TreeDecompositionSolver(dimod.Sampler):
     """Tree decomposition-based solver for binary quadratic models.
 
     The Orang solver uses `tree decomposition`_ to find ground states of the
@@ -86,8 +86,8 @@ class OrangSolver(dimod.Sampler):
 
     def __init__(self):
         # make these object properties rather than class properties
-        self.parameters = dict(OrangSolver.parameters)
-        self.properties = dict(OrangSolver.properties)
+        self.parameters = dict(self.parameters)
+        self.properties = dict(self.properties)
 
     def sample(self, bqm: dimod.BinaryQuadraticModel, num_reads: Optional[int] = 1,
                elimination_order: Optional[List[Variable]] = None) -> dimod.SampleSet:
@@ -174,7 +174,7 @@ class OrangSolver(dimod.Sampler):
                                             num_occurrences=num_occurrences)
 
 
-class OrangSampler(dimod.Sampler):
+class TreeDecompositionSampler(dimod.Sampler):
     """Tree decomposition-based solver for binary quadratic models.
 
     The orang sampler uses `tree decomposition`_ to sample from a
@@ -246,8 +246,8 @@ class OrangSampler(dimod.Sampler):
 
     def __init__(self):
         # make these object properties rather than class properties
-        self.parameters = dict(OrangSampler.parameters)
-        self.properties = dict(OrangSampler.properties)
+        self.parameters = dict(self.parameters)
+        self.properties = dict(self.properties)
 
     def sample(self, bqm: dimod.BinaryQuadraticModel, num_reads: Optional[int] = 1,
                elimination_order: Optional[List[Variable]] = None, beta: Optional[float] = 3.0,
