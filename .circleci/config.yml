@@ -50,6 +50,17 @@ jobs:
             pip install -r requirements.txt
             pip install --no-index --find-links=dist --only-binary=dwave-samplers dwave-samplers
 
+  test-cpp:
+    docker:
+      # just use a python image, all we really want is debian
+      - image: cimg/python:3.10.4
+
+    steps:
+      - checkout
+      - run:
+          name: Run C++ tests
+          command: |
+            make -C tests/cpp/ --always-make
 
 workflows:
   build-test-deploy:
@@ -149,6 +160,10 @@ workflows:
               python-version: *python-versions
               python-arch: *python-archs-win
               package: [<< pipeline.parameters.package >>]
+          filters:
+            <<: *always-run
+
+      - test-cpp:
           filters:
             <<: *always-run
 
