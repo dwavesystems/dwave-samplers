@@ -23,10 +23,10 @@ Algorithms
 
 The following algorithms are implemented in **dwave-samplers**:
 
-* `Simulated Annealing <readme_simulated_annealing_>`_
-* `Steepest Descent <readme_steepest_descent_>`_
-* `Tabu <readme_tabu_>`_
-* `Tree Decomposition <readme_tree_decomposition_>`_
+* `Simulated Annealing <readme_simulated_annealing_>`_: a probabilistic heuristic for optimization and approximate Boltzmann sampling well suited to finding good solutions of large problems.
+* `Steepest Descent <readme_steepest_descent_>`_: a discrete analogue of gradient descent, often used in machine learning, that quickly finds a local minimum.
+* `Tabu <readme_tabu_>`_: a heuristic that employs local search with methods to escape local minima.
+* `Tree Decomposition <readme_tree_decomposition_>`_: an exact solver for problems with low treewidth.
 
 .. _readme_simulated_annealing:
 
@@ -113,7 +113,7 @@ We can sample using the ``TabuSampler``, either using the default tenure and num
 Tree Decomposition
 ~~~~~~~~~~~~~~~~~~
 
-`Tree decomposition <https://en.wikipedia.org/wiki/Tree_decomposition>`_-based solvers have a runtime that is polynomial in the `treewidth <https://en.wikipedia.org/wiki/Treewidth>`_ of the problem graph. For problems with low treewidth, the solver can find ground states very quickly. However, the performance is very poor for even moderately dense problems.
+`Tree decomposition <https://en.wikipedia.org/wiki/Tree_decomposition>`_-based solvers have a runtime that is exponential in the `treewidth <https://en.wikipedia.org/wiki/Treewidth>`_ of the problem graph. For problems with low treewidth, the solver can find ground states very quickly. However, the performance is very poor for even moderately dense problems.
 
 >>> from dwave.samplers import TreeDecompositionSolver
 >>> solver = TreeDecompositionSolver()
