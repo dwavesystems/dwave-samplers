@@ -15,12 +15,13 @@
 from typing import List, Optional
 
 import dimod
-from dimod.typing import Variable
-import dwave_networkx as dnx
 import numpy as np
+
+from dimod.typing import Variable
 
 from dwave.samplers.tree.sample import sample_bqm_wrapper
 from dwave.samplers.tree.solve import solve_bqm_wrapper, samples_dtype, energies_dtype
+from dwave.samplers.tree.utilities import elimination_order_width, min_fill_heuristic
 
 __all__ = ['TreeDecompositionSolver', 'TreeDecompositionSampler']
 
@@ -137,9 +138,9 @@ class TreeDecompositionSolver(dimod.Sampler):
         max_samples = min(num_reads, 2**len(bqm))
 
         if elimination_order is None:
-            tree_width, elimination_order = dnx.min_fill_heuristic(bqm.adj)
+            tree_width, elimination_order = min_fill_heuristic(bqm)
         else:
-            tree_width = dnx.elimination_order_width(bqm.adj, elimination_order)
+            tree_width = elimination_order_width(bqm, elimination_order)
 
         # developer note: we start getting bad_alloc errors above tree_width 25, this
         # should be fixed in the future
@@ -329,10 +330,10 @@ class TreeDecompositionSampler(dimod.Sampler):
 
         if elimination_order is None:
             # note that this does not respect the given seed
-            tree_width, elimination_order = dnx.min_fill_heuristic(bqm.adj)
+            tree_width, elimination_order = min_fill_heuristic(bqm)
         else:
             # this also checks the order against the bqm
-            tree_width = dnx.elimination_order_width(bqm.adj, elimination_order)
+            tree_width = elimination_order_width(bqm, elimination_order)
 
         # developer note: we start getting bad_alloc errors above tree_width 25, this
         # should be fixed in the future
