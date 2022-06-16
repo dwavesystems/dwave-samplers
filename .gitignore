@@ -117,3 +117,8 @@ dwave/samplers/tabu/*.cpp
 dwave/samplers/tabu/*.html
 dwave/samplers/tree/*.cpp
 dwave/samplers/tree/*.html
+
+# C++ testing
+tests/cpp/*.o
+tests/cpp/*.out
+tests/cpp/test_main
