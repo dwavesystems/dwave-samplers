@@ -28,13 +28,17 @@ __all__ = ['TreeDecompositionSolver', 'TreeDecompositionSampler']
 class TreeDecompositionSolver(dimod.Sampler):
     """Tree decomposition-based solver for binary quadratic models.
 
-    The Orang solver uses `tree decomposition`_ to find ground states of the
-    given binary quadratic model.
+    The tree decomposition solver uses `tree decomposition`_ to find ground
+    states of the given binary quadratic model.
+
+    .. Important:: The performance of this sampler is highly dependant on the
+        treewidth of the problem.
 
     Examples:
         Create a solver:
 
-        >>> solver = orang.OrangSolver()
+        >>> from dwave.samplers import TreeDecompositionSolver
+        >>> solver = TreeDecompositionSolver()
 
         Create a simple Ising problem:
 
@@ -66,8 +70,8 @@ class TreeDecompositionSolver(dimod.Sampler):
 
     Accepted kwargs:
 
-        * `num_reads`
-        * `elimination_order`
+        * ``num_reads``
+        * ``elimination_order``
 
     See :meth:`.sample` for descriptions.
 
@@ -78,7 +82,7 @@ class TreeDecompositionSolver(dimod.Sampler):
 
     Properties:
 
-        * `max_treewidth`: 25. The maximum treewidth_ allowed by the solver.
+        * ``max_treewidth``: 25. The maximum treewidth_ allowed by the solver.
 
     .. _treewidth: https://en.wikipedia.org/wiki/Treewidth
 
@@ -99,9 +103,9 @@ class TreeDecompositionSolver(dimod.Sampler):
 
             num_reads:
                 The total number of samples to draw. The samples are drawn in
-                order of energy so if `num_reads=1`, only the ground state will
-                be returned. If `num_reads=2`, the ground state and the first
-                excited state are returned. If `num_reads >= len(bqm)**2`, then 
+                order of energy so if ``num_reads=1``, only the ground state will
+                be returned. If ``num_reads=2``, the ground state and the first
+                excited state are returned. If ``num_reads >= len(bqm)**2``, then
                 samples are duplicated.
 
             elimination_order:
@@ -140,10 +144,12 @@ class TreeDecompositionSolver(dimod.Sampler):
         # developer note: we start getting bad_alloc errors above tree_width 25, this
         # should be fixed in the future
         if tree_width > self.properties['max_treewidth']:
-            msg = ("maximum treewidth of {} exceeded. To see bqm's treewidth:\n"
-                   ">>> import dwave_networkx as dnx\n"
-                   ">>> dnx.elimination_order(bqm.adj, {})".format(self.properties['max_treewidth'], elimination_order))
-            raise ValueError(msg)
+            raise ValueError(
+                f"maximum treewidth of {self.properties['max_treewidth']} exceeded. "
+                "To see the bqm's treewidth:\n"
+                ">>> import dwave_networkx as dnx\n"
+                f">>> dnx.elimination_order_width(bqm.adj, {elimination_order})"
+                )
 
         max_complexity = tree_width + 1
 
@@ -177,13 +183,17 @@ class TreeDecompositionSolver(dimod.Sampler):
 class TreeDecompositionSampler(dimod.Sampler):
     """Tree decomposition-based solver for binary quadratic models.
 
-    The orang sampler uses `tree decomposition`_ to sample from a
+    The tree decomposition sampler uses `tree decomposition`_ to sample from a
     `Boltzmann distribution`_ defined by the given binary quadratic model.
+
+    .. Important:: The performance of this sampler is highly dependant on the
+        treewidth of the problem.
 
     Examples:
         Create a sampler:
 
-        >>> sampler = orang.OrangSampler()
+        >>> from dwave.samplers import TreeDecompositionSampler
+        >>> sampler = TreeDecompositionSampler()
 
         Create a simple Ising problem:
 
@@ -223,11 +233,11 @@ class TreeDecompositionSampler(dimod.Sampler):
 
     Accepted kwargs:
 
-        * `num_reads`
-        * `elimination_order`
-        * `beta`
-        * `marginals`
-        * `seed`
+        * ``num_reads``
+        * ``elimination_order``
+        * ``beta``
+        * ``marginals``
+        * ``seed``
 
     See :meth:`.sample` for descriptions.
 
@@ -238,7 +248,7 @@ class TreeDecompositionSampler(dimod.Sampler):
 
     Properties:
 
-        * `max_treewidth`: 25. The maximum treewidth_ allowed by the solver.
+        * ``max_treewidth``: 25. The maximum treewidth_ allowed by the solver.
 
     .. _treewidth: https://en.wikipedia.org/wiki/Treewidth
 
@@ -281,18 +291,18 @@ class TreeDecompositionSampler(dimod.Sampler):
         Returns:
             :obj:`dimod.SampleSet`: :attr:`dimod.SampleSet.info` will contain:
 
-                * `'log_partition_function'`: The log partition function.
+                * ``'log_partition_function'``: The log partition function.
 
 
-            If `marginals=True`, it will also contain:
+            If ``marginals=True``, it will also contain:
 
-                * `'variable_marginals'`: A dict of the form `{v: p, ...}` where
-                  `v` is a variable in the binary quadratic model and
-                  `p = prob(v == 1)`.
-                * `'interaction_marginals'`: A dict of the form
-                  `{(u, v): {(s, t): p, ...}, ...}` where `(u, v)` is an
+                * ``'variable_marginals'``: A dict of the form ``{v: p, ...}`` where
+                  ``v`` is a variable in the binary quadratic model and
+                  ``p = prob(v == 1)``.
+                * ``'interaction_marginals'``: A dict of the form
+                  ``{(u, v): {(s, t): p, ...}, ...}`` where ``(u, v)`` is an
                   interaction in the binary quadratic model and
-                  `p = prob(u == s & v == t)`.
+                  ``p = prob(u == s & v == t)``.
 
         Raises:
             ValueError:
@@ -327,10 +337,12 @@ class TreeDecompositionSampler(dimod.Sampler):
         # developer note: we start getting bad_alloc errors above tree_width 25, this
         # should be fixed in the future
         if tree_width > self.properties['max_treewidth']:
-            msg = ("maximum treewidth of {} exceeded. To see bqm's treewidth:\n"
-                   ">>> import dwave_networkx as dnx\n"
-                   ">>> dnx.elimination_order(bqm.adj, {})".format(self.properties['max_treewidth'], elimination_order))
-            raise ValueError(msg)
+            raise ValueError(
+                f"maximum treewidth of {self.properties['max_treewidth']} exceeded. "
+                "To see the bqm's treewidth:\n"
+                ">>> import dwave_networkx as dnx\n"
+                f">>> dnx.elimination_order_width(bqm.adj, {elimination_order})"
+                )
 
         # relabel bqm variables so that we only work with linear indices
         bqm_copy, int_to_var = bqm.relabel_variables_as_integers(inplace=False)

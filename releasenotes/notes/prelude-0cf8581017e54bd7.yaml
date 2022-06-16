@@ -1,0 +1,8 @@
+---
+prelude: >
+    D-Wave Samplers combines the samplers from
+    `dwave-greedy <https://github.com/dwavesystems/dwave-greedy>`_,
+    `dwave-neal <https://github.com/dwavesystems/dwave-neal>`_, and
+    `dwave-tabu <https://github.com/dwavesystems/dwave-tabu>`_.
+features:
+  - Add ``TreeDecompositionSampler`` and ``TreeDecompositionSolver`` which solve/sample low treewidth problems.

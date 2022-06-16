@@ -30,17 +30,6 @@ class SteepestDescentComposite(dimod.ComposedSampler):
         child_sampler (:class:`dimod.Sampler`):
             A dimod sampler, such as a :class:`~dwave.system.samplers.DWaveSampler`.
 
-    Examples:
-       >>> from dwave.system import DWaveSampler
-       >>> from greedy import SteepestDescentComposite
-       ...
-       >>> sampler = SteepestDescentComposite(DWaveSampler())
-       >>> h = {0: -1, 4: 2}
-       >>> J = {(0, 4): 1.5}
-       >>> sampleset = sampler.sample_ising(h, J)
-       >>> sampleset.first.energy
-       -4.5
-
     """
 
     def __init__(self, child_sampler):
