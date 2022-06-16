@@ -5,4 +5,4 @@ prelude: >
     `dwave-neal <https://github.com/dwavesystems/dwave-neal>`_, and
     `dwave-tabu <https://github.com/dwavesystems/dwave-tabu>`_.
 features:
-  - Add ``TreeDecompositionSampler`` and ``TreeDecompositionSolver`` which solve/sampler low treewidth problems.
+  - Add ``TreeDecompositionSampler`` and ``TreeDecompositionSolver`` which solve/sample low treewidth problems.

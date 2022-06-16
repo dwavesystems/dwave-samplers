@@ -16,7 +16,7 @@ dwave-samplers
 .. index-start-marker
 
 Implements several classical algorithms for solving
-`binary quadratic models <https://docs.ocean.dwavesys.com/en/stable/concepts/bqm.html>`_
+`binary quadratic models <https://docs.ocean.dwavesys.com/en/stable/concepts/bqm.html>`_.
 
 Algorithms
 ----------
@@ -33,17 +33,17 @@ The following algorithms are implemented in **dwave-samplers**:
 Simulated Annealing
 ~~~~~~~~~~~~~~~~~~~
 
-`Simulated annealing <https://en.wikipedia.org/wiki/Simulated_annealing>`_ can be used for approximate Boltzmann sampling or heuristic optimization. This implementation approaches the equilibrium distribution by performing updates at a sequence of increasing beta values, beta_schedule, terminating at the target beta. Each spin is updated once in a fixed order per point in the beta_schedule according to a Metropolis- Hastings update. When beta is large the target distribution concentrates, at equilibrium, over ground states of the model. Samples are guaranteed to match the equilibrium for long 'smooth' beta schedules.
+`Simulated annealing <https://en.wikipedia.org/wiki/Simulated_annealing>`_ can be used for approximate Boltzmann sampling or heuristic optimization. This implementation approaches the equilibrium distribution by performing updates at a sequence of increasing beta values, ``beta_schedule``, terminating at the target beta. Each spin is updated once in a fixed order per point in the ``beta_schedule`` according to a Metropolis- Hastings update. When beta is large the target distribution concentrates, at equilibrium, over ground states of the model. Samples are guaranteed to match the equilibrium for long 'smooth' beta schedules.
 
 >>> from dwave.samplers import SimulatedAnnealingSampler
 >>> sampler = SimulatedAnnealingSampler()
 
-Get a random binary quadratic model (BQM)
+Create a random binary quadratic model (BQM).
 
 >>> import dimod
 >>> bqm = dimod.generators.gnp_random_bqm(100, .5, 'BINARY')
 
-Sample using simulated annealing, both with the default beta range and a user-specified one
+Sample using simulated annealing, both with the default beta range and a user-specified one.
 
 >>> sampleset = sampler.sample(bqm)
 >>> sampleset = sampler.sample(bqm, beta_range=[.1, 4.2])
@@ -66,7 +66,7 @@ Construct the QUBO:
 >>> x, y = Binaries(['x', 'y'])
 >>> qubo = x + y - 2.5 * x * y
 
-If the solver starts up hill from the global minimum, it will take the
+If the solver starts uphill from the global minimum, it takes the
 steepest path, thereby finding the optimal solution.
 
 >>> sampleset = solver.sample(qubo, initial_states={'x': 0, 'y': 1})
@@ -75,7 +75,7 @@ steepest path, thereby finding the optimal solution.
 0  1  1   -0.5       1       1
 ['BINARY', 1 rows, 1 samples, 2 variables]
 
-If the solver starts in a local minima, it will get stuck
+If the solver starts in a local minimum, it gets stuck.
 
 >>> sampleset = solver.sample(qubo, initial_states={'x': 0, 'y': 0})
 >>> print(sampleset)
@@ -118,7 +118,7 @@ Tree Decomposition
 >>> from dwave.samplers import TreeDecompositionSolver
 >>> solver = TreeDecompositionSolver()
 
-Construct a large, tree-shaped problem
+Construct a large, tree-shaped problem.
 
 >>> import dimod
 >>> import networkx as nx
