@@ -1,5 +1,5 @@
 // Copyright 2019 D-Wave Systems Inc.
-//
+
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -12,18 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// g++ tests/test_descent.cpp greedy/src/descent.cpp -std=c++11 -I greedy/src/
-
 #include <vector>
-#include <cassert>
-#include <iostream>
-#include "../dwave/samplers/greedy/src/descent.h"
 
-#define len(arr) (sizeof(arr) / sizeof((arr)[0]))
+#include "../Catch2/single_include/catch2/catch.hpp"
+#include "descent.h"
 
-using namespace std;
 
-int main() {
+TEST_CASE("Test steepest_gradient_descent") {
     int num_samples = 1;
 
     char states[3] = {1, 1, 1}, min_states[3] = {-1, 1, 1};
@@ -41,24 +36,11 @@ int main() {
         linear_biases, coupler_starts, coupler_ends, coupler_weights
     );
 
-    // debug output
-    cerr << "Local minimum state: "
-         << (int)states[0] << ", " << (int)states[1] << ", " << (int)states[2]
-         << "; Energy: " << energies[0] << endl;
-
-    cerr << "Expected state: "
-         << (int)min_states[0] << ", " << (int)min_states[1] << ", " << (int)min_states[2]
-         << "; Energy: " << min_energies[0] << endl;
-
     // assert correct solution
-    for (auto i = 0; i < len(states); i++) {
-        assert(states[i] == min_states[i]);
+    for (auto i = 0; i < 3; i++) {
+        CHECK(states[i] == min_states[i]);
     }
-    for (auto i = 0; i < len(energies); i++) {
-        assert(energies[i] == min_energies[i]);
+    for (auto i = 0; i < 1; i++) {
+        CHECK(energies[i] == min_energies[i]);
     }
-
-    cerr << "OK" << endl;
-
-    return 0;
 }
