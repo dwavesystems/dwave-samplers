@@ -44,8 +44,9 @@ is large the target distribution concentrates, at equilibrium, over ground state
 of the model. Samples are guaranteed to match the equilibrium for long, smooth
 :math:`\beta` schedules.
 
-.. [#] :math:`\beta` represents inverse temperature, :math:`1/(k_B T)`, where
-   :math:`T` is the thermodynamic temperature in kelvin and :math:`k_B` is
+.. [#] :math:`\beta` represents the inverse temperature, :math:`1/(k_B T)`, of a
+   `Boltzmann distribution <https://en.wikipedia.org/wiki/Boltzmann_distribution>`_
+   where :math:`T` is the thermodynamic temperature in kelvin and :math:`k_B` is
    Boltzmann's constant.
 
 >>> from dwave.samplers import SimulatedAnnealingSampler
