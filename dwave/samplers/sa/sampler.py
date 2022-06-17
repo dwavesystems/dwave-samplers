@@ -29,7 +29,7 @@ __all__ = ["Neal", "SimulatedAnnealingSampler"]
 
 
 class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
-    """Simulated annealing sampler.
+    """Simulated annealing sampler for binary quadratic models.
 
     `Simulated annealing <https://en.wikipedia.org/wiki/Simulated_annealing>`_
     can be used for heuristic optimization or approximate Boltzmann sampling. This
@@ -214,7 +214,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                 energies found so far.
 
         Returns:
-            :class:`dimod.SampleSet`.
+            :class:`dimod.SampleSet`: A `dimod` :class:`~dimod.SampleSet` object.
 
         Examples:
             This example runs simulated annealing on a binary quadratic model
