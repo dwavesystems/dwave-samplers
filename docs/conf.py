@@ -65,7 +65,7 @@ html_theme_options = {
     "show_prev_next": False,
 }
 html_sidebars = {"**": ["search-field", "sidebar-nav-bs"]}  # remove ads
-html_static_path = ["_static"]
+#html_static_path = ["_static"]
 
 
 # -- Panels ---------------------------------------------------------------

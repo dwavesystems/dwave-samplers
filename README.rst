@@ -23,12 +23,10 @@ Algorithms
 
 The following algorithms are implemented in **dwave-samplers**:
 
-* `Simulated Annealing <readme_simulated_annealing_>`_: a probabilistic heuristic for optimization and approximate Boltzmann sampling well suited to finding good solutions of large problems.
-* `Steepest Descent <readme_steepest_descent_>`_: a discrete analogue of gradient descent, often used in machine learning, that quickly finds a local minimum.
-* `Tabu <readme_tabu_>`_: a heuristic that employs local search with methods to escape local minima.
-* `Tree Decomposition <readme_tree_decomposition_>`_: an exact solver for problems with low treewidth.
-
-.. _readme_simulated_annealing:
+* `Simulated Annealing`_: a probabilistic heuristic for optimization and approximate Boltzmann sampling well suited to finding good solutions of large problems.
+* `Steepest Descent`_: a discrete analogue of gradient descent, often used in machine learning, that quickly finds a local minimum.
+* `Tabu`_: a heuristic that employs local search with methods to escape local minima.
+* `Tree Decomposition`_: an exact solver for problems with low treewidth.
 
 Simulated Annealing
 ~~~~~~~~~~~~~~~~~~~
@@ -47,8 +45,6 @@ Sample using simulated annealing, both with the default beta range and a user-sp
 
 >>> sampleset = sampler.sample(bqm)
 >>> sampleset = sampler.sample(bqm, beta_range=[.1, 4.2])
-
-.. _readme_steepest_descent:
 
 Steepest Descent
 ~~~~~~~~~~~~~~~~
@@ -83,8 +79,6 @@ If the solver starts in a local minimum, it gets stuck.
 0  0  0    0.0       1       0
 ['BINARY', 1 rows, 1 samples, 2 variables]
 
-.. _readme_tabu:
-
 Tabu
 ~~~~
 
@@ -107,8 +101,6 @@ We can sample using the ``TabuSampler``, either using the default tenure and num
 
 >>> sampleset0 = sampler.sample(qubo)
 >>> sampleset1 = sampler.sample(qubo, tenure=1, num_restarts=1)
-
-.. _readme_tree_decomposition:
 
 Tree Decomposition
 ~~~~~~~~~~~~~~~~~~
