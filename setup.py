@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from Cython.Build import cythonize
 from setuptools import setup
+from Cython.Build import cythonize
 from setuptools.command.build_ext import build_ext
 
 import dimod
