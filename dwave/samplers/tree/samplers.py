@@ -46,13 +46,13 @@ class TreeDecompositionSolver(dimod.Sampler):
         >>> h = {'a': .1, 'b': 0}
         >>> J = {('a', 'b') : -1}
 
-        We can use Orang to find the ground state.
+        Find the ground state.
 
         >>> sampleset = solver.sample_ising(h, J)
         >>> sampleset.first.sample
         {'a': -1, 'b': -1}
 
-        We can also take multiple reads to find states of increasing energy.
+        Take multiple reads to find states of increasing energy.
 
         >>> sampleset = solver.sample_ising(h, J, num_reads=3)
         >>> print(sampleset)
@@ -69,10 +69,12 @@ class TreeDecompositionSolver(dimod.Sampler):
                   'elimination_order': ['max_treewidth']}
     """Keyword arguments accepted by the sampling methods.
 
-    Accepted kwargs:
+    Examples:
 
-        * ``num_reads``
-        * ``elimination_order``
+        >>> from dwave.samplers import TreeDecompositionSolver
+        >>> solver = TreeDecompositionSolver()
+        >>> sorted(solver.parameters.keys())
+        ['elimination_order', 'num_reads']
 
     See :meth:`.sample` for descriptions.
 
@@ -81,11 +83,12 @@ class TreeDecompositionSolver(dimod.Sampler):
     properties = {'max_treewidth': 25}
     """Information about the solver.
 
-    Properties:
+    Examples:
 
-        * ``max_treewidth``: 25. The maximum treewidth_ allowed by the solver.
-
-    .. _treewidth: https://en.wikipedia.org/wiki/Treewidth
+        >>> from dwave.samplers import TreeDecompositionSolver
+        >>> solver = TreeDecompositionSolver()
+        >>> solver.properties
+        {'max_treewidth': 25}
 
     """
 
@@ -100,26 +103,26 @@ class TreeDecompositionSolver(dimod.Sampler):
 
         Args:
             bqm:
-                The binary quadratic model.
+                Binary quadratic model (BQM).
 
             num_reads:
-                The total number of samples to draw. The samples are drawn in
-                order of energy so if ``num_reads=1``, only the ground state will
-                be returned. If ``num_reads=2``, the ground state and the first
-                excited state are returned. If ``num_reads >= len(bqm)**2``, then
+                Total number of samples to draw. The samples are drawn in
+                order of energy so if ``num_reads=1``, only the ground state is
+                returned. If ``num_reads=2``, the ground state and the first
+                excited state are returned. If ``num_reads >= len(bqm)**2``,
                 samples are duplicated.
 
             elimination_order:
-                The variable elimination order. Should be a list of the
-                variables in the binary quadratic model. If None is provided,
-                the min-fill heuristic [#gd]_ is used to generate one.
+                Variable elimination order. Should be a list of the
+                variables in the binary quadratic model. If None, the min-fill
+                heuristic [#gd]_ is used to generate one.
 
         Returns:
-            :obj:`dimod.SampleSet`
+            :obj:`dimod.SampleSet`.
 
         Raises:
             ValueError:
-                The treewidth_ of the given bqm and elimination order cannot
+                The treewidth_ of the given BQM and elimination order cannot
                 exceed the value provided in :attr:`.properties`.
 
         .. _treewidth: https://en.wikipedia.org/wiki/Treewidth
@@ -182,7 +185,7 @@ class TreeDecompositionSolver(dimod.Sampler):
 
 
 class TreeDecompositionSampler(dimod.Sampler):
-    """Tree decomposition-based solver for binary quadratic models.
+    """Tree decomposition-based sampler for binary quadratic models.
 
     The tree decomposition sampler uses `tree decomposition`_ to sample from a
     `Boltzmann distribution`_ defined by the given binary quadratic model.
@@ -208,7 +211,7 @@ class TreeDecompositionSampler(dimod.Sampler):
         >>> sampleset.first.sample
         {'a': -1, 'b': -1}
 
-        We can also see information about the distribution.
+        View information about the distribution.
 
         >>> variable_marginals = sampleset.info['variable_marginals']
         >>> round(variable_marginals['a'], 3)  # prob(a == 1)
@@ -232,26 +235,26 @@ class TreeDecompositionSampler(dimod.Sampler):
                   'seed': []}
     """Keyword arguments accepted by the sampling methods.
 
-    Accepted kwargs:
+    Examples:
 
-        * ``num_reads``
-        * ``elimination_order``
-        * ``beta``
-        * ``marginals``
-        * ``seed``
+        >>> from dwave.samplers import TreeDecompositionSampler
+        >>> sampler = TreeDecompositionSampler()
+        >>> sorted(sampler.parameters.keys())
+        ['beta', 'elimination_order', 'marginals', 'num_reads', 'seed']
 
     See :meth:`.sample` for descriptions.
 
     """
 
     properties = {'max_treewidth': 25}
-    """Information about the solver.
+    """Information about the sampler.
 
-    Properties:
+    Examples:
 
-        * ``max_treewidth``: 25. The maximum treewidth_ allowed by the solver.
-
-    .. _treewidth: https://en.wikipedia.org/wiki/Treewidth
+        >>> from dwave.samplers import TreeDecompositionSampler
+        >>> sampler = TreeDecompositionSampler()
+        >>> sampler.properties
+        {'max_treewidth': 25}
 
     """
 
@@ -267,41 +270,41 @@ class TreeDecompositionSampler(dimod.Sampler):
 
         Args:
             bqm:
-                A binary quadratic model.
+                Binary quadratic model.
 
             num_reads:
-                The number of samples to draw.
+                Number of samples to draw.
 
             elimination_order:
-                The variable elimination order. Should be a list of the
-                variables in the binary quadratic model. If None is provided,
-                the min-fill heuristic [#gd]_ is used to generate one.
+                Variable elimination order. Should be a list of the
+                variables in the binary quadratic model. If None, the min-fill
+                heuristic [#gd]_ is used to generate one.
 
             beta:
                 `Boltzmann distribution`_ inverse temperature parameter.
 
             marginals:
-                Whether or not to compute the marginals. If True, they will be
-                included in the return :obj:`~dimod.SampleSet`'s `info` field.
-                See example in :class:`.OrangSampler`.
+                Whether or not to compute the marginals. If True, they are
+                included in the return :obj:`~dimod.SampleSet`'s ``info`` field.
+                See example in :class:`.TreeDecompositionSampler`.
 
             seed:
-                Random number generator seed. Negative values will cause a
+                Random number generator seed. Negative values cause a
                 time-based seed to be used.
 
         Returns:
-            :obj:`dimod.SampleSet`: :attr:`dimod.SampleSet.info` will contain:
+            :obj:`dimod.SampleSet`: :attr:`dimod.SampleSet.info` contains:
 
                 * ``'log_partition_function'``: The log partition function.
 
 
-            If ``marginals=True``, it will also contain:
+            If ``marginals=True``, also contains:
 
-                * ``'variable_marginals'``: A dict of the form ``{v: p, ...}`` where
+                * ``'variable_marginals'``: Dict of the form ``{v: p, ...}``, where
                   ``v`` is a variable in the binary quadratic model and
                   ``p = prob(v == 1)``.
-                * ``'interaction_marginals'``: A dict of the form
-                  ``{(u, v): {(s, t): p, ...}, ...}`` where ``(u, v)`` is an
+                * ``'interaction_marginals'``: Dict of the form
+                  ``{(u, v): {(s, t): p, ...}, ...}``, where ``(u, v)`` is an
                   interaction in the binary quadratic model and
                   ``p = prob(u == s & v == t)``.
 
