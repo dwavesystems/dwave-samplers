@@ -117,9 +117,6 @@ class TreeDecompositionSolver(dimod.Sampler):
                 variables in the binary quadratic model. If None, the min-fill
                 heuristic [#gd]_ is used to generate one.
 
-        Returns:
-            :obj:`dimod.SampleSet`.
-
         Raises:
             ValueError:
                 The treewidth_ of the given BQM and elimination order cannot
@@ -293,7 +290,7 @@ class TreeDecompositionSampler(dimod.Sampler):
                 time-based seed to be used.
 
         Returns:
-            :obj:`dimod.SampleSet`: :attr:`dimod.SampleSet.info` contains:
+            Returned :attr:`dimod.SampleSet.info` contains:
 
                 * ``'log_partition_function'``: The log partition function.
 
