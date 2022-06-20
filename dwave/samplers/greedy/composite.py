@@ -57,11 +57,11 @@ class SteepestDescentComposite(dimod.ComposedSampler):
     Contains the properties of the child sampler.
     """
 
-    def sample(self, bqm, **parameters):
+    def sample(self, bqm: dimod.BinaryQuadraticModel, **parameters) -> dimod.SampleSet:
         """Sample from the provided binary quadratic model.
 
         Args:
-            bqm (:class:`dimod.BinaryQuadraticModel`):
+            bqm:
                 Binary quadratic model to be sampled from.
 
             **parameters:
