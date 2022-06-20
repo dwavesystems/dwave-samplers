@@ -17,12 +17,9 @@
 import numpy as np
 import dimod
 
-from typing import (Literal, Optional, )
-try:
-    from dimod.core.initialized import InitialStateGenerator
-except AttributeError:
-    InitialStateGenerator = str
+from typing import Optional
 
+from dimod.core.initialized import InitialStateGenerator
 from dwave.samplers.tabu import TabuSearch
 
 __all__ = ["TabuSampler"]

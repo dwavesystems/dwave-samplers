@@ -15,11 +15,9 @@
 """A dimod sampler that uses the steepest gradient descent."""
 
 from numbers import Integral
-from typing import (Literal, Optional, )
-try:
-    from dimod.core.initialized import InitialStateGenerator
-except AttributeError:
-    InitialStateGenerator = str
+from typing import Optional
+
+from dimod.core.initialized import InitialStateGenerator
 
 import dimod
 import numpy as np

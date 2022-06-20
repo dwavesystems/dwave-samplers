@@ -17,13 +17,14 @@ import math
 from numbers import Integral
 from numpy.random import randint
 from collections import defaultdict
-from typing import (List, Literal, Sequence, Tuple, Optional, Union)
+from typing import List, Sequence, Tuple, Optional, Union
 try:
-    from dimod.core.initialized import InitialStateGenerator
+    from typing import Literal
     BetaScheduleType = Literal['linear', 'geometric', 'custom']
-except AttributeError:
-    InitialStateGenerator = str
+except ImportError:
     BetaScheduleType = str
+
+from dimod.core.initialized import InitialStateGenerator
 
 import dimod
 import numpy as np
