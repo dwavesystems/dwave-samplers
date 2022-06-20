@@ -18,8 +18,8 @@ Attributes
 .. autosummary::
    :toctree: generated/
 
-   ~SimulatedAnnealingSampler.properties
    ~SimulatedAnnealingSampler.parameters
+   ~SimulatedAnnealingSampler.properties
 
 Methods
 ~~~~~~~
@@ -51,8 +51,8 @@ Attributes
 .. autosummary::
    :toctree: generated/
 
-   ~SteepestDescentSolver.properties
    ~SteepestDescentSolver.parameters
+   ~SteepestDescentSolver.properties
 
 Methods
 ~~~~~~~
@@ -81,8 +81,8 @@ Attributes
 .. autosummary::
    :toctree: generated/
 
-   ~SteepestDescentComposite.properties
    ~SteepestDescentComposite.parameters
+   ~SteepestDescentComposite.properties
 
 Methods
 ~~~~~~~

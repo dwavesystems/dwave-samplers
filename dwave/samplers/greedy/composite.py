@@ -69,7 +69,7 @@ class SteepestDescentComposite(dimod.ComposedSampler):
                 sampler.
 
         Returns:
-            :class:`dimod.SampleSet`
+            :class:`dimod.SampleSet`.
         """
 
         # solve the problem on the child system

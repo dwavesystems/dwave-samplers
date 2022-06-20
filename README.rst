@@ -10,52 +10,74 @@
 .. image:: https://circleci.com/gh/dwavesystems/dwave-samplers.svg?style=svg
     :target: https://circleci.com/gh/dwavesystems/dwave-samplers
 
+.. index-start-marker
+
+==============
 dwave-samplers
 ==============
 
-.. index-start-marker
+Ocean software provides a variety of quantum, classical, and quantum-classical
+:doc:`dimod <oceandocs:docs_dimod/sdk_index>` :term:`sampler`\ s that run either remotely
+(for example, in D-Wave's `Leap <https://cloud.dwavesys.com/leap/>`_ environment)
+or locally on your CPU.
 
-Implements several classical algorithms for solving
-`binary quadratic models <https://docs.ocean.dwavesys.com/en/stable/concepts/bqm.html>`_.
+*dwave-samplers* implements the following classical algorithms for solving
+:term:`binary quadratic model`\ s (BQM):
 
-Algorithms
-----------
-
-The following algorithms are implemented in **dwave-samplers**:
-
-* `Simulated Annealing <readme_simulated_annealing_>`_: a probabilistic heuristic for optimization and approximate Boltzmann sampling well suited to finding good solutions of large problems.
-* `Steepest Descent <readme_steepest_descent_>`_: a discrete analogue of gradient descent, often used in machine learning, that quickly finds a local minimum.
-* `Tabu <readme_tabu_>`_: a heuristic that employs local search with methods to escape local minima.
-* `Tree Decomposition <readme_tree_decomposition_>`_: an exact solver for problems with low treewidth.
-
-.. _readme_simulated_annealing:
+* `Simulated Annealing`_: a probabilistic heuristic for optimization and approximate
+  Boltzmann sampling well suited to finding good solutions of large problems.
+* `Steepest Descent`_: a discrete analogue of gradient descent, often used in
+  machine learning, that quickly finds a local minimum.
+* `Tabu`_: a heuristic that employs local search with methods to escape local minima.
+* `Tree Decomposition`_: an exact solver for problems with low treewidth.
 
 Simulated Annealing
-~~~~~~~~~~~~~~~~~~~
+===================
 
-`Simulated annealing <https://en.wikipedia.org/wiki/Simulated_annealing>`_ can be used for approximate Boltzmann sampling or heuristic optimization. This implementation approaches the equilibrium distribution by performing updates at a sequence of increasing beta values, ``beta_schedule``, terminating at the target beta. Each spin is updated once in a fixed order per point in the ``beta_schedule`` according to a Metropolis- Hastings update. When beta is large the target distribution concentrates, at equilibrium, over ground states of the model. Samples are guaranteed to match the equilibrium for long 'smooth' beta schedules.
+`Simulated annealing <https://en.wikipedia.org/wiki/Simulated_annealing>`_ can be
+used for heuristic optimization or approximate Boltzmann sampling. The
+*dwave-samplers* implementation approaches the equilibrium distribution by
+performing updates at a sequence of decreasing temperatures, terminating at the
+target :math:`\beta`.\ [#]_ Each spin is updated once in a fixed order per point
+per temperature according to a Metropolis-Hastings update. When the temperature
+is low the target distribution concentrates, at equilibrium, over ground states
+of the model. Samples are guaranteed to match the equilibrium for long, smooth
+temperature schedules.
+
+.. [#] :math:`\beta` represents the inverse temperature, :math:`1/(k_B T)`, of a
+   `Boltzmann distribution <https://en.wikipedia.org/wiki/Boltzmann_distribution>`_
+   where :math:`T` is the thermodynamic temperature in kelvin and :math:`k_B` is
+   Boltzmann's constant.
 
 >>> from dwave.samplers import SimulatedAnnealingSampler
 >>> sampler = SimulatedAnnealingSampler()
 
-Create a random binary quadratic model (BQM).
+Create a random binary quadratic model.
 
 >>> import dimod
 >>> bqm = dimod.generators.gnp_random_bqm(100, .5, 'BINARY')
 
-Sample using simulated annealing, both with the default beta range and a user-specified one.
+Sample using simulated annealing with both the default temperature schedule
+and a custom one.
 
 >>> sampleset = sampler.sample(bqm)
->>> sampleset = sampler.sample(bqm, beta_range=[.1, 4.2])
-
-.. _readme_steepest_descent:
+>>> sampleset = sampler.sample(bqm, beta_range=[.1, 4.2], beta_schedule_type='linear')
 
 Steepest Descent
-~~~~~~~~~~~~~~~~
+================
 
-`Steepest descent <https://en.wikipedia.org/wiki/Gradient_descent>`_ is the discrete analogue of gradient descent, but the best move is computed using a local minimization rather rather than computing a gradient. At each step, we determine the dimension along which to descend based on the highest energy drop caused by a variable flip.
+`Steepest descent <https://en.wikipedia.org/wiki/Gradient_descent>`_ is the
+discrete analogue of gradient descent, but the best move is computed using a local
+minimization rather rather than computing a gradient. The dimension along which
+to descend is determined, at each step, by the variable flip that causes the
+greatest reduction in energy.
 
-Steepest descent is fast and effective for unfrustrated problems, but it can get stuck in local minima. Consider a quadratic unconstrained binary optimization (QUBO) of the form `E(x, y) = x + y - 2.5 * x * y`. This problem has two local minima, `(0, 0)` which has an energy of `0`, and `(1, 1)` which has an energy of `-0.5`.
+Steepest descent is fast and effective for unfrustrated problems, but it can get
+stuck in local minima.
+
+The quadratic unconstrained binary optimization (QUBO)
+`E(x, y) = x + y - 2.5 * x * y`, for example, has two local minima:
+`(0, 0)` with an energy of `0` and `(1, 1)` with an energy of `-0.5`.
 
 >>> from dwave.samplers import SteepestDescentSolver
 >>> solver = SteepestDescentSolver()
@@ -66,8 +88,8 @@ Construct the QUBO:
 >>> x, y = Binaries(['x', 'y'])
 >>> qubo = x + y - 2.5 * x * y
 
-If the solver starts uphill from the global minimum, it takes the
-steepest path, thereby finding the optimal solution.
+If the solver starts uphill from the global minimum, it takes the steepest path
+and finds the optimal solution.
 
 >>> sampleset = solver.sample(qubo, initial_states={'x': 0, 'y': 1})
 >>> print(sampleset)
@@ -83,37 +105,41 @@ If the solver starts in a local minimum, it gets stuck.
 0  0  0    0.0       1       0
 ['BINARY', 1 rows, 1 samples, 2 variables]
 
-.. _readme_tabu:
-
 Tabu
-~~~~
+====
 
-An implementation of the `MST2 multistart tabu search algorithm <https://link.springer.com/article/10.1023/B:ANOR.0000039522.58036.68>`_ for quadratic unconstrained binary optimization (QUBO) problems.
+`Tabu search <https://en.wikipedia.org/wiki/Tabu_search>`_ is a heuristic that
+employs local search and can escape local minima by maintaining a "tabu list" of
+recently explored states that it does not revisit. The length of this tabu list
+is called the "tenure". *dwave-samplers* implementats the
+`MST2 multistart tabu search algorithm <https://link.springer.com/article/10.1023/B:ANOR.0000039522.58036.68>`_
+for quadratic unconstrained binary optimization (QUBO) problems.
 
-Tabu solvers maintain a "tabu list" of recently explored states. The algorithm will not revisit those states, thereby avoiding getting stuck in local minima. The length of the tabu list is called the "tenure".
-
-Each read of the tabu algorithm consists of many starts. The solver will then take the best non-tabu step repeatedly until it does not improve its energy any more.
+Each read of the tabu algorithm consists of many starts. The solver takes the best
+non-tabu step repeatedly until it does not improve its energy any more.
 
 >>> from dwave.samplers import TabuSampler
 >>> sampler = TabuSampler()
 
-Construct a simple problem
+Construct a simple problem.
 
 >>> from dimod import Binaries
 >>> a, b = Binaries(['a', 'b'])
 >>> qubo = -.5 * a + b - a * b
 
-We can sample using the ``TabuSampler``, either using the default tenure and number of restarts, or specifying them explicitly.
+Sample using both default and custom values of tenure and number of restarts.
 
 >>> sampleset0 = sampler.sample(qubo)
 >>> sampleset1 = sampler.sample(qubo, tenure=1, num_restarts=1)
 
-.. _readme_tree_decomposition:
-
 Tree Decomposition
-~~~~~~~~~~~~~~~~~~
+==================
 
-`Tree decomposition <https://en.wikipedia.org/wiki/Tree_decomposition>`_-based solvers have a runtime that is exponential in the `treewidth <https://en.wikipedia.org/wiki/Treewidth>`_ of the problem graph. For problems with low treewidth, the solver can find ground states very quickly. However, the performance is very poor for even moderately dense problems.
+`Tree decomposition <https://en.wikipedia.org/wiki/Tree_decomposition>`_-based
+solvers have a runtime that is exponential in the
+`treewidth <https://en.wikipedia.org/wiki/Treewidth>`_ of the problem graph. For
+problems with low treewidth, the solver can find ground states very quickly.
+However, for even moderately dense problems, performance is very poor.
 
 >>> from dwave.samplers import TreeDecompositionSolver
 >>> solver = TreeDecompositionSolver()
@@ -128,7 +154,7 @@ Construct a large, tree-shaped problem.
 >>> for u, v in tree.edges:
 ...     bqm.set_quadratic(u, v, 1)
 
-Because the BQM is a binary tree, it has a tree width of 1 and can be solved exactly.
+Because the BQM is a binary tree, it has a treewidth of 1 and can be solved exactly.
 
 >>> sampleset = solver.sample(bqm)
 >>> print(sampleset)
@@ -139,7 +165,7 @@ Because the BQM is a binary tree, it has a tree width of 1 and can be solved exa
 .. index-end-marker
 
 Installation
-------------
+============
 
 To install the core package:
 
@@ -148,18 +174,18 @@ To install the core package:
     pip install dwave-samplers
 
 License
--------
+=======
 
 Released under the Apache License 2.0
 
 Contributing
-------------
+============
 
 Ocean's `contributing guide <https://docs.ocean.dwavesys.com/en/stable/contributing.html>`_
 has guidelines for contributing to Ocean packages.
 
 Release Notes
-~~~~~~~~~~~~~
+-------------
 
 **dwave-samplers** makes use of `reno <https://docs.openstack.org/reno/>`_ to manage its
 release notes.
