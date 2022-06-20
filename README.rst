@@ -17,12 +17,14 @@ dwave-samplers
 ==============
 
 Ocean software provides a variety of quantum, classical, and quantum-classical
-:doc:`dimod <oceandocs:docs_dimod/sdk_index>` :term:`sampler`\ s that run either remotely
-(for example, in D-Wave's `Leap <https://cloud.dwavesys.com/leap/>`_ environment)
-or locally on your CPU.
+`dimod <https://docs.ocean.dwavesys.com/en/stable/docs_dimod/sdk_index.html>`_
+`samplers <https://docs.ocean.dwavesys.com/en/stable/concepts/samplers.html>`_
+that run either remotely (for example, in D-Wave's
+`Leap <https://cloud.dwavesys.com/leap/>`_ environment) or locally on your CPU.
 
 *dwave-samplers* implements the following classical algorithms for solving
-:term:`binary quadratic model`\ s (BQM):
+`binary quadratic models <https://docs.ocean.dwavesys.com/en/stable/concepts/bqm.html>`_
+(BQM):
 
 * `Simulated Annealing`_: a probabilistic heuristic for optimization and approximate
   Boltzmann sampling well suited to finding good solutions of large problems.
