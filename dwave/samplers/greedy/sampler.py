@@ -83,8 +83,8 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
 
         >>> from dwave.samplers import SteepestDescentSampler
         >>> sampler = SteepestDescentSampler()
-        >>> sorted(sampler.parameters.keys())
-        ['initial_states', 'initial_states_generator', 'large_sparse_opt', 'num_reads', 'seed']
+        >>> sampler.parameters.keys()
+        dict_keys(['num_reads', 'initial_states', 'initial_states_generator', 'seed', 'large_sparse_opt'])
 
     """
 
@@ -95,8 +95,8 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
 
         >>> from dwave.samplers import SteepestDescentSampler
         >>> sampler = SteepestDescentSampler()
-        >>> sorted(sampler.properties.keys())
-        ['initial_states_generators', 'large_sparse_opt_values']
+        >>> sampler.properties.keys()
+        dict_keys(['initial_states_generators', 'large_sparse_opt_values'])
 
     """
 

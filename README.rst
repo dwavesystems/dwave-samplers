@@ -39,10 +39,10 @@ used for heuristic optimization or approximate Boltzmann sampling. The
 *dwave-samplers* implementation approaches the equilibrium distribution by
 performing updates at a sequence of decreasing temperatures, terminating at the
 target :math:`\beta`.\ [#]_ Each spin is updated once in a fixed order per point
-per :math:`\beta` according to a Metropolis-Hastings update. When :math:`\beta`
-is large the target distribution concentrates, at equilibrium, over ground states
+per temperature according to a Metropolis-Hastings update. When the temperature
+is low the target distribution concentrates, at equilibrium, over ground states
 of the model. Samples are guaranteed to match the equilibrium for long, smooth
-:math:`\beta` schedules.
+temperature schedules.
 
 .. [#] :math:`\beta` represents the inverse temperature, :math:`1/(k_B T)`, of a
    `Boltzmann distribution <https://en.wikipedia.org/wiki/Boltzmann_distribution>`_

@@ -73,8 +73,8 @@ class TreeDecompositionSolver(dimod.Sampler):
 
         >>> from dwave.samplers import TreeDecompositionSolver
         >>> solver = TreeDecompositionSolver()
-        >>> sorted(solver.parameters.keys())
-        ['elimination_order', 'num_reads']
+        >>> solver.parameters.keys()
+        dict_keys(['num_reads', 'elimination_order'])
 
     See :meth:`.sample` for descriptions.
 
@@ -239,8 +239,8 @@ class TreeDecompositionSampler(dimod.Sampler):
 
         >>> from dwave.samplers import TreeDecompositionSampler
         >>> sampler = TreeDecompositionSampler()
-        >>> sorted(sampler.parameters.keys())
-        ['beta', 'elimination_order', 'marginals', 'num_reads', 'seed']
+        >>> sampler.parameters.keys()
+        dict_keys(['num_reads', 'elimination_order', 'beta', 'marginals', 'seed'])
 
     See :meth:`.sample` for descriptions.
 
