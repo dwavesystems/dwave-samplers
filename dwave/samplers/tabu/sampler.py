@@ -19,7 +19,7 @@ import dimod
 
 from typing import (Literal, Optional, )
 try:
-    InitialStateGenerator = Literal['none', 'tile', 'random']
+    from dimod.core.initialized import InitialStateGenerator
 except AttributeError:
     InitialStateGenerator = str
 

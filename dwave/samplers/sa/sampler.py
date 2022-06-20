@@ -17,9 +17,9 @@ import math
 from numbers import Integral
 from numpy.random import randint
 from collections import defaultdict
-from typing import (List, Literal, Tuple, Optional, Union)
+from typing import (List, Literal, Sequence, Tuple, Optional, Union)
 try:
-    InitialStateGenerator = Literal['none', 'tile', 'random']
+    from dimod.core.initialized import InitialStateGenerator
     BetaScheduleType = Literal['linear', 'geometric', 'custom']
 except AttributeError:
     InitialStateGenerator = str
@@ -138,7 +138,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                beta_schedule_type: BetaScheduleType = "geometric",
                seed: Optional[int] = None,
                interrupt_function=None,
-               beta_schedule: Optional[np.ndarray] = None,
+               beta_schedule: Optional[Union[Sequence[float], np.ndarray]] = None,
                initial_states: Optional[dimod.typing.SamplesLike] = None,
                initial_states_generator: InitialStateGenerator = "random",
                **kwargs) -> dimod.SampleSet:

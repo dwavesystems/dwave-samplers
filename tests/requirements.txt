@@ -1,6 +1,5 @@
 coverage[toml]
 codecov
 
-mypy==0.942
 networkx==2.6.3
 parameterized==0.7.4
