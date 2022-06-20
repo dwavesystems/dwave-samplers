@@ -20,7 +20,7 @@ from collections import defaultdict
 from typing import (List, Literal, Tuple, Optional, Union)
 try:
     InitialStateGenerator = Literal['none', 'tile', 'random']
-    BetaScheduleType = Literal['linear', 'geomtric', 'custom']
+    BetaScheduleType = Literal['linear', 'geometric', 'custom']
 except AttributeError:
     InitialStateGenerator = str
     BetaScheduleType = str
@@ -138,10 +138,10 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                beta_schedule_type: BetaScheduleType = "geometric",
                seed: Optional[int] = None,
                interrupt_function=None,
-               beta_schedule: Optional[numpy.array] = None,
+               beta_schedule: Optional[np.ndarray] = None,
                initial_states: Optional[dimod.typing.SamplesLike] = None,
                initial_states_generator: InitialStateGenerator = "random",
-               **kwargs):
+               **kwargs) -> dimod.SampleSet:
         """Sample from a binary quadratic model.
 
         Args:
@@ -225,9 +225,6 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                 simulated annealing. If the function returns True, simulated
                 annealing terminates and returns with all of the samples and
                 energies found so far.
-
-        Returns:
-            :class:`dimod.SampleSet`: A `dimod` :class:`~dimod.SampleSet` object.
 
         Examples:
             This example runs simulated annealing on a binary quadratic model
