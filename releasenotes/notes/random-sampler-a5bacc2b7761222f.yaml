@@ -1,0 +1,3 @@
+---
+features:
+  - Add ``RandomSampler`` which generates samples with variable assignments chosen by coin flip.

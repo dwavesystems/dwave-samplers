@@ -24,12 +24,31 @@ or locally on your CPU.
 *dwave-samplers* implements the following classical algorithms for solving
 :term:`binary quadratic model`\ s (BQM):
 
+* Random: a sampler that draws uniform random samples.
 * `Simulated Annealing`_: a probabilistic heuristic for optimization and approximate
   Boltzmann sampling well suited to finding good solutions of large problems.
 * `Steepest Descent`_: a discrete analogue of gradient descent, often used in
   machine learning, that quickly finds a local minimum.
 * `Tabu`_: a heuristic that employs local search with methods to escape local minima.
 * `Tree Decomposition`_: an exact solver for problems with low treewidth.
+
+Random
+======
+
+Random samplers provide a useful baseline performance comparison. The variable
+assignments in each sample are chosen by a coin flip.
+
+>>> from dwave.samplers import RandomSampler
+>>> sampler = RandomSampler()
+
+Create a random binary quadratic model.
+
+>>> import dimod
+>>> bqm = dimod.generators.gnp_random_bqm(100, .5, 'BINARY')
+
+Get the 20 best random samples found in .2 seconds of searching.
+
+>>> sampleset = sampler.sample(bqm, num_reads=20, time_limit=.2)
 
 Simulated Annealing
 ===================
