@@ -80,7 +80,7 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
     """
 
     parameters = None
-    """dict: Keyword arguments accepted by the sampling methods.
+    """Keyword arguments accepted by the sampling methods.
 
     Examples:
 
@@ -92,7 +92,7 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
     """
 
     properties = None
-    """dict: Values for parameters accepted by the sampling methods.
+    """Values for parameters accepted by the sampling methods.
 
     Examples:
 

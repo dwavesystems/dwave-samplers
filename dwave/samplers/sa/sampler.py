@@ -73,9 +73,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
     """
 
     parameters = None
-    """dict: A dict where keys are the keyword parameters accepted by the
-    sampler methods (allowed kwargs) and values are lists of
-    :attr:`SimulatedAnnealingSampler.properties` relevant to each parameter.
+    """Keyword arguments accepted by the sampling methods.
 
     See :meth:`.SimulatedAnnealingSampler.sample` for a description of the
     parameters.
@@ -104,7 +102,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
     """
 
     properties = None
-    """dict: A dict containing any additional information about the sampler.
+    """A dict containing any additional information about the sampler.
 
     Examples:
         This example looks at the supported values of a sampler property.

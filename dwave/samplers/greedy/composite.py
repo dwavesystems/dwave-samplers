@@ -42,7 +42,7 @@ class SteepestDescentComposite(dimod.ComposedSampler):
         self.properties = dict(child_properties=child_sampler.properties.copy())
 
     parameters = None  # overwritten by init
-    """dict[str, list]: Parameters in the form of a dict.
+    """Parameters in the form of a dict.
 
     For an instantiated composed sampler, keys are the keyword parameters
     accepted by the child sampler and parameters added by the composite.
@@ -52,7 +52,7 @@ class SteepestDescentComposite(dimod.ComposedSampler):
     """list [child_sampler]: List containing the structured sampler."""
 
     properties = None  # overwritten by init
-    """dict: Properties in the form of a dict.
+    """Properties in the form of a dict.
 
     Contains the properties of the child sampler.
     """
