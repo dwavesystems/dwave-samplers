@@ -35,9 +35,15 @@ cdef class TabuSearch:
                   int timeout,
                   int numRestarts,
                   object seed=None,
-                  object energyThreshold=None):
+                  object energyThreshold=None,
+                  object Z1coeff=None,
+                  object Z2coeff=None,
+                  object tabuIterationsLowerBound=None):
         cdef unsigned int _seed = time(NULL) if seed is None else seed
         cdef double _energyThreshold = -np.inf if energyThreshold is None else energyThreshold
+        cdef int _Z1coeff = -1 if Z1coeff is None else Z1coeff
+        cdef int _Z2coeff = -1 if Z2coeff is None else Z2coeff
+        cdef int _tabuIterationsLowerBound = -1 if tabuIterationsLowerBound is None else tabuIterationsLowerBound
 
         cdef double[:,:] qubo = np.asarray(Q, dtype=np.double)
         cdef vector[vector[double]] Qvec
@@ -54,7 +60,8 @@ cdef class TabuSearch:
 
         with nogil:
             self.c_tabu = new dwave.samplers.tabu.tabu.TabuSearch(
-                Qvec, initVec, tenure, timeout, numRestarts, _seed, _energyThreshold)
+                Qvec, initVec, tenure, timeout, numRestarts, _seed, _energyThreshold,
+                _Z1coeff, _Z2coeff, _tabuIterationsLowerBound)
 
     def __dealloc__(self):
         del self.c_tabu

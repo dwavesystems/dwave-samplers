@@ -28,7 +28,10 @@ TabuSearch::TabuSearch(vector<vector<double>> Q,
                        long int timeout,
                        int numRestarts,
                        unsigned int seed,
-                       double energyThreshold) 
+                       double energyThreshold,
+		       int Z1Coeff,
+		       int Z2Coeff,
+		       int tabuIterationsLowerBound) 
     : bqp(Q) {
     
     size_t nvars = Q.size();
@@ -48,7 +51,8 @@ TabuSearch::TabuSearch(vector<vector<double>> Q,
     generator.seed(seed);
 
     // Solve and update bqp
-    multiStartTabuSearch(timeout, numRestarts, energyThreshold, initSol, nullptr);
+    multiStartTabuSearch(timeout, numRestarts, energyThreshold, Z1Coeff, Z2Coeff,
+			 tabuIterationsLowerBound, initSol, nullptr);
 }
 
 double TabuSearch::bestEnergy()
@@ -69,6 +73,9 @@ int TabuSearch::numRestarts()
 void TabuSearch::multiStartTabuSearch(long long timeLimitInMilliSecs, 
                                       int numRestarts, 
                                       double energyThreshold,
+				      int Z1Coeff,
+				      int Z2Coeff,
+				      int tabuIterationsLowerBound,
                                       const vector<int> &initSolution, 
                                       const bqpSolver_Callback *callback) {
 
@@ -76,17 +83,26 @@ void TabuSearch::multiStartTabuSearch(long long timeLimitInMilliSecs,
 
     vector<int> I(bqp.nVars); // will store set of variables to apply steepest ascent to
 
-    // Z coeffs are used to define the max number of iterations for each individual tabu search
-    int Z1Coeff = (bqp.nVars <= 500)? 10000 : 25000;
-    int Z2Coeff = (bqp.nVars <= 500)? 2500 : 10000;
-
+    // Z coefficents are used to define the max number of iterations for each
+    // individual tabu search
+    // Subject to a lower bound of tabuIterationsLowerBound.
+    // Negative values are used as a flag to indicate defaulting. 
+    if(Z1Coeff < 0)
+        Z1Coeff = (bqp.nVars <= 500)? 10000 : 25000;
+    if(Z2Coeff < 0)
+        // Previous default simplified: Z2Coeff = (bqp.nVars <= 500)? 2500 : 10000;
+        Z2Coeff = Z1Coeff/4;
+    if(tabuIterationsLowerBound<0)
+        tabuIterationsLowerBound = 500000;
+    long long maxIterInitialSearch = (tabuIterationsLowerBound > Z1Coeff * (long long)bqp.nVars) ? tabuIterationsLowerBound : Z1Coeff * (long long)bqp.nVars;
+    long long maxIterRestartedSearch = (tabuIterationsLowerBound > Z2Coeff * (long long)bqp.nVars) ? tabuIterationsLowerBound : Z2Coeff * (long long)bqp.nVars;
     bqp.initialize(initSolution);
 
     bool useTimeLimit = timeLimitInMilliSecs >= 0;
 
     simpleTabuSearch(bqp.solution, 
                      bqp.solutionQuality, 
-                     Z1Coeff, 
+                     maxIterInitialSearch, 
                      timeLimitInMilliSecs, 
                      useTimeLimit, 
                      energyThreshold, 
@@ -107,17 +123,17 @@ void TabuSearch::multiStartTabuSearch(long long timeLimitInMilliSecs,
         computeC(C, bqp.solution);
 
         // Select a group of variables (I) and apply steepest ascent to it
+        // JR: To do, expose ALPHA as solver parameter in wrapper.
         int numSelection = (10 > (int)(ALPHA * bqp.nVars))? 10 : (int)(ALPHA * bqp.nVars);
         if (numSelection > bqp.nVars) {
             numSelection = bqp.nVars;
-        }
-
+        } 
         selectVariables(numSelection, C, I);  
 
-        // Construct new initial solution to apply taboo search to 
-        vector<int> solution(bqp.nVars);
-        steepestAscent(numSelection, C, I, solution);    
-
+        // Construct new initial solution to apply taboo search to
+	vector<int> solution (bqp.nVars);
+        steepestAscent(numSelection, C, I, solution); 
+	
         for (int i = 0; i < numSelection; i++) {
             if (solution[I[i]] == 1) {
                 bqp.solution[I[i]] = 1 - bqp.solution[I[i]];  // flipping variable
@@ -129,7 +145,7 @@ void TabuSearch::multiStartTabuSearch(long long timeLimitInMilliSecs,
         bqp.restartNum++;
         simpleTabuSearch(bqp.solution, 
                          bqp.solutionQuality, 
-                         Z2Coeff, 
+                         maxIterRestartedSearch, 
                          timeLimitInMilliSecs - (realtime_clock() - startTime), 
                          useTimeLimit, 
                          energyThreshold, 
@@ -151,7 +167,7 @@ void TabuSearch::multiStartTabuSearch(long long timeLimitInMilliSecs,
 
 void TabuSearch::simpleTabuSearch(const vector<int> &starting,
                                   double startingObjective,
-                                  long long ZCoeff,
+                                  long long maxIter,
                                   long long timeLimitInMilliSecs,
                                   bool useTimeLimit,
                                   double energyThreshold,
@@ -177,7 +193,6 @@ void TabuSearch::simpleTabuSearch(const vector<int> &starting,
     vector<int> tieList(bqp.nVars);
 
     long long iter = 0;
-    long long maxIter = (500000 > ZCoeff * (long long)bqp.nVars)? 500000 : ZCoeff * (long long)bqp.nVars;
 
     while (iter < maxIter) {
         if ((bqp.solutionQuality <= energyThreshold) ||
@@ -326,6 +341,8 @@ void TabuSearch::selectVariables(int numSelection, vector<vector<double>> &C, ve
                     continue;
                 }
                 if (d[i] <= 0 && dmin < 0) {
+		    // Default lambda is large, d[i]
+		    // selected only after exhausing positive d[i]
                     e[i] = 1 - d[i] / dmin;
                 }
                 else if (d[i] == dmin && dmin == 0) {

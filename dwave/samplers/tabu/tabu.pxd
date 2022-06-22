@@ -23,7 +23,10 @@ cdef extern from "tabu_search.h" nogil:
                    long int timeout,
                    int numRestarts,
                    unsigned int seed,
-                   double energyThreshold) except +
+                   double energyThreshold,
+		   double Z1coeff,
+		   double Z2coeff,
+		   double tabuIterationsLowerBound) except +
         double bestEnergy()
         vector[int] bestSolution()
         int numRestarts()

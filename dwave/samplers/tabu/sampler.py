@@ -31,7 +31,7 @@ class TabuSampler(dimod.Sampler, dimod.Initialized):
     `Tabu search <https://en.wikipedia.org/wiki/Tabu_search>`_ is a heuristic that
     employs local search and can escape local minima by maintaining a "tabu list" of
     recently explored states that it does not revisit. This sampler implements the
-    `MST2 multistart tabu search algorithm
+    `MST2 multistart tabu search algorithm with alpha=0.4, lambda=5000.
     <https://link.springer.com/article/10.1023/B:ANOR.0000039522.58036.68>`_
     for quadratic unconstrained binary optimization (QUBO) problems.
 
@@ -60,6 +60,9 @@ class TabuSampler(dimod.Sampler, dimod.Initialized):
             'timeout': [],
             'num_restarts': [],
             'energy_threshold': [],
+            'coefficient_z_first': [],
+            'coefficient_z_restart': [],
+            'lower_bound_z': [],
         }
         self.properties = {}
 
@@ -72,6 +75,9 @@ class TabuSampler(dimod.Sampler, dimod.Initialized):
                timeout: int = 20,
                num_restarts: int = 1000000,
                energy_threshold: Optional[float] = None,
+               coefficient_z_first: Optional[int] = None,
+               coefficient_z_restart: Optional[int] = None,
+               lower_bound_z: Optional[int] = None,
                **kwargs) -> dimod.SampleSet:
         """Run a multistart tabu search on a given binary quadratic model.
 
@@ -118,13 +124,34 @@ class TabuSampler(dimod.Sampler, dimod.Initialized):
                 a maximum value of 20.
 
             timeout:
-                Total running time per read in milliseconds.
+                Maximum running time per read in milliseconds.
 
             num_restarts:
-                Number of tabu search restarts per read.
+                Maximum number of tabu search restarts per read. Setting this value
+                to zero results in a simple tabu search.
 
             energy_threshold:
-                Terminate when an energy lower than ``energy_threshold`` is found.
+                Terminate when an energy lower than or equal to ``energy_threshold`` is found.
+
+            coefficient_z_first:
+                :code:`max(bqm.num_variables*coefficient_z_first, lower_bound_z)`
+                determines the number of variable updates considered in the first 
+                simple tabu search. This excludes updates triggered as part of 
+                the LOCAL_SEARCH() subroutine. The coefficient is default as
+                10000 for small problems (num_var<=500) and 25000 for larger 
+                problems.
+                
+            coefficient_z_restart:
+                :code:`max(bqm.num_variables*coefficient_z_restart, lower_bound_z)` 
+                determines the maximum number of variable updates considered in 
+                restarted simple tabu search. This excludes updates triggered as part
+                of the LOCAL_SEARCH() subroutine. The value is defaulted as 
+                :code:`coefficient_z_first/4`
+                
+            lower_bound_z:
+                Minimum number of updates considered in the simple-tabu search,
+                excluding updates triggered by the LOCAL_SEACH() subroutine. The
+                value is defaulted as 500000. 
 
         Examples:
             This example samples a simple two-variable Ising model.
@@ -172,7 +199,7 @@ class TabuSampler(dimod.Sampler, dimod.Initialized):
         restarts = []
         for ni, initial_state in enumerate(parsed_initial_states):
             seed_per_read = rng.integers(2**32, dtype=np.uint32)
-            r = TabuSearch(qubo, initial_state, tenure, timeout, num_restarts, seed_per_read, energy_threshold)
+            r = TabuSearch(qubo, initial_state, tenure, timeout, num_restarts, seed_per_read, energy_threshold, coefficient_z_first, coefficient_z_restart, lower_bound_z)
             samples[ni, :] = r.bestSolution()
             restarts.append(r.numRestarts())
 
