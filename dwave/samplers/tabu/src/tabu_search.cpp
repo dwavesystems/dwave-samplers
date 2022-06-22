@@ -29,8 +29,8 @@ TabuSearch::TabuSearch(vector<vector<double>> Q,
                        int numRestarts,
                        unsigned int seed,
                        double energyThreshold,
-		       int Z1Coeff,
-		       int Z2Coeff,
+                       int Z1Coeff,
+                       int Z2Coeff,
 		       int tabuIterationsLowerBound) 
     : bqp(Q) {
     
@@ -52,7 +52,7 @@ TabuSearch::TabuSearch(vector<vector<double>> Q,
 
     // Solve and update bqp
     multiStartTabuSearch(timeout, numRestarts, energyThreshold, Z1Coeff, Z2Coeff,
-			 tabuIterationsLowerBound, initSol, nullptr);
+                         tabuIterationsLowerBound, initSol, nullptr);
 }
 
 double TabuSearch::bestEnergy()
