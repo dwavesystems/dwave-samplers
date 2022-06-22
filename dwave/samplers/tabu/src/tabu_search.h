@@ -38,9 +38,9 @@ class TabuSearch
                    int numRestarts, 
                    unsigned int seed, 
                    double energyThreshold,
-		   int Z1coeff,
-		   int Z2coeff,
-		   int tabuIterationsLowerBound);
+                   int Z1coeff,
+                   int Z2coeff,
+                   int tabuIterationsLowerBound);
         double bestEnergy();
         std::vector<int> bestSolution();
         int numRestarts();
@@ -58,9 +58,9 @@ class TabuSearch
         void multiStartTabuSearch(long long timeLimitInMilliSecs, 
                                   int numStarts, 
                                   double energyThreshold,
-				  int Z1coeff,
-				  int Z2coeff,
-				  int tabuIterationsLowerBound,
+                                  int Z1coeff,
+                                  int Z2coeff,
+                                  int tabuIterationsLowerBound,
                                   const std::vector<int> &initSolution, 
                                   const bqpSolver_Callback *callback);
 

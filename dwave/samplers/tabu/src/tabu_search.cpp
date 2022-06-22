@@ -31,7 +31,7 @@ TabuSearch::TabuSearch(vector<vector<double>> Q,
                        double energyThreshold,
                        int Z1Coeff,
                        int Z2Coeff,
-		       int tabuIterationsLowerBound) 
+                       int tabuIterationsLowerBound) 
     : bqp(Q) {
     
     size_t nvars = Q.size();
@@ -73,9 +73,9 @@ int TabuSearch::numRestarts()
 void TabuSearch::multiStartTabuSearch(long long timeLimitInMilliSecs, 
                                       int numRestarts, 
                                       double energyThreshold,
-				      int Z1Coeff,
-				      int Z2Coeff,
-				      int tabuIterationsLowerBound,
+                                      int Z1Coeff,
+                                      int Z2Coeff,
+                                      int tabuIterationsLowerBound,
                                       const vector<int> &initSolution, 
                                       const bqpSolver_Callback *callback) {
 
@@ -131,9 +131,9 @@ void TabuSearch::multiStartTabuSearch(long long timeLimitInMilliSecs,
         selectVariables(numSelection, C, I);  
 
         // Construct new initial solution to apply taboo search to
-	vector<int> solution (bqp.nVars);
+        vector<int> solution (bqp.nVars);
         steepestAscent(numSelection, C, I, solution); 
-	
+
         for (int i = 0; i < numSelection; i++) {
             if (solution[I[i]] == 1) {
                 bqp.solution[I[i]] = 1 - bqp.solution[I[i]];  // flipping variable
@@ -341,8 +341,8 @@ void TabuSearch::selectVariables(int numSelection, vector<vector<double>> &C, ve
                     continue;
                 }
                 if (d[i] <= 0 && dmin < 0) {
-		    // Default lambda is large, d[i]
-		    // selected only after exhausing positive d[i]
+                    // Default lambda is large, d[i]
+                    // selected only after exhausing positive d[i]
                     e[i] = 1 - d[i] / dmin;
                 }
                 else if (d[i] == dmin && dmin == 0) {
