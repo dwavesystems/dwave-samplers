@@ -103,14 +103,12 @@ def sample(bqm, Py_ssize_t num_reads, object seed, np.float64_t time_limit):
         sampling_stop_time = sampling_start_time + time_limit
 
     # try sampling
-    cdef Py_ssize_t num_drawn = 0
+
     cdef vector[state_t] samples
     for i in range(num_reads):
         samples.push_back(get_sample(cybqm, bitgen, is_spin))
-        num_drawn += 1
 
-        if realtime_clock() > sampling_stop_time:
-            break
+    cdef Py_ssize_t num_drawn = num_reads
 
     if time_limit >= 0:
         while realtime_clock() < sampling_stop_time:
