@@ -18,10 +18,8 @@
 cimport cython
 
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
-from libc.time cimport time, time_t
 from libcpp.algorithm cimport sort
 from libcpp.vector cimport vector
-from posix.time cimport clock_gettime, timespec, CLOCK_REALTIME
 
 import dimod
 cimport dimod
