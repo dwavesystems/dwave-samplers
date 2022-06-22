@@ -27,31 +27,15 @@ import numpy as np
 cimport numpy as np
 cimport numpy.random
 
+# chrono is not included in Cython's libcpp. So we do it more manually
 cdef extern from *:
     """
-    #if defined(_WIN32) || defined(_WIN64)
-
-    #include <Windows.h>
+    #include <chrono>
 
     double realtime_clock() {
-        LARGE_INTEGER frequency;
-        LARGE_INTEGER now;
-
-        QueryPerformanceFrequency(&frequency);
-        QueryPerformanceCounter(&now);
-
-        return now.QuadPart / frequency.QuadPart;
+        auto t = std::chrono::high_resolution_clock::now();
+        return std::chrono::duration<double>(t.time_since_epoch()).count();
     }
-
-    #else
-
-    double realtime_clock() {
-        struct timespec ts;
-        clock_gettime(CLOCK_MONOTONIC, &ts);
-        return ts.tv_sec + ts.tv_nsec / 1e9;
-    }
-
-    #endif
     """
     double realtime_clock()
 
