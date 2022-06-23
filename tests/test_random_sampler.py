@@ -40,6 +40,8 @@ class TestRandomSampler(unittest.TestCase):
 
         dimod.testing.assert_response_energies(response, bqm)
 
+        self.assertTrue((response.record.energy[:-1] <= response.record.energy[1:]).all())
+
     def test_kwargs(self):
         bqm = dimod.BinaryQuadraticModel({}, {}, 0.0, dimod.SPIN)
         with self.assertWarns(dimod.exceptions.SamplerUnknownArgWarning):

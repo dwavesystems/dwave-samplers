@@ -19,6 +19,7 @@ cimport cython
 
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from libcpp.algorithm cimport sort
+from libcpp.utility cimport pair
 from libcpp.vector cimport vector
 
 import dimod
@@ -40,13 +41,9 @@ cdef extern from *:
     double realtime_clock()
 
 
-cdef struct state_t:
-    np.float64_t energy
-    vector[np.int8_t] sample
-
-
-cdef bint comp_state(const state_t& a, const state_t& b) nogil:
-    return a.energy < b.energy
+# it would be nicer to use a struct, but OSX throws segfaults when sorting
+# Cython-created structs. We should retest that when we switch to Cython 3.
+ctypedef pair[np.float64_t, vector[np.int8_t]] state_t
 
 
 cdef state_t get_sample(dimod.cyBQM_float64 cybqm,
@@ -57,17 +54,17 @@ cdef state_t get_sample(dimod.cyBQM_float64 cybqm,
     cdef state_t state
 
     # generate the sample
-    state.sample.reserve(cybqm.num_variables())
+    state.second.reserve(cybqm.num_variables())
     cdef Py_ssize_t i
     for i in range(cybqm.num_variables()):
-        state.sample.push_back(bitgen.next_uint32(bitgen.state) % 2)
+        state.second.push_back(bitgen.next_uint32(bitgen.state) % 2)
 
     if is_spin:
         # go back through and convert to spin
-        for i in range(state.sample.size()):
-            state.sample[i] = 2 * state.sample[i] - 1
+        for i in range(state.second.size()):
+            state.second[i] = 2 * state.second[i] - 1
 
-    state.energy = cybqm.data().energy(state.sample.begin())
+    state.first = cybqm.data().energy(state.second.begin())
 
     return state
 
@@ -114,7 +111,7 @@ def sample(bqm, Py_ssize_t num_reads, object seed, np.float64_t time_limit):
         while realtime_clock() < sampling_stop_time:
 
             samples.push_back(get_sample(cybqm, bitgen, is_spin))
-            sort(samples.begin(), samples.end(), comp_state)
+            sort(samples.begin(), samples.end())
             samples.pop_back()
 
             num_drawn += 1
@@ -124,7 +121,7 @@ def sample(bqm, Py_ssize_t num_reads, object seed, np.float64_t time_limit):
     if time_limit < 0:
          # for consistency we sort in this case as well, though we count
          # it towards postprocessing since it's not necessary
-        sort(samples.begin(), samples.end(), comp_state)
+        sort(samples.begin(), samples.end())
 
     record = np.rec.array(np.empty(num_reads,
                       dtype=[('sample', np.int8, (cybqm.num_variables(),)),
@@ -135,12 +132,12 @@ def sample(bqm, Py_ssize_t num_reads, object seed, np.float64_t time_limit):
 
     cdef np.float64_t[:] energies_view = record['energy']
     for i in range(num_reads):
-        energies_view[i] = samples[i].energy
+        energies_view[i] = samples[i].first
 
     cdef np.int8_t[:, :] sample_view = record['sample']
     for i in range(num_reads):
         for j in range(cybqm.num_variables()):
-            sample_view[i, j] = samples[i].sample[j]
+            sample_view[i, j] = samples[i].second[j]
 
     sampleset = dimod.SampleSet(record, bqm.variables, info=dict(), vartype=bqm.vartype)
 
