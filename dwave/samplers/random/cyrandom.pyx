@@ -18,7 +18,7 @@
 cimport cython
 
 from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
-from libcpp.algorithm cimport sort
+from libcpp.algorithm cimport make_heap, push_heap, pop_heap
 from libcpp.utility cimport pair
 from libcpp.vector cimport vector
 
@@ -107,21 +107,18 @@ def sample(bqm, Py_ssize_t num_reads, object seed, np.float64_t time_limit):
 
     cdef Py_ssize_t num_drawn = num_reads
 
-    if time_limit >= 0:
-        while realtime_clock() < sampling_stop_time:
+    if time_limit >= 0 and realtime_clock() < sampling_stop_time:
+        make_heap(samples.begin(), samples.end())
 
+        while realtime_clock() < sampling_stop_time:
             samples.push_back(get_sample(cybqm, bitgen, is_spin))
-            sort(samples.begin(), samples.end())
+            push_heap(samples.begin(), samples.end())
+            pop_heap(samples.begin(), samples.end())
             samples.pop_back()
 
             num_drawn += 1
 
     cdef double postprocessing_start_time = realtime_clock()
-
-    if time_limit < 0:
-         # for consistency we sort in this case as well, though we count
-         # it towards postprocessing since it's not necessary
-        sort(samples.begin(), samples.end())
 
     record = np.rec.array(np.empty(num_reads,
                       dtype=[('sample', np.int8, (cybqm.num_variables(),)),

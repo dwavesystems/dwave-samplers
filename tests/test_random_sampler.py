@@ -40,8 +40,6 @@ class TestRandomSampler(unittest.TestCase):
 
         dimod.testing.assert_response_energies(response, bqm)
 
-        self.assertTrue((response.record.energy[:-1] <= response.record.energy[1:]).all())
-
     def test_kwargs(self):
         bqm = dimod.BinaryQuadraticModel({}, {}, 0.0, dimod.SPIN)
         with self.assertWarns(dimod.exceptions.SamplerUnknownArgWarning):
@@ -64,3 +62,18 @@ class TestRandomSampler(unittest.TestCase):
         dimod.testing.assert_sampleset_energies(sampleset, bqm)
         self.assertEqual(len(sampleset), 10)
         self.assertGreater(sampleset.info['num_drawn'], 1000)  # should be much much bigger
+
+    def test_time_limit_quality(self):
+        # get a linear BQM
+        bqm = dimod.BQM('BINARY')
+        for v in range(32):
+            bqm.set_linear(v, 1 << v)
+
+        num_reads = 100
+        # pick a time limit that should produce many more draws than reads
+        sampleset = RandomSampler().sample(bqm, num_reads=num_reads, time_limit=.01)
+        num_drawn = sampleset.info['num_drawn']
+
+        # solutions should all be in range [0, (2 << 32) * (num_reads / num_draws)]
+        self.assertTrue(
+            (sampleset.record.energy < (2 << 32) * (num_reads / num_drawn) * 1.25).all())
