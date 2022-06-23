@@ -16,6 +16,8 @@ __version__ = '0.0.1'
 
 from dwave.samplers.greedy import *
 
+from dwave.samplers.random import *
+
 from dwave.samplers.sa import *
 
 from dwave.samplers.tabu import *

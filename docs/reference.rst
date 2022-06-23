@@ -4,6 +4,34 @@ Reference Documentation
 
 .. currentmodule:: dwave.samplers
 
+Random
+=======
+
+RandomSampler
+-------------
+
+.. autoclass:: RandomSampler
+
+Attributes
+~~~~~~~~~~
+
+.. autosummary::
+   :toctree: generated/
+
+   ~RandomSampler.parameters
+   ~RandomSampler.properties
+
+Methods
+~~~~~~~
+
+.. autosummary::
+   :toctree: generated/
+
+   ~RandomSampler.sample
+   ~RandomSampler.sample_ising
+   ~RandomSampler.sample_qubo
+
+
 Simulated Annealing
 ===================
 

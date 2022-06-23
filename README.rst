@@ -26,12 +26,32 @@ that run either remotely (for example, in D-Wave's
 `binary quadratic models <https://docs.ocean.dwavesys.com/en/stable/concepts/bqm.html>`_
 (BQM):
 
+* Random: a sampler that draws uniform random samples.
 * `Simulated Annealing`_: a probabilistic heuristic for optimization and approximate
   Boltzmann sampling well suited to finding good solutions of large problems.
 * `Steepest Descent`_: a discrete analogue of gradient descent, often used in
   machine learning, that quickly finds a local minimum.
 * `Tabu`_: a heuristic that employs local search with methods to escape local minima.
 * `Tree Decomposition`_: an exact solver for problems with low treewidth.
+
+Random
+======
+
+Random samplers provide a useful baseline performance comparison. The variable
+assignments in each sample are chosen by a coin flip.
+
+>>> from dwave.samplers import RandomSampler
+>>> sampler = RandomSampler()
+
+Create a random binary quadratic model.
+
+>>> import dimod
+>>> bqm = dimod.generators.gnp_random_bqm(100, .5, 'BINARY')
+
+Get the best 5 sample found in .1 seconds.
+
+>>> sampleset = sampler.sample(bqm, time_limit=.1, max_num_samples=5)
+>>> num_reads = sampleset.info['num_reads']  # the total number of samples generated
 
 Simulated Annealing
 ===================
