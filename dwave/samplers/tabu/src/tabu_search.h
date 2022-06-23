@@ -37,7 +37,10 @@ class TabuSearch
                    long int timeout, 
                    int numRestarts, 
                    unsigned int seed, 
-                   double energyThreshold);
+                   double energyThreshold,
+                   int coeffZFirst,
+                   int coeffZRestart,
+                   int lowerBoundZ);
         double bestEnergy();
         std::vector<int> bestSolution();
         int numRestarts();
@@ -47,7 +50,10 @@ class TabuSearch
          * Simple tabu search solver with multi starts. Updates bqp with best solution found.
          * \param timeLimitInMilliSecs: Time limit in milliseconds
          * \param numStarts: Number of re starts
-         * \param energyThreshold: Search terminates when energy lower than threshold is found
+         * \param energyThreshold: Search terminates when energy equal to or lower than threshold is found
+         * \param coeffZFirst: Parameter used to define the number of iterations on first STS
+         * \param coeffZRestart: Parameter used to define the number of iterations on subsequent STS
+         * \param lowerBoundZ: Parameter used to define a minimum number of updates per STS procedure
          * \param initSolution: Starting solution to start search from
          * \param callback: Optional callback function
          * \return
@@ -55,6 +61,9 @@ class TabuSearch
         void multiStartTabuSearch(long long timeLimitInMilliSecs, 
                                   int numStarts, 
                                   double energyThreshold,
+                                  int coeffZFirst,
+                                  int coeffZRestart,
+                                  int lowerBoundZ,
                                   const std::vector<int> &initSolution, 
                                   const bqpSolver_Callback *callback);
 
@@ -62,10 +71,12 @@ class TabuSearch
          * Solves and updates the BQP using simple tabu search heuristic
          * \param starting: A starting solution
          * \param startingObjective: The objective function value for the starting solution
-         * \param ZCoeff: Parameter used to define the max number of iterations
          * \param timeLimitInMilliSecs: Time limit in milli seconds
          * \param useTimeLimit: If false, timeLimitInMilliSecs is ignored
-         * \param energyThreshold: Search terminates when energy lower than threshold is found
+         * \param energyThreshold: Search terminates when energy lower than or equal to the threshold is found
+         * \param coeffZFirst: Parameter used to define the number of iterations on first STS
+         * \param coeffZRestart: Parameter used to define the number of iterations on subsequent STS
+         * \param lowerBoundZ: Parameter used to define a minimum number of updates per STS procedure
          * \param callback: Optional callback function
          * \return
          */

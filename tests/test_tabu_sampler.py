@@ -238,6 +238,12 @@ class TestTabuSampler(unittest.TestCase):
             response = sampler.sample(bqm, num_reads=3, timeout=200, seed=123)
         self.assertAlmostEqual(tt.dt, 0.6, places=1)
 
+        #Run as simple-tabu-search with timeout:
+        with tictoc() as tt:
+            response = sampler.sample(bqm, num_reads=2, timeout=300, seed=123,
+                                      num_restarts=0, lower_bound_z= 2147483647)
+        self.assertAlmostEqual(tt.dt, 0.6, places=1)
+
     def test_num_restarts(self):
         sampler = tabu.TabuSampler()
         bqm = dimod.generators.random.randint(10, 'SPIN', seed=123)
@@ -258,3 +264,45 @@ class TestTabuSampler(unittest.TestCase):
             response = sampler.sample(bqm, timeout=100000, energy_threshold=energy_threshold, seed=345)
 
         self.assertLessEqual(tt.dt, 1.0)
+
+    def test_coeff_z(self):
+        # bqm with excited state initialization should relax if and only if updated:
+        # num_var large enough that 'steepest ascent' subroutine does not cover all variables:
+        # single spin model (trivially solved by MIS), with initialization in
+        # an excited state
+        num_var = 11
+        bqm = dimod.BinaryQuadraticModel.from_ising({i : 1 for i in range(num_var)},{})
+        init = dimod.SampleSet.from_samples_bqm([{i: bqm.linear[i] for i in range(num_var)}], bqm)
+        sampler = tabu.TabuSampler()
+        
+        response = sampler.sample(bqm, num_reads=1, timeout=None, num_restarts=0,
+                                  coefficient_z_first=0, lower_bound_z=0,
+                                  initial_states=init)
+        self.assertEqual(response.record.energy[0], num_var) #No updates, insufficient to find global minima.
+        
+        response = sampler.sample(bqm, num_reads=1, timeout=None, num_restarts=0,
+                                  coefficient_z_first=0, lower_bound_z=1,
+                                  initial_states=init)
+        self.assertEqual(response.record.energy[0], -num_var) #Updated once, sufficient to find global minima.
+        
+        response = sampler.sample(bqm, num_reads=1, timeout=None, num_restarts=0,
+                                  coefficient_z_first=1, lower_bound_z=0,
+                                  initial_states=init)
+        self.assertEqual(response.record.energy[0], -num_var) #Updated once, sufficient to find global minima.
+
+        response = sampler.sample(bqm, num_reads=1, timeout=None, num_restarts=1,
+                                  coefficient_z_first=0, lower_bound_z=0,
+                                  coefficient_z_restart=1, 
+                                  initial_states=init)
+        self.assertEqual(response.record.energy[0], -num_var) #Updated once, sufficient to find global minima.
+        
+        # subset steepest ascent (meaning descent, if we think of qubo minimization)
+        # alone is insufficient to establish global minima, but is sufficient to
+        # escape the global maxima:        
+        response = sampler.sample(bqm, num_reads=1, timeout=None, num_restarts=1,
+                                  coefficient_z_first=0, lower_bound_z=0,
+                                  coefficient_z_restart=0, 
+                                  initial_states=init)
+        self.assertLess(response.record.energy[0], num_var)
+        self.assertGreater(response.record.energy[0], -num_var)
+
