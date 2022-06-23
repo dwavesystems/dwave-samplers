@@ -12,6 +12,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import datetime
+import sys
 import typing
 
 import dimod
@@ -36,16 +38,21 @@ class RandomSampler(dimod.Sampler):
         >>> import dimod
         >>> bqm = dimod.generators.gnp_random_bqm(100, .5, 'BINARY')
 
-        Get the 20 best random samples found in .2 seconds of searching.
+        Get 20 random samples.
 
-        >>> sampleset = sampler.sample(bqm, num_reads=20, time_limit=.2)
+        >>> sampleset = sampler.sample(bqm, num_reads=20)
+
+        Get the best 5 sample found in .1 seconds
+
+        >>> sampleset = sampler.sample(bqm, time_limit=.1, max_num_samples=5)
 
     """
 
     parameters: typing.Mapping[str, typing.List] = dict(
         num_reads=[],
-        seed=[],
         time_limit=[],
+        max_num_samples=[],
+        seed=[],
         )
     """Keyword arguments accepted by the sampling methods.
 
@@ -54,7 +61,7 @@ class RandomSampler(dimod.Sampler):
         >>> from dwave.samplers import RandomSampler
         >>> sampler = RandomSampler()
         >>> sampler.parameters
-        {'num_reads': [], 'seed': [], 'time_limit': []}
+        {'num_reads': [], 'time_limit': [], 'max_num_samples': [], 'seed': []}
 
     """
 
@@ -74,9 +81,10 @@ class RandomSampler(dimod.Sampler):
     def sample(self,
                bqm: dimod.BinaryQuadraticModel,
                *,
-               num_reads: int = 10,
+               num_reads: typing.Optional[int] = None,
+               time_limit: typing.Optional[typing.Union[float, datetime.timedelta]] = None,
+               max_num_samples: int = 1000,
                seed: typing.Union[None, int, np.random.Generator] = None,
-               time_limit: typing.Optional[float] = None,
                **kwargs,
                ) -> dimod.SampleSet:
         """Return random samples for a binary quadratic model.
@@ -84,30 +92,34 @@ class RandomSampler(dimod.Sampler):
         Args:
             bqm: Binary quadratic model to be sampled from.
 
-            num_reads: The number of samples to be returned.
+            num_reads:
+                The maximum number of random samples to be drawn.
+                If neither ``num_reads`` nor ``time_limit`` are provided,
+                ``num_reads`` is set to 1.
+                If ``time_limit`` is provided, there is no limit imposed on
+                the number of reads.
+
+            time_limit:
+                The maximum run time in seconds.
+                Only the time to generate the samples, calculate the energies,
+                and maintain the population is counted.
+
+            max_num_samples:
+                The maximum number of samples returned by the sampler.
+                This limits the memory usage for small problems are large
+                ``time_limits``.
+                Ignored when ``num_reads`` is set.
 
             seed:
                 Seed for the random number generator.
                 Passed to :func:`numpy.random.default_rng()`.
-
-            time_limit:
-                The maximum sampling time in seconds.
-                If given and non-negative, samples are drawn until ``time_limit``.
-                Only the best ``num_reads`` (or fewer) samples are kept.
 
         Returns:
             A sample set.
             Some additional information is provided in the
             :attr:`~dimod.SampleSet.info` dictionary:
 
-                * **num_drawn**: The total number of samples generated.
-                * **prepreocessing_time**: The time to parse the ``bqm`` and to
-                  initialize the random number generator.
-                * **sampling_time**: The time used to generate the samples
-                  and calculate the energies. This is the number controlled by
-                  ``time_limit``.
-                * **postprocessing_time**: The time to construct the sample
-                  set.
+                * **num_reads**: The total number of samples generated.
 
         """
 
@@ -115,8 +127,34 @@ class RandomSampler(dimod.Sampler):
         # skip for simplicity.
         self.remove_unknown_kwargs(**kwargs)
 
+        # default case
+        if num_reads is None and time_limit is None:
+            num_reads = 1
+            time_limit = float('inf')
+
+        if num_reads is None:
+            # we know that time_limit was set
+            num_reads = sys.maxsize
+        elif num_reads <= 0:
+            raise ValueError("if given, num_reads must be a positive integer")
+        else:
+            # it was given, so max_num_samples is ignored
+            max_num_samples = num_reads
+
+        if time_limit is None:
+            # num_reads is specified
+            time_limit = float('inf')
+        elif isinstance(time_limit, datetime.timedelta):
+            time_limit = time_limit.total_seconds()
+        elif time_limit <= 0:
+            raise ValueError("if given, time_limit must be positive")
+
+        if max_num_samples <= 0:
+            raise ValueError("max_num_samples must be a positive integer")
+
         return sample(bqm,
                       num_reads=num_reads,
+                      time_limit=time_limit,
+                      max_num_samples=max_num_samples,
                       seed=seed,
-                      time_limit=-1 if time_limit is None else time_limit,
                       )

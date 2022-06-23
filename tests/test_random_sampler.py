@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import datetime
 import time
 import unittest
 
@@ -37,6 +38,7 @@ class TestRandomSampler(unittest.TestCase):
                                          dimod.SPIN)
         sampler = RandomSampler()
         response = sampler.sample(bqm, num_reads=10)
+        self.assertEqual(len(response), 10)
 
         dimod.testing.assert_response_energies(response, bqm)
 
@@ -54,14 +56,29 @@ class TestRandomSampler(unittest.TestCase):
                                          dimod.SPIN)
 
         t = time.perf_counter()
-        sampleset = RandomSampler().sample(bqm, num_reads=10, time_limit=.02)
+        sampleset = RandomSampler().sample(bqm, time_limit=.02, max_num_samples=10)
         runtime = time.perf_counter() - t
 
         self.assertTrue(.01 < runtime < .04)
 
         dimod.testing.assert_sampleset_energies(sampleset, bqm)
         self.assertEqual(len(sampleset), 10)
-        self.assertGreater(sampleset.info['num_drawn'], 1000)  # should be much much bigger
+        self.assertGreater(sampleset.info['num_reads'], 10)  # should be much much bigger
+
+    def test_time_limit_datetime(self):
+        t = time.time()
+
+        bqm = dimod.BinaryQuadraticModel({0: 0.0, 1: 0.0, 2: 0.0},
+                                         {(0, 1): -1.0, (1, 2): 1.0, (0, 2): 1.0},
+                                         1.0,
+                                         dimod.SPIN)
+
+        t = time.perf_counter()
+        sampleset = RandomSampler().sample(
+            bqm, time_limit=datetime.timedelta(minutes=1)/600)
+        runtime = time.perf_counter() - t
+
+        self.assertTrue(.05 < runtime < .15)
 
     def test_time_limit_quality(self):
         # get a linear BQM
@@ -69,11 +86,12 @@ class TestRandomSampler(unittest.TestCase):
         for v in range(32):
             bqm.set_linear(v, 1 << v)
 
-        num_reads = 100
+        max_num_samples = 100
         # pick a time limit that should produce many more draws than reads
-        sampleset = RandomSampler().sample(bqm, num_reads=num_reads, time_limit=.01)
-        num_drawn = sampleset.info['num_drawn']
+        sampleset = RandomSampler().sample(bqm, max_num_samples=max_num_samples,
+                                           time_limit=.01)
+        num_drawn = sampleset.info['num_reads']
 
-        # solutions should all be in range [0, (2 << 32) * (num_reads / num_draws)]
+        # solutions should all be in range [0, (2 << 32) * (max_num_samples / num_draws)]
         self.assertTrue(
-            (sampleset.record.energy < (2 << 32) * (num_reads / num_drawn) * 1.25).all())
+            (sampleset.record.energy < (2 << 32) * (max_num_samples / num_drawn) * 1.25).all())

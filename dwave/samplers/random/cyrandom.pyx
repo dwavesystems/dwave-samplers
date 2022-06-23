@@ -71,9 +71,11 @@ cdef state_t get_sample(dimod.cyBQM_float64 cybqm,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def sample(bqm, Py_ssize_t num_reads, object seed, np.float64_t time_limit):
-
-    cdef double preprocessing_start_time = realtime_clock()
+def sample(object bqm,
+           Py_ssize_t num_reads,
+           np.float64_t time_limit,
+           Py_ssize_t max_num_samples,
+           object seed):
 
     cdef Py_ssize_t i, j  # counters for use later
 
@@ -81,6 +83,13 @@ def sample(bqm, Py_ssize_t num_reads, object seed, np.float64_t time_limit):
     # but honestly everyone just uses float64 anyway so...
     cdef dimod.cyBQM_float64 cybqm = dimod.as_bqm(bqm, dtype=float).data
     cdef bint is_spin = bqm.vartype is dimod.SPIN
+
+    if num_reads <= 0:
+        raise ValueError("num_reads must be positive")
+    if time_limit <= 0:
+        raise ValueError("time_limit must be positive")
+    if max_num_samples <= 0:
+        raise ValueError("max_num_samples must be positive")
 
     # Get Cython access to the rng
     rng = np.random.default_rng(seed)
@@ -91,25 +100,31 @@ def sample(bqm, Py_ssize_t num_reads, object seed, np.float64_t time_limit):
         raise ValueError("Invalid pointer to anon_func_state")
     bitgen = <numpy.random.bitgen_t *> PyCapsule_GetPointer(capsule, capsule_name)
 
+    # ok, time to start sampling!
     cdef double sampling_start_time = realtime_clock()
+    cdef double sampling_stop_time = sampling_start_time + time_limit
 
-    cdef double sampling_stop_time
-    if time_limit < 0:
-        sampling_stop_time = float('inf')
-    else:
-        sampling_stop_time = sampling_start_time + time_limit
-
-    # try sampling
-
+    # fill out the population
     cdef vector[state_t] samples
-    for i in range(num_reads):
+    for i in range(max_num_samples):
         samples.push_back(get_sample(cybqm, bitgen, is_spin))
 
-    cdef Py_ssize_t num_drawn = num_reads
+        if samples.size() >= num_reads:
+            break
+        if realtime_clock() >= sampling_stop_time:
+            break
 
-    if time_limit >= 0 and realtime_clock() < sampling_stop_time:
+    cdef Py_ssize_t num_drawn = samples.size()
+
+    # determine if we need to keep going
+    if samples.size() < num_reads and realtime_clock() < sampling_stop_time:
+        # at this point, we want to stop growing our samples vector, so
+        # we turn it into a heap
         make_heap(samples.begin(), samples.end())
 
+        # we're never going to change size, so we stop testing the num_reads
+        # condition. It was up to the caller to ensure that max_num_samples >= num_reads
+        # if they want to terminate on num_reads
         while realtime_clock() < sampling_stop_time:
             samples.push_back(get_sample(cybqm, bitgen, is_spin))
             push_heap(samples.begin(), samples.end())
@@ -118,31 +133,31 @@ def sample(bqm, Py_ssize_t num_reads, object seed, np.float64_t time_limit):
 
             num_drawn += 1
 
-    cdef double postprocessing_start_time = realtime_clock()
+    # sampling done!
+    # time to construct the return objects
 
-    record = np.rec.array(np.empty(num_reads,
-                      dtype=[('sample', np.int8, (cybqm.num_variables(),)),
-                             ('energy', float),
-                             ('num_occurrences', int)]))
+    record = np.rec.array(
+        np.empty(samples.size(),
+                 dtype=[('sample', np.int8, (bqm.num_variables,)),
+                        ('energy', float),
+                        ('num_occurrences', int)]))
 
     record['num_occurrences'][:] = 1
 
     cdef np.float64_t[:] energies_view = record['energy']
-    for i in range(num_reads):
+    for i in range(samples.size()):
         energies_view[i] = samples[i].first
 
     cdef np.int8_t[:, :] sample_view = record['sample']
-    for i in range(num_reads):
+    for i in range(samples.size()):
         for j in range(cybqm.num_variables()):
             sample_view[i, j] = samples[i].second[j]
 
     sampleset = dimod.SampleSet(record, bqm.variables, info=dict(), vartype=bqm.vartype)
 
     sampleset.info.update(
-        num_drawn=num_drawn,
-        prepreocessing_time=sampling_start_time-preprocessing_start_time,
-        sampling_time=postprocessing_start_time-sampling_start_time,
-        postprocessing_time=realtime_clock()-preprocessing_start_time,
+        num_reads=num_drawn,
+        # todo: timing data
         )
 
     return sampleset

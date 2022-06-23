@@ -46,9 +46,9 @@ Create a random binary quadratic model.
 >>> import dimod
 >>> bqm = dimod.generators.gnp_random_bqm(100, .5, 'BINARY')
 
-Get the 20 best random samples found in .2 seconds of searching.
+Get the best 5 sample found in .1 seconds
 
->>> sampleset = sampler.sample(bqm, num_reads=20, time_limit=.2)
+>>> sampleset = sampler.sample(bqm, time_limit=.1, max_num_samples=5)
 
 Simulated Annealing
 ===================
