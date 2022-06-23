@@ -29,9 +29,9 @@ TabuSearch::TabuSearch(vector<vector<double>> Q,
                        int numRestarts,
                        unsigned int seed,
                        double energyThreshold,
-                       int Z1Coeff,
-                       int Z2Coeff,
-                       int tabuIterationsLowerBound) 
+                       int coeffZFirst,
+                       int coeffZRestart,
+                       int lowerBoundZ) 
     : bqp(Q) {
     
     size_t nvars = Q.size();
@@ -51,8 +51,8 @@ TabuSearch::TabuSearch(vector<vector<double>> Q,
     generator.seed(seed);
 
     // Solve and update bqp
-    multiStartTabuSearch(timeout, numRestarts, energyThreshold, Z1Coeff, Z2Coeff,
-                         tabuIterationsLowerBound, initSol, nullptr);
+    multiStartTabuSearch(timeout, numRestarts, energyThreshold, coeffZFirst, coeffZRestart,
+                         lowerBoundZ, initSol, nullptr);
 }
 
 double TabuSearch::bestEnergy()
@@ -73,9 +73,9 @@ int TabuSearch::numRestarts()
 void TabuSearch::multiStartTabuSearch(long long timeLimitInMilliSecs, 
                                       int numRestarts, 
                                       double energyThreshold,
-                                      int Z1Coeff,
-                                      int Z2Coeff,
-                                      int tabuIterationsLowerBound,
+                                      int coeffZFirst,
+                                      int coeffZRestart,
+                                      int lowerBoundZ,
                                       const vector<int> &initSolution, 
                                       const bqpSolver_Callback *callback) {
 
@@ -85,17 +85,17 @@ void TabuSearch::multiStartTabuSearch(long long timeLimitInMilliSecs,
 
     // Z coefficents are used to define the max number of iterations for each
     // individual tabu search
-    // Subject to a lower bound of tabuIterationsLowerBound.
+    // Subject to a lower bound of lowerBoundZ.
     // Negative values are used as a flag to indicate defaulting. 
-    if(Z1Coeff < 0)
-        Z1Coeff = (bqp.nVars <= 500)? 10000 : 25000;
-    if(Z2Coeff < 0)
-        // Previous default simplified: Z2Coeff = (bqp.nVars <= 500)? 2500 : 10000;
-        Z2Coeff = Z1Coeff/4;
-    if(tabuIterationsLowerBound<0)
-        tabuIterationsLowerBound = 500000;
-    long long maxIterInitialSearch = (tabuIterationsLowerBound > Z1Coeff * (long long)bqp.nVars) ? tabuIterationsLowerBound : Z1Coeff * (long long)bqp.nVars;
-    long long maxIterRestartedSearch = (tabuIterationsLowerBound > Z2Coeff * (long long)bqp.nVars) ? tabuIterationsLowerBound : Z2Coeff * (long long)bqp.nVars;
+    if(coeffZFirst < 0)
+        coeffZFirst = (bqp.nVars <= 500)? 10000 : 25000;
+    if(coeffZRestart < 0)
+        // Previous default simplified: coeffZRestart = (bqp.nVars <= 500)? 2500 : 10000;
+        coeffZRestart = coeffZFirst/4;
+    if(lowerBoundZ<0)
+        lowerBoundZ = 500000;
+    long long maxIterInitialSearch = (lowerBoundZ > coeffZFirst * (long long)bqp.nVars) ? lowerBoundZ : coeffZFirst * (long long)bqp.nVars;
+    long long maxIterRestartedSearch = (lowerBoundZ > coeffZRestart * (long long)bqp.nVars) ? lowerBoundZ : coeffZRestart * (long long)bqp.nVars;
     bqp.initialize(initSolution);
 
     bool useTimeLimit = timeLimitInMilliSecs >= 0;

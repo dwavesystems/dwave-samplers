@@ -31,7 +31,7 @@ class TabuSampler(dimod.Sampler, dimod.Initialized):
     `Tabu search <https://en.wikipedia.org/wiki/Tabu_search>`_ is a heuristic that
     employs local search and can escape local minima by maintaining a "tabu list" of
     recently explored states that it does not revisit. This sampler implements the
-    `MST2 multistart tabu search algorithm with alpha=0.4, lambda=5000.
+    `MST2 multistart tabu search algorithm.
     <https://link.springer.com/article/10.1023/B:ANOR.0000039522.58036.68>`_
     for quadratic unconstrained binary optimization (QUBO) problems.
 
@@ -128,30 +128,29 @@ class TabuSampler(dimod.Sampler, dimod.Initialized):
 
             num_restarts:
                 Maximum number of tabu search restarts per read. Setting this value
-                to zero results in a simple tabu search.
+                to zero results in a simple tabu search. 
 
             energy_threshold:
                 Terminate when an energy lower than or equal to ``energy_threshold`` is found.
 
             coefficient_z_first:
                 :code:`max(bqm.num_variables*coefficient_z_first, lower_bound_z)`
-                determines the number of variable updates considered in the first 
-                simple tabu search. This excludes updates triggered as part of 
-                the LOCAL_SEARCH() subroutine. The coefficient is default as
-                10000 for small problems (num_var<=500) and 25000 for larger 
-                problems.
+                bounds the number of variable updates considered in
+                the first simple tabu search (STS). Variable updates arising from 
+                the STS greedy-descent subroutine, invoked upon discovery of new 
+                global optima, are excluded from the count. The 
+                coefficient defaults to 10000 for small problems (up to 500 
+                variables) and 25000 for larger problems.
                 
             coefficient_z_restart:
-                :code:`max(bqm.num_variables*coefficient_z_restart, lower_bound_z)` 
-                determines the maximum number of variable updates considered in 
-                restarted simple tabu search. This excludes updates triggered as part
-                of the LOCAL_SEARCH() subroutine. The value is defaulted as 
-                :code:`coefficient_z_first/4`
+                Controls the number of variable updates on restarted simple tabu
+                search stages, matching the description for ``coefficient_z_first``. 
+                The coefficient defaults to :code:`coefficient_z_first/4`
                 
             lower_bound_z:
-                Minimum number of updates considered in the simple-tabu search,
-                excluding updates triggered by the LOCAL_SEACH() subroutine. The
-                value is defaulted as 500000. 
+                Sets a minimum number of variable updates on all simple tabu
+                searches, see ``coefficient_z_first``. The bound defaults to 
+                500000. 
 
         Examples:
             This example samples a simple two-variable Ising model.
