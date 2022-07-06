@@ -4,7 +4,7 @@
 .. image:: https://img.shields.io/pypi/pyversions/dwave-samplers.svg
     :target: https://pypi.python.org/pypi/dwave-samplers
 
-.. image:: https://codecov.io/gh/dwavesystems/dwave-samplers/branch/master/graph/badge.svg
+.. image:: https://codecov.io/gh/dwavesystems/dwave-samplers/branch/main/graph/badge.svg
     :target: https://codecov.io/gh/dwavesystems/dwave-samplers
 
 .. image:: https://circleci.com/gh/dwavesystems/dwave-samplers.svg?style=svg
