@@ -316,6 +316,25 @@ class TestSimulatedAnsaingSampler(unittest.TestCase):
         # if num_reads explicitly given together without initial_states, they are generated
         self.assertEqual(len(sampler.sample(bqm, num_reads=4)), 4)
 
+    def test_0_num_sweeps(self):
+        bqm = dimod.BinaryQuadraticModel({}, {'ab': 1}, 0, 'SPIN')
+        sampleset = dimod.SampleSet.from_samples_bqm([{'a': 1, 'b': -1},
+                                                      {'a': -1, 'b': 1}], bqm)
+
+        result = SimulatedAnnealingSampler().sample(bqm, num_sweeps=0, initial_states=sampleset)
+
+        self.assertTrue(np.array_equal(result.record.sample, sampleset.record.sample))
+        self.assertEqual(len(result.record.sample), 2)
+
+        result = SimulatedAnnealingSampler().sample(
+            bqm, num_sweeps=0, num_reads=4,
+            initial_states=sampleset, initial_states_generator='tile')
+
+        expected = np.tile(sampleset.record.sample, (2, 1))
+
+        self.assertTrue(np.array_equal(result.record.sample, expected))
+        self.assertEqual(len(result), 4)
+
 
 class TestDefaultBetaRange(unittest.TestCase):
     def test_empty_problem(self):
