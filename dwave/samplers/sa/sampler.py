@@ -335,8 +335,8 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
 
             num_betas, rem = divmod(num_sweeps,num_sweeps_per_beta)
 
-            if rem > 0 or num_betas < 1:
-                error_msg = "'num_sweeps' must be a positive value divisible by 'num_sweeps_per_beta'."
+            if rem > 0 or num_betas < 0:
+                error_msg = "'num_sweeps' must be a non-negative value divisible by 'num_sweeps_per_beta'."
                 raise ValueError(error_msg)
 
             if beta_range is None:
