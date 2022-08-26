@@ -125,7 +125,9 @@ void simulated_annealing_run(
             // the probability.
             const double threshold = 44.36142 / beta;
 
-            for (int var = 0; var < num_vars; var++) {
+            for (int varI = 0; varI < num_vars; varI++) {
+	        FASTRAND(rand);
+		int var = rand%num_vars;
                 if (delta_energy[var] >= threshold) continue;
 
                 flip_spin = false;
