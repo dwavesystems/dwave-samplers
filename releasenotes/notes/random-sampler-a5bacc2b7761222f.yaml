@@ -1,0 +1,3 @@
+---
+features:
+  - Add ``RandomSampler`` which generates samples randomly.

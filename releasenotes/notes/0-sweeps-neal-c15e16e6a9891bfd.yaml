@@ -1,0 +1,5 @@
+---
+fixes:
+  - |
+    Allow ``num_sweeps=0`` for simulated annealing. This was incorrectly
+    disabled in ``1.0.0.dev0``.

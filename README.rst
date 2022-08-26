@@ -4,7 +4,7 @@
 .. image:: https://img.shields.io/pypi/pyversions/dwave-samplers.svg
     :target: https://pypi.python.org/pypi/dwave-samplers
 
-.. image:: https://codecov.io/gh/dwavesystems/dwave-samplers/branch/master/graph/badge.svg
+.. image:: https://codecov.io/gh/dwavesystems/dwave-samplers/branch/main/graph/badge.svg
     :target: https://codecov.io/gh/dwavesystems/dwave-samplers
 
 .. image:: https://circleci.com/gh/dwavesystems/dwave-samplers.svg?style=svg
@@ -26,12 +26,32 @@ that run either remotely (for example, in D-Wave's
 `binary quadratic models <https://docs.ocean.dwavesys.com/en/stable/concepts/bqm.html>`_
 (BQM):
 
+* Random: a sampler that draws uniform random samples.
 * `Simulated Annealing`_: a probabilistic heuristic for optimization and approximate
   Boltzmann sampling well suited to finding good solutions of large problems.
 * `Steepest Descent`_: a discrete analogue of gradient descent, often used in
   machine learning, that quickly finds a local minimum.
 * `Tabu`_: a heuristic that employs local search with methods to escape local minima.
 * `Tree Decomposition`_: an exact solver for problems with low treewidth.
+
+Random
+======
+
+Random samplers provide a useful baseline performance comparison. The variable
+assignments in each sample are chosen by a coin flip.
+
+>>> from dwave.samplers import RandomSampler
+>>> sampler = RandomSampler()
+
+Create a random binary quadratic model.
+
+>>> import dimod
+>>> bqm = dimod.generators.gnp_random_bqm(100, .5, 'BINARY')
+
+Get the best 5 sample found in .1 seconds.
+
+>>> sampleset = sampler.sample(bqm, time_limit=.1, max_num_samples=5)
+>>> num_reads = sampleset.info['num_reads']  # the total number of samples generated
 
 Simulated Annealing
 ===================
@@ -40,15 +60,15 @@ Simulated Annealing
 used for heuristic optimization or approximate Boltzmann sampling. The
 *dwave-samplers* implementation approaches the equilibrium distribution by
 performing updates at a sequence of decreasing temperatures, terminating at the
-target :math:`\beta`.\ [#]_ Each spin is updated once in a fixed order per point
+target `β`.\ [#]_ Each spin is updated once in a fixed order per point
 per temperature according to a Metropolis-Hastings update. When the temperature
 is low the target distribution concentrates, at equilibrium, over ground states
 of the model. Samples are guaranteed to match the equilibrium for long, smooth
 temperature schedules.
 
-.. [#] :math:`\beta` represents the inverse temperature, :math:`1/(k_B T)`, of a
+.. [#] `β` represents the inverse temperature, `1/(k T)`, of a
    `Boltzmann distribution <https://en.wikipedia.org/wiki/Boltzmann_distribution>`_
-   where :math:`T` is the thermodynamic temperature in kelvin and :math:`k_B` is
+   where `T` is the thermodynamic temperature in kelvin and `k` is
    Boltzmann's constant.
 
 >>> from dwave.samplers import SimulatedAnnealingSampler

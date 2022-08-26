@@ -111,6 +111,8 @@ venv.bak/
 # cython files
 dwave/samplers/greedy/*.cpp
 dwave/samplers/greedy/*.html
+dwave/samplers/random/*.cpp
+dwave/samplers/random/*.html
 dwave/samplers/sa/*.cpp
 dwave/samplers/sa/*.html
 dwave/samplers/tabu/*.cpp
