@@ -2,11 +2,12 @@ import networkx as nx
 import numpy as np
 import scipy
 
-from savanna.io.dimod import bqm_to_multigraph
-from savanna.kasteleyn import kasteleyn
-from savanna.planar import rotation_from_coordinates, plane_triangulate, odd_in_degree_orientation, is_plane_triangulated
+from dwave.samplers.planar.kasteleyn import kasteleyn
+from dwave.samplers.planar.planar import rotation_from_coordinates, plane_triangulate, odd_in_degree_orientation
+from dwave.samplers.planar.util import bqm_to_multigraph
 
 
+# noinspection PyPep8Naming
 def logsqrtdet(K):
     """Calculate ln(sqrt(|K|)).
 
@@ -22,16 +23,14 @@ def logsqrtdet(K):
 
     """
     # LU decomposition
-    PL, U = scipy.linalg.lu(K, permute_l=True)
-
-    # assert np.linalg.det(PL) in (-1, 1), 'The contribution of the determinent of PL should be 1'
-    # assert np.all(np.triu(U) == U), 'U should be upper triangular'
+    # noinspection PyTupleAssignmentBalance
+    _, U = scipy.linalg.lu(K, permute_l=True)
 
     return .5 * np.sum(np.log(np.absolute(np.diag(U))))
 
 
+# noinspection PyPep8Naming
 def log_partition_bqm(bqm, pos):
-
     if len(bqm) < 3:
         raise ValueError("bqm must have at least three variables")
 

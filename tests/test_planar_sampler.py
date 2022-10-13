@@ -2,7 +2,10 @@ import unittest
 
 import dimod
 
-import savanna
+from dwave.samplers.planar import PlanarGraphSampler
+
+
+# from dwave.samplers.planar.sampler_old import ground_state_bqm
 
 
 class TestGroundStateBQM(unittest.TestCase):
@@ -15,7 +18,7 @@ class TestGroundStateBQM(unittest.TestCase):
 
         pos = {'a': (0, 0), 'b': (1, 0), 'c': (0, 1)}
 
-        sample = savanna.ground_state_bqm(bqm, pos)
+        sample = PlanarGraphSampler().sample(bqm, pos)
 
         self.assertEqual(set(sample.values()), {-1, +1})
 
@@ -30,7 +33,7 @@ class TestGroundStateBQM(unittest.TestCase):
 
         def pos(v): return v
 
-        sample = savanna.ground_state_bqm(bqm, pos)
+        sample = PlanarGraphSampler().sample(bqm, pos)
 
         self.assertEqual(set(sample.values()), {-1, +1})
 
@@ -45,7 +48,7 @@ class TestGroundStateBQM(unittest.TestCase):
 
         def pos(v): return v
 
-        sample = savanna.ground_state_bqm(bqm, pos)
+        sample = PlanarGraphSampler().sample(bqm, pos)
 
         # should all be the same
         self.assertEqual(len(set(sample.values())), 1)

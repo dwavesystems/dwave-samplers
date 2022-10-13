@@ -1,12 +1,11 @@
-from itertools import chain
-
 import numpy as np
 
 
+# noinspection PyPep8Naming
 def half_kasteleyn(G):
     """G should be triangulated, oriented"""
 
-    edgelist = sorted(G.edges(keys=True), key=lambda e: G.edges[e]['index'])
+    _ = sorted(G.edges(keys=True), key=lambda e: G.edges[e]['index'])
     num_edges = len(G.edges)
 
     # Create the empty half-kasteleyn
@@ -21,7 +20,7 @@ def half_kasteleyn(G):
         else:
             alpha = 2 * s - 1
 
-        edge_i = G.node[v]['rotation'][edge_s]
+        edge_i = G.nodes[v]['rotation'][edge_s]
         i = G.edges[edge_i]['index']
 
         while True:
@@ -36,15 +35,16 @@ def half_kasteleyn(G):
                 H[2 * i, alpha] = 1
                 alpha = 2 * i - 1
 
-            edge_i = G.node[v]['rotation'][edge_i]
+            edge_i = G.nodes[v]['rotation'][edge_i]
             i = G.edges[edge_i]['index']
 
-            if edge_i == G.node[v]['rotation'][edge_s]:
+            if edge_i == G.nodes[v]['rotation'][edge_s]:
                 break
 
     return H
 
 
+# noinspection PyPep8Naming
 def half_kasteleyn_to_kasteleyn(G, H):
     K = H.astype(float)
 
@@ -59,5 +59,6 @@ def half_kasteleyn_to_kasteleyn(G, H):
     return K
 
 
+# noinspection PyPep8Naming
 def kasteleyn(G):
     return half_kasteleyn_to_kasteleyn(G, half_kasteleyn(G))

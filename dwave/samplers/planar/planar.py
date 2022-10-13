@@ -1,6 +1,5 @@
-import itertools
 import math
-
+# noinspection PyProtectedMember
 from collections import OrderedDict, Mapping, namedtuple
 
 import networkx as nx
@@ -9,6 +8,7 @@ Edge = namedtuple('Edge', ['head', 'tail', 'key'])
 """Represents a (directed) edge in a Multigraph"""
 
 
+# noinspection PyPep8Naming
 def rotation_from_coordinates(G, pos):
     """Compute the rotation system for a planar G from the node positions.
 
@@ -64,6 +64,7 @@ def _inverse_rotation_system(rotation_system, v, edge):
     raise RuntimeError
 
 
+# noinspection PyPep8Naming
 def _insert_chord(ij, jk, G, rotation_system):
     """Insert a chord between i and k."""
     assert ij.tail == jk.head
@@ -80,6 +81,7 @@ def _insert_chord(ij, jk, G, rotation_system):
     rotation_system[i][ik] = ij
 
 
+# noinspection PyPep8Naming
 def plane_triangulate(G):
     """Add edges to planar graph G to make it plane triangulated.
 
@@ -95,7 +97,7 @@ def plane_triangulate(G):
     if len(G) < 3:
         raise ValueError("only defined for graphs with 3 or more nodes")
 
-    rotation_system = {v: G.node[v]['rotation'] for v in G}
+    rotation_system = {v: G.nodes[v]['rotation'] for v in G}
 
     # following the notation from the paper
     for i in G.nodes:
@@ -133,6 +135,7 @@ def plane_triangulate(G):
     return
 
 
+# noinspection PyPep8Naming
 def is_plane_triangulated(G):
     # biconnected and each of its faces is a triangle
     # expects G to have the rotation system as node attributes, and is multigraph
@@ -146,19 +149,19 @@ def is_plane_triangulated(G):
     for x in G.nodes:
         for xz in G.edges(x, keys=True):
 
-            xy = x, y, xykey = G.node[x]['rotation'][xz]
-            yz = y, z, yzkey = G.node[y]['rotation'][(y, x, xykey)]
-            zx = z, x, xzkey = G.node[z]['rotation'][(z, y, yzkey)]
+            _ = x, y, xykey = G.nodes[x]['rotation'][xz]
+            _ = y, z, yzkey = G.nodes[y]['rotation'][(y, x, xykey)]
+            _ = z, x, xzkey = G.nodes[z]['rotation'][(z, y, yzkey)]
 
             if xz != (x, z, xzkey):
                 return False
     return True
 
 
+# noinspection PyPep8Naming
 def odd_in_degree_orientation(H):
     G = H.copy()
 
-    visited = set()
     orientation = set()
 
     for (u, v) in reversed(list(nx.dfs_edges(H))):
@@ -191,6 +194,7 @@ def odd_in_degree_orientation(H):
     return {(u, v, key): v for (u, v, key) in orientation}
 
 
+# noinspection PyPep8Naming
 def expanded_dual(G):
     """G should be multigraph, triangulated, oriented, edges indexed"""
 
@@ -212,7 +216,7 @@ def expanded_dual(G):
 
             u, v, _ = left = Edge(*left)
             assert u == n
-            s, t, _ = right = Edge(*G.node[u]['rotation'][left])
+            s, t, _ = right = Edge(*G.nodes[u]['rotation'][left])
             assert s == u
 
             # we want to connect the node left (from n) or right

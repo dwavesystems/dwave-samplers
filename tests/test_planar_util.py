@@ -4,7 +4,7 @@ import itertools
 import dimod
 import networkx as nx
 
-import savanna
+import dwave.samplers.planar.util as savanna
 
 
 class TestAgreementIsingEnergy(unittest.TestCase):
@@ -34,7 +34,7 @@ class TestBQMToAgreementIsing(unittest.TestCase):
         bqm = dimod.BinaryQuadraticModel.from_ising({}, {('a', 'b'): -1})
         G, offset = savanna.bqm_to_multigraph(bqm)
 
-        variables = list(bqm)
+        variables = bqm.variables#list(bqm)
         for config in itertools.product((-1, 1), repeat=len(bqm)):
             sample = dict(zip(variables, config))
 
@@ -47,7 +47,7 @@ class TestBQMToAgreementIsing(unittest.TestCase):
         bqm = dimod.BinaryQuadraticModel.from_ising({}, {('a', 'b'): +1})
         G, offset = savanna.bqm_to_multigraph(bqm)
 
-        variables = list(bqm)
+        variables = bqm.variables# list(bqm)
         for config in itertools.product((-1, 1), repeat=len(bqm)):
             sample = dict(zip(variables, config))
 
@@ -63,7 +63,7 @@ class TestBQMToAgreementIsing(unittest.TestCase):
         bqm = dimod.BinaryQuadraticModel.from_ising({}, J, offset=1.3)
         G, offset = savanna.bqm_to_multigraph(bqm)
 
-        variables = list(bqm)
+        variables = bqm.variables #list(bqm)
         for config in itertools.product((-1, 1), repeat=len(bqm)):
             sample = dict(zip(variables, config))
 

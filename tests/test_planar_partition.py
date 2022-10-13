@@ -5,7 +5,7 @@ import random
 import dimod
 import numpy as np
 
-import savanna
+from dwave.samplers.planar import log_partition_bqm
 
 
 class TestLogPartitionBQM(unittest.TestCase):
@@ -19,7 +19,7 @@ class TestLogPartitionBQM(unittest.TestCase):
 
         pos = {0: (0, 0), 1: (1, 0), 2: (0, 1)}
 
-        logZ = savanna.log_partition_bqm(bqm, pos)
+        logZ = log_partition_bqm(bqm, pos)
 
         en = list(-bqm.energy(dict(zip(range(len(bqm)), config)))
                   for config in itertools.product((-1, 1), repeat=len(bqm)))
@@ -40,24 +40,24 @@ class TestLogPartitionBQM(unittest.TestCase):
                2: (-1, -1),
                3: (+1, -1)}
 
-        logZ = savanna.log_partition_bqm(bqm, pos)
+        logZ = log_partition_bqm(bqm, pos)
 
         en = list(-bqm.energy(dict(zip(range(len(bqm)), config)))
                   for config in itertools.product((-1, 1), repeat=len(bqm)))
 
         self.assertAlmostEqual(np.log(np.sum(np.exp(en))), logZ)
 
-    def test_FrustTriangleL39(self):
-        from tests.data import bqm_L39, pos_L39
-
-        logZ = savanna.log_partition_bqm(bqm_L39, pos_L39)
+    # def test_FrustTriangleL39(self):
+    #     from tests.data import bqm_L39, pos_L39
+    #
+    #     _ = log_partition_bqm(bqm_L39, pos_L39)
 
     def test_square_with_chord(self):
         bqm = dimod.BinaryQuadraticModel.from_ising({0: -0.0, 1: -0.0, 2: -0.0, 3: -0.0},
                                                     {(1, 2): 2, (0, 1): 1, (1, 3): 1, (2, 3): 1, (0, 2): 1})
         pos = {0: (0, 0), 1: (0, 1), 2: (1, 0), 3: (1, 1)}
 
-        logZ = savanna.log_partition_bqm(bqm, pos)
+        logZ = log_partition_bqm(bqm, pos)
 
         en = []
         for config in itertools.product((-1, 1), repeat=len(bqm)):
@@ -73,7 +73,7 @@ class TestLogPartitionBQM(unittest.TestCase):
 
         pos = {0: (0, 0), 1: (0, 1), 2: (1, 0), 3: (1, 1)}
 
-        logZ = savanna.log_partition_bqm(bqm, pos)
+        logZ = log_partition_bqm(bqm, pos)
 
         en = []
         for config in itertools.product((-1, 1), repeat=len(bqm)):
@@ -99,7 +99,7 @@ class TestLogPartitionBQM(unittest.TestCase):
             for u, v in edges:
                 bqm.add_interaction(u, v, random.uniform(-1, 1))
 
-            logZ = savanna.log_partition_bqm(bqm, pos)
+            logZ = log_partition_bqm(bqm, pos)
 
             en = list(-bqm.energy(dict(zip(range(len(bqm)), config)))
                       for config in itertools.product((-1, 1), repeat=len(bqm)))

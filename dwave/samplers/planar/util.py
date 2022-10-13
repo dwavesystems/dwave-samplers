@@ -1,6 +1,7 @@
 import networkx as nx
 
 
+# noinspection PyPep8Naming
 def bqm_to_multigraph(bqm):
     """todo"""
     if any(bqm.spin.linear.values()):
@@ -16,6 +17,7 @@ def bqm_to_multigraph(bqm):
     return G, offset
 
 
+# noinspection PyPep8Naming
 def agreement_energy(state, G, offset=0.0):
     """todo"""
     en = offset

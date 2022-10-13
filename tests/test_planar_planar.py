@@ -4,8 +4,8 @@ from collections import OrderedDict
 
 import networkx as nx
 
-import savanna
-from savanna import Edge
+from dwave.samplers.planar import rotation_from_coordinates, plane_triangulate, odd_in_degree_orientation, \
+    expanded_dual, Edge
 
 
 class TestSetRotationFromCoords(unittest.TestCase):
@@ -19,7 +19,7 @@ class TestSetRotationFromCoords(unittest.TestCase):
                3: (-1, 0),  # south
                4: (0, -1)}  # west
 
-        r = savanna.rotation_from_coordinates(G, pos)
+        r = rotation_from_coordinates(G, pos)
 
         # the order of the two edges (0, 1) are not fixed
         self.assertIn(r, [{0: {(0, 1, 1): (0, 2, 0),
@@ -48,7 +48,7 @@ class TestSetRotationFromCoords(unittest.TestCase):
     def test_empty(self):
         G = nx.MultiGraph()
         pos = {}
-        r = savanna.rotation_from_coordinates(G, pos)
+        r = rotation_from_coordinates(G, pos)
         self.assertTrue(len(G) == 0)
         self.assertTrue(len(r) == 0)
 
@@ -58,14 +58,14 @@ class TestPlaneTriangulation(unittest.TestCase):
         # should do nothing
         G = nx.cycle_graph(3, create_using=nx.MultiGraph())
 
-        G.node[0]['rotation'] = OrderedDict([(Edge(0, 2, 0), Edge(0, 1, 0)),
+        G.nodes[0]['rotation'] = OrderedDict([(Edge(0, 2, 0), Edge(0, 1, 0)),
                                              (Edge(0, 1, 0), Edge(0, 2, 0))])
-        G.node[1]['rotation'] = OrderedDict([(Edge(1, 0, 0), Edge(1, 2, 0)),
+        G.nodes[1]['rotation'] = OrderedDict([(Edge(1, 0, 0), Edge(1, 2, 0)),
                                              (Edge(1, 2, 0), Edge(1, 0, 0))])
-        G.node[2]['rotation'] = OrderedDict([(Edge(2, 1, 0), Edge(2, 0, 0)),
+        G.nodes[2]['rotation'] = OrderedDict([(Edge(2, 1, 0), Edge(2, 0, 0)),
                                              (Edge(2, 0, 0), Edge(2, 1, 0))])
 
-        savanna.plane_triangulate(G)
+        plane_triangulate(G)
 
         # G should not have changed
         self.assertEqual(set(G.edges()), set(nx.cycle_graph(3).edges()))
@@ -75,12 +75,12 @@ class TestPlaneTriangulation(unittest.TestCase):
         # should add an edge between 0, 2
         G = nx.path_graph(3, create_using=nx.MultiGraph())
 
-        G.node[0]['rotation'] = OrderedDict([(Edge(0, 1, 0), Edge(0, 1, 0))])
-        G.node[1]['rotation'] = OrderedDict([(Edge(1, 0, 0), Edge(1, 2, 0)),
+        G.nodes[0]['rotation'] = OrderedDict([(Edge(0, 1, 0), Edge(0, 1, 0))])
+        G.nodes[1]['rotation'] = OrderedDict([(Edge(1, 0, 0), Edge(1, 2, 0)),
                                              (Edge(1, 2, 0), Edge(1, 0, 0))])
-        G.node[2]['rotation'] = OrderedDict([(Edge(2, 1, 0), Edge(2, 1, 0))])
+        G.nodes[2]['rotation'] = OrderedDict([(Edge(2, 1, 0), Edge(2, 1, 0))])
 
-        savanna.plane_triangulate(G)
+        plane_triangulate(G)
 
         # MG should match now be a three cycle
         self.assertEqual(set(nx.cycle_graph(3).edges()), set(G.edges()))
@@ -93,10 +93,10 @@ class TestPlaneTriangulation(unittest.TestCase):
 
         pos = {1: (-1, -1), 2: (+1, -1), 3: (+1, +1), 4: (-1, +1), 5: (-.5, -.5)}
 
-        r = savanna.rotation_from_coordinates(G, pos)
+        r = rotation_from_coordinates(G, pos)
         nx.set_node_attributes(G, name='rotation', values=r)
 
-        savanna.plane_triangulate(G)
+        plane_triangulate(G)
 
         # we could test that it is plane triangular here but we would need to write
         # a test. For now let's just use this as a smoke test
@@ -107,10 +107,10 @@ class TestPlaneTriangulation(unittest.TestCase):
 
         pos = {1: (-1, -1), 2: (+1, -1), 3: (+1, +1), 4: (-1, +1), 5: (-.5, -.5)}
 
-        r = savanna.rotation_from_coordinates(G, pos)
+        r = rotation_from_coordinates(G, pos)
         nx.set_node_attributes(G, name='rotation', values=r)
 
-        savanna.plane_triangulate(G)
+        plane_triangulate(G)
 
         # we could test that it is plane triangular here but we would need to write
         # a test. For now let's just use this as a smoke test
@@ -124,7 +124,7 @@ class TestOddEdgeOrientation(unittest.TestCase):
         faces = [[(0, 1, 0), (1, 2, 0), (2, 0, 0)],
                  [(1, 0, 0), (2, 1, 0), (0, 2, 0)]]
 
-        orientation = savanna.odd_in_degree_orientation(G)
+        orientation = odd_in_degree_orientation(G)
 
         # check that it's an orientation
         self.assertEqual(len(orientation), len(G.edges), "not every edge present in orientation")
@@ -144,7 +144,7 @@ class TestOddEdgeOrientation(unittest.TestCase):
 
         G.add_edges_from([(0, 1), (0, 3), (0, 2), (0, 2), (1, 2), (2, 3)])
 
-        orientation = savanna.odd_in_degree_orientation(G)
+        orientation = odd_in_degree_orientation(G)
 
         # check that it's an orientation
         self.assertEqual(len(orientation), len(G.edges), "not every edge present in orientation")
@@ -168,7 +168,7 @@ class TestOddEdgeOrientation(unittest.TestCase):
                 G.add_edge((x, y), (x + 1, y + 1))
                 G.add_edge((x, y), (x, y + 1))
 
-        orientation = savanna.odd_in_degree_orientation(G)
+        orientation = odd_in_degree_orientation(G)
 
         # check that it's an orientation
         self.assertEqual(len(orientation), len(G.edges), "not every edge present in orientation")
@@ -195,14 +195,14 @@ class TestExpandedDual(unittest.TestCase):
         for u, v, key in [(0, 1, 0), (1, 2, 0), (2, 0, 0)]:
             G[u][v][key]['oriented'] = v
 
-        G.node[0]['rotation'] = OrderedDict([((0, 2, 0), (0, 1, 0)),
+        G.nodes[0]['rotation'] = OrderedDict([((0, 2, 0), (0, 1, 0)),
                                              ((0, 1, 0), (0, 2, 0))])
-        G.node[1]['rotation'] = OrderedDict([((1, 0, 0), (1, 2, 0)),
+        G.nodes[1]['rotation'] = OrderedDict([((1, 0, 0), (1, 2, 0)),
                                              ((1, 2, 0), (1, 0, 0))])
-        G.node[2]['rotation'] = OrderedDict([((2, 1, 0), (2, 0, 0)),
+        G.nodes[2]['rotation'] = OrderedDict([((2, 1, 0), (2, 0, 0)),
                                              ((2, 0, 0), (2, 1, 0))])
 
-        dual = savanna.expanded_dual(G)
+        dual = expanded_dual(G)
 
         self.assertEqual(len(dual.edges), 9)
         self.assertEqual(len(dual.nodes), 6)
@@ -243,7 +243,7 @@ class TestExpandedDual(unittest.TestCase):
         #                (0, 1, 0): 1, (2, 0, 0): 0}
         # nx.set_edge_attributes(G, name='oriented', values=orientation)
 
-        dual = savanna.expanded_dual(G)
+        dual = expanded_dual(G)
 
         self.assertEqual(len(dual.edges), 4 * 3 + len(G.edges))
         self.assertEqual(len(dual.nodes), 2 * len(G.edges))

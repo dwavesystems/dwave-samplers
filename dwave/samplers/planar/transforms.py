@@ -1,4 +1,4 @@
-
+# noinspection PyPep8Naming
 def dual_matching_to_cut(G, matching):
     # the for each edge u,v in G, the expanded dual has two nodes (u,v), (v,u) with an edge between
     # them. The matching is defined on that graph. There are additional edges, but we don't care
@@ -14,6 +14,7 @@ def dual_matching_to_cut(G, matching):
     return cut
 
 
+# noinspection PyPep8Naming
 def cut_to_state(G, cut, node=None, val=0):
     if node is None:
         node = next(iter(G))  # get any node and assign it to val
@@ -37,5 +38,6 @@ def cut_to_state(G, cut, node=None, val=0):
     return state
 
 
+# noinspection PyPep8Naming
 def state_to_cut(G, state):
     return set((u, v) for u, v in G.edges if state[u] != state[v])
