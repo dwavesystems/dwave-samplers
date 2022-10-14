@@ -1,3 +1,17 @@
+# Copyright 2022 D-Wave Systems Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS F ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import dimod
 from dimod import *
 from networkx import is_perfect_matching
@@ -9,10 +23,29 @@ from dwave.samplers.planar.transforms import *
 __all__ = ["PlanarGraphSampler"]
 
 
-# noinspection PyPep8Naming,DuplicatedCode
 class PlanarGraphSampler(dimod.Sampler, dimod.Initialized):
-    properties = None
+    """A (weighted) max-cut sampler, specifically for planar-graphs
+
+    In "planar graphs, the Maximum-Cut Problem is dual to the route inspection
+    problem (the problem of finding a shortest tour that visits each edge of a
+    graph at least once), in the sense that the edges that do not belong to a
+    maximum cut-set of a graph G are the duals of the edges that are doubled in
+    an optimal inspection tour of the dual graph of G. The optimal inspection
+    tour forms a self-intersecting curve that separates the plane into two
+    subsets, the subset of points for which the winding number of the curve is
+    even and the subset for which the winding number is odd; these two subsets
+    form a cut that includes all of the edges whose duals appear an odd number
+    of times in the tour. The route inspection problem may be solved in polynomial
+    time, and this duality allows the maximum cut problem to also be solved in
+    polynomial time for planar graphs."
+
+    Ref: https://en.wikipedia.org/wiki/Maximum_cut
+
+    """
     parameters = None
+    """Keyword arguments accepted by the sampling methods."""
+    properties = None
+    """Values for parameters accepted by the sampling methods."""
 
     def __init__(self):
         self.parameters = {
@@ -23,20 +56,32 @@ class PlanarGraphSampler(dimod.Sampler, dimod.Initialized):
     def sample(self,
                bqm: BinaryQuadraticModel,
                pos: dict = None,
-               **parameters) -> SampleSet:
-        """
+               **kwargs) -> SampleSet:
+        """Sample from a binary quadratic model.
 
-        :param bqm:
-        :param pos:
-        :param parameters:
-        :return:
+        Args:
+            bqm: Binary quadratic model to be sampled.
+            pos: Position for each node
+
+        Examples:
+            >>> import dimod
+            >>> from dwave.samplers.planar import PlanarGraphSampler
+            >>> bqm = dimod.BinaryQuadraticModel.empty(dimod.SPIN)
+            >>> bqm.add_interaction('a', 'b', +1.0)
+            >>> bqm.add_interaction('b', 'c', +1.0)
+            >>> bqm.add_interaction('c', 'a', +1.0)
+            >>> pos = {'a': (0, 0), 'b': (1, 0), 'c': (0, 1)}
+            >>> sample = PlanarGraphSampler().sample(bqm, pos)
+            >>> sample.first
+            Sample(sample={'a': 1, 'b': -1, 'c': -1}, energy=0, num_occurrences=1)
+
         """
 
         if pos is None:
             pos = {}
 
         if len(bqm) < 3:
-            raise ValueError("bqm must have at least three variables")
+            raise ValueError("The provided BQM must have at least three variables")
 
         G, off = bqm_to_multigraph(bqm)
 
