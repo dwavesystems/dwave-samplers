@@ -15,7 +15,6 @@ class TestLogPartitionBQM(unittest.TestCase):
         bqm.add_interaction(0, 1, .69)
         bqm.add_interaction(1, 2, +1.0)
         bqm.add_interaction(2, 0, .5)
-        bqm.add_offset(0)
 
         pos = {0: (0, 0), 1: (1, 0), 2: (0, 1)}
 
@@ -33,7 +32,7 @@ class TestLogPartitionBQM(unittest.TestCase):
         bqm.add_interaction(1, 2, +1.0)
         bqm.add_interaction(2, 3, +1.0)
         bqm.add_interaction(0, 3, +1.0)
-        bqm.add_offset(1.8)
+        bqm.offset += 1.8
 
         pos = {0: (+1, +1),
                1: (-1, +1),
