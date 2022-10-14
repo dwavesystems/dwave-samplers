@@ -1,3 +1,4 @@
+import dimod
 from dimod import *
 from networkx import is_perfect_matching
 
@@ -63,5 +64,5 @@ class PlanarGraphSampler(dimod.Sampler, dimod.Initialized):
         if bqm.vartype is not dimod.BINARY:
             state = {v: 2 * b - 1 for v, b in state.items()}
 
-        ret = dimod.SampleSet.from_samples(state)
+        ret = dimod.SampleSet.from_samples(state, bqm.vartype, 0)
         return ret
