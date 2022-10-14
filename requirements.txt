@@ -1,7 +1,8 @@
-networkx>=2.1
-scipy==1.1.0
 cython==0.29.28
 dimod==0.11.3
 numpy==1.21.6
 reno==3.3.0  # for changelog
 setuptools>=46.4.0  # to support setup.cfg getting __version__
+networkx==2.6.3
+scipy==1.7.3;python_version<"3.8"
+scipy==1.9.2;python_version>="3.8"
