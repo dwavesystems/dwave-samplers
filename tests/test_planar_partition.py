@@ -21,7 +21,7 @@ import numpy as np
 import scipy
 
 from dwave.samplers.planar import *
-from tests.test_planar_kasteleyn import _kasteleyn
+from test_planar_kasteleyn import _kasteleyn
 
 
 # TODO: Should this whole test-class be removed?  I can't tell if the tests are indirectly testing something important
