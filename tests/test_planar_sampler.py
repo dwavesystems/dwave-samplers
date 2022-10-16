@@ -20,6 +20,27 @@ from dwave.samplers.planar import PlanarGraphSampler
 
 
 class TestGroundStateBQM(unittest.TestCase):
+    def test_noPosProvided_threeVariables(self):
+        bqm = dimod.BinaryQuadraticModel.empty(dimod.SPIN)
+
+        bqm.add_interaction('a', 'b', +1.0)
+        bqm.add_interaction('b', 'c', +1.0)
+        bqm.add_interaction('c', 'a', +1.0)
+
+        sample = PlanarGraphSampler().sample(bqm)
+        self.assertDictEqual(sample.first.sample, {'a': 1, 'b': -1, 'c': -1})
+
+    def test_noPosProvided_tenVariables(self):
+        bqm = dimod.BinaryQuadraticModel.empty(dimod.SPIN)
+
+        for i in range(0, 10):
+            bqm.add_interaction(i, i+1, 1)
+
+        sample = PlanarGraphSampler().sample(bqm)
+        self.assertDictEqual(sample.first.sample,
+                             {0: 1, 1: -1, 2: 1, 3: -1, 4: 1, 5: -1, 6: 1, 7: -1, 8: 1, 9: -1, 10: 1}
+                             )
+
     def test_NAE3SAT_bqm(self):
         bqm = dimod.BinaryQuadraticModel.empty(dimod.SPIN)
 
@@ -41,9 +62,7 @@ class TestGroundStateBQM(unittest.TestCase):
                 bqm.add_interaction((x, y), (x + 1, y + 1), 1)
                 bqm.add_interaction((x, y), (x, y + 1), 1)
 
-        def pos(v): return v
-
-        sample = PlanarGraphSampler().sample(bqm, pos)
+        sample = PlanarGraphSampler().sample(bqm)
 
         self.assertEqual(set(sample.first.sample.values()), {-1, +1})
         self.assertDictEqual(
@@ -90,9 +109,7 @@ class TestGroundStateBQM(unittest.TestCase):
                 bqm.add_interaction((x, y), (x + 1, y + 1), -1)
                 bqm.add_interaction((x, y), (x, y + 1), -1)
 
-        def pos(v): return v
-
-        sample = PlanarGraphSampler().sample(bqm, pos)
+        sample = PlanarGraphSampler().sample(bqm)
 
         # should all be the same
         self.assertEqual(set(sample.first.sample.values()), {-1})

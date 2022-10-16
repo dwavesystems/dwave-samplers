@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS F ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import networkx
 from dimod import *
 from networkx import is_perfect_matching
 
@@ -74,13 +74,13 @@ class PlanarGraphSampler(dimod.Sampler, dimod.Initialized):
 
         """
 
-        if pos is None:
-            pos = {}
-
         if len(bqm) < 3:
             raise ValueError("The provided BQM must have at least three variables")
 
         G, off = bqm_to_multigraph(bqm)
+
+        if pos is None:
+            pos = _determine_pos(G)
 
         # apply the rotation system
         r = rotation_from_coordinates(G, pos)
@@ -106,6 +106,15 @@ class PlanarGraphSampler(dimod.Sampler, dimod.Initialized):
 
         ret = SampleSet.from_samples(state, bqm.vartype, 0)
         return ret
+
+
+def _determine_pos(G: MultiGraph) -> dict:
+    is_planar, P = networkx.check_planarity(G)
+    if not is_planar:
+        raise ValueError("The provided BQM does not yield a planar embedding")
+
+    layout = nx.planar_layout(P)
+    return {k: tuple(v) for k, v in layout.items()}
 
 
 def _dual_matching_to_cut(G: MultiGraph, matching: set) -> set:

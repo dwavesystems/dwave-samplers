@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import math
-from collections import OrderedDict, Mapping, namedtuple
+from collections import OrderedDict, namedtuple
 
 import networkx as nx
 
@@ -21,7 +21,7 @@ Edge = namedtuple('Edge', ['head', 'tail', 'key'])
 """Represents a (directed) edge in a Multigraph"""
 
 
-def rotation_from_coordinates(G: nx.MultiGraph, pos) -> dict:
+def rotation_from_coordinates(G: nx.MultiGraph, pos: dict) -> dict:
     """Compute the rotation system for a planar G from the node positions.
 
     Args:
@@ -38,22 +38,16 @@ def rotation_from_coordinates(G: nx.MultiGraph, pos) -> dict:
     if not isinstance(G, nx.MultiGraph):
         raise TypeError("expected G to be a MultiGraph")
 
-    if isinstance(pos, Mapping):
-        _pos = pos
-
-        def pos(v):
-            return _pos[v]
-
     rotation = {}
     for u in G.nodes:
-        x0, y0 = pos(u)
+        x0, y0 = pos[u]
 
         def angle(edge):
             if len(edge) == 3:  # generic for Graph or MultiGraph
                 _, v, _ = edge
             else:
                 _, v = edge
-            x, y = pos(v)
+            x, y = pos[v]
             return math.atan2(y - y0, x - x0)
 
         if isinstance(G, nx.MultiGraph):
