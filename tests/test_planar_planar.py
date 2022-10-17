@@ -17,8 +17,8 @@ from collections import OrderedDict
 
 import networkx as nx
 
-from dwave.samplers.planar import rotation_from_coordinates, plane_triangulate, odd_in_degree_orientation, \
-    expanded_dual, Edge
+from dwave.samplers.planar.planar import rotation_from_coordinates, Edge, plane_triangulate, odd_in_degree_orientation,\
+    expanded_dual
 
 
 class TestSetRotationFromCoords(unittest.TestCase):

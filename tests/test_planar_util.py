@@ -16,8 +16,9 @@ import itertools
 import unittest
 
 import dimod
+import networkx as nx
 
-from dwave.samplers.planar import *
+from dwave.samplers.planar.util import bqm_to_multigraph
 
 
 def _agreement_energy(state, G, offset=0.0):

@@ -11,11 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS F ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import networkx
-from dimod import *
-from networkx import is_perfect_matching, MultiGraph
+import dimod
+import networkx as nx
 
-from dwave.samplers.planar import *
+from dwave.samplers.planar.planar import rotation_from_coordinates, plane_triangulate, expanded_dual
+from dwave.samplers.planar.util import bqm_to_multigraph
 
 __all__ = ["PlanarGraphSampler"]
 
@@ -51,9 +51,9 @@ class PlanarGraphSampler(dimod.Sampler, dimod.Initialized):
         self.properties = {}
 
     def sample(self,
-               bqm: BinaryQuadraticModel,
+               bqm: dimod.BinaryQuadraticModel,
                pos: dict = None,
-               **kwargs) -> SampleSet:
+               **kwargs) -> dimod.SampleSet:
         """Sample from a binary quadratic model.
 
         Args:
@@ -96,7 +96,7 @@ class PlanarGraphSampler(dimod.Sampler, dimod.Initialized):
         dual = expanded_dual(G)
         matching = nx.max_weight_matching(dual, maxcardinality=True, weight='weight')
 
-        assert is_perfect_matching(dual, matching)
+        assert nx.is_perfect_matching(dual, matching)
 
         cut = _dual_matching_to_cut(G, matching)
         state = _cut_to_state(G, cut)
@@ -104,12 +104,12 @@ class PlanarGraphSampler(dimod.Sampler, dimod.Initialized):
         if bqm.vartype is not dimod.BINARY:
             state = {v: 2 * b - 1 for v, b in state.items()}
 
-        ret = SampleSet.from_samples(state, bqm.vartype, 0)
+        ret = dimod.SampleSet.from_samples(state, bqm.vartype, 0)
         return ret
 
 
-def _determine_pos(G: MultiGraph) -> dict:
-    is_planar, P = networkx.check_planarity(G)
+def _determine_pos(G: nx.MultiGraph) -> dict:
+    is_planar, P = nx.check_planarity(G)
     if not is_planar:
         raise ValueError("The provided BQM does not yield a planar embedding")
 
@@ -117,7 +117,7 @@ def _determine_pos(G: MultiGraph) -> dict:
     return {k: tuple(v) for k, v in layout.items()}
 
 
-def _dual_matching_to_cut(G: MultiGraph, matching: set) -> set:
+def _dual_matching_to_cut(G: nx.MultiGraph, matching: set) -> set:
     """
     Then for each edge u,v in G, the expanded dual has two nodes (u,v), (v,u) with
     an edge between them. The matching is defined on that graph. There are
@@ -134,7 +134,7 @@ def _dual_matching_to_cut(G: MultiGraph, matching: set) -> set:
     return cut
 
 
-def _cut_to_state(G: MultiGraph, cut: set, node=None, val=0) -> dict:
+def _cut_to_state(G: nx.MultiGraph, cut: set, node=None, val=0) -> dict:
     if node is None:
         node = next(iter(G))  # get any node and assign it to val
 
