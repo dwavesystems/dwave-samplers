@@ -114,7 +114,8 @@ def _determine_pos(G: nx.MultiGraph) -> dict:
         raise ValueError("The provided BQM does not yield a planar embedding")
 
     layout = nx.planar_layout(P)
-    return {k: tuple(v) for k, v in layout.items()}
+    # return {k: tuple(v) for k, v in layout.items()}
+    return layout
 
 
 def _dual_matching_to_cut(G: nx.MultiGraph, matching: set) -> set:
