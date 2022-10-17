@@ -23,3 +23,5 @@ from dwave.samplers.sa import *
 from dwave.samplers.tabu import *
 
 from dwave.samplers.tree import *
+
+from dwave.samplers.planar import *
