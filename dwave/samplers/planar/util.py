@@ -14,11 +14,9 @@
 
 import networkx as nx
 from dimod import BinaryQuadraticModel
-from networkx import MultiGraph
-from numpy import number
 
 
-def bqm_to_multigraph(bqm: BinaryQuadraticModel): # -> tuple[MultiGraph, number]:
+def bqm_to_multigraph(bqm: BinaryQuadraticModel):
     """
     Args:
         bqm: Binary quadratic model to be sampled.

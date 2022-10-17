@@ -13,7 +13,7 @@
 # limitations under the License.
 import networkx
 from dimod import *
-from networkx import is_perfect_matching
+from networkx import is_perfect_matching, MultiGraph
 
 from dwave.samplers.planar import *
 

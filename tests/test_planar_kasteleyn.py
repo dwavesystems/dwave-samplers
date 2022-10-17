@@ -110,7 +110,6 @@ class TestHalfKasteleyn(unittest.TestCase):
         # todo
 
 
-# noinspection DuplicatedCode,PyPep8Naming
 class TestKasteleyn(unittest.TestCase):
     def test_three_path(self):
         G = nx.cycle_graph(3, create_using=nx.MultiGraph())
