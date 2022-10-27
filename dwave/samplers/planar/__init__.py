@@ -8,20 +8,7 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# WITHOUT WARRANTIES OR CONDITIONS F ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-__version__ = '1.0.0.dev1'
-
-from dwave.samplers.greedy import *
-
-from dwave.samplers.random import *
-
-from dwave.samplers.sa import *
-
-from dwave.samplers.tabu import *
-
-from dwave.samplers.tree import *
-
-from dwave.samplers.planar import *
+from dwave.samplers.planar.sampler import *
