@@ -6,7 +6,6 @@ requires = [
     'dimod==0.12.1',
     'numpy==1.19.0;python_version<"3.9"',  # C API for numpy.random
     'oldest-supported-numpy;python_version>="3.9"',
-    'networkx==2.6.3',
 ]
 build-backend = "setuptools.build_meta"
 
