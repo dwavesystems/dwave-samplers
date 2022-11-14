@@ -7,8 +7,6 @@ requires = [
     'numpy==1.19.0;python_version<"3.9"',  # C API for numpy.random
     'oldest-supported-numpy;python_version>="3.9"',
     'networkx==2.6.3',
-    'scipy==1.7.3;python_version<"3.8"',
-    'scipy==1.9.2;python_version>="3.8"',
 ]
 build-backend = "setuptools.build_meta"
 
