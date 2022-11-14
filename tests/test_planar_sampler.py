@@ -16,7 +16,7 @@ import unittest
 
 import dimod
 
-from dwave.samplers.planar import PlanarGraphSampler
+from dwave.samplers.planar import PlanarGraphSolver
 
 
 class TestGroundStateBQM(unittest.TestCase):
@@ -27,7 +27,7 @@ class TestGroundStateBQM(unittest.TestCase):
         bqm.add_interaction('b', 'c', +1.0)
         bqm.add_interaction('c', 'a', +1.0)
 
-        sample = PlanarGraphSampler().sample(bqm)
+        sample = PlanarGraphSolver().sample(bqm)
         self.assertDictEqual(sample.first.sample, {'a': 1, 'b': -1, 'c': -1})
 
     def test_noPosProvided_tenVariables(self):
@@ -36,7 +36,7 @@ class TestGroundStateBQM(unittest.TestCase):
         for i in range(0, 10):
             bqm.add_interaction(i, i+1, 1)
 
-        sample = PlanarGraphSampler().sample(bqm)
+        sample = PlanarGraphSolver().sample(bqm)
         self.assertDictEqual(sample.first.sample,
                              {0: 1, 1: -1, 2: 1, 3: -1, 4: 1, 5: -1, 6: 1, 7: -1, 8: 1, 9: -1, 10: 1}
                              )
@@ -50,7 +50,7 @@ class TestGroundStateBQM(unittest.TestCase):
 
         pos = {'a': (0, 0), 'b': (1, 0), 'c': (0, 1)}
 
-        sample = PlanarGraphSampler().sample(bqm, pos)
+        sample = PlanarGraphSolver().sample(bqm, pos)
         self.assertDictEqual(sample.first.sample, {'a': 1, 'b': -1, 'c': -1})
 
     def test_grid_15x15(self):
@@ -62,7 +62,7 @@ class TestGroundStateBQM(unittest.TestCase):
                 bqm.add_interaction((x, y), (x + 1, y + 1), 1)
                 bqm.add_interaction((x, y), (x, y + 1), 1)
 
-        sample = PlanarGraphSampler().sample(bqm)
+        sample = PlanarGraphSolver().sample(bqm)
 
         self.assertEqual(set(sample.first.sample.values()), {-1, +1})
         self.assertDictEqual(
@@ -109,7 +109,7 @@ class TestGroundStateBQM(unittest.TestCase):
                 bqm.add_interaction((x, y), (x + 1, y + 1), -1)
                 bqm.add_interaction((x, y), (x, y + 1), -1)
 
-        sample = PlanarGraphSampler().sample(bqm)
+        sample = PlanarGraphSolver().sample(bqm)
 
         # should all be the same
         self.assertEqual(set(sample.first.sample.values()), {-1})
