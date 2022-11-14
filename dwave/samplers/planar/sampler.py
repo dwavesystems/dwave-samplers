@@ -11,48 +11,33 @@
 # WITHOUT WARRANTIES OR CONDITIONS F ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+import copy
+import typing
+
 import dimod
 import networkx as nx
 
 from dwave.samplers.planar.planar import rotation_from_coordinates, plane_triangulate, expanded_dual
 from dwave.samplers.planar.util import bqm_to_multigraph
 
-__all__ = ["PlanarGraphSampler"]
+__all__ = ["PlanarGraphSolver"]
 
 
-class PlanarGraphSampler(dimod.Sampler, dimod.Initialized):
-    """A (weighted) max-cut sampler, specifically for planar-graphs
-
-    In "planar graphs, the Maximum-Cut Problem is dual to the route inspection
-    problem (the problem of finding a shortest tour that visits each edge of a
-    graph at least once), in the sense that the edges that do not belong to a
-    maximum cut-set of a graph G are the duals of the edges that are doubled in
-    an optimal inspection tour of the dual graph of G. The optimal inspection
-    tour forms a self-intersecting curve that separates the plane into two
-    subsets, the subset of points for which the winding number of the curve is
-    even and the subset for which the winding number is odd; these two subsets
-    form a cut that includes all of the edges whose duals appear an odd number
-    of times in the tour. The route inspection problem may be solved in polynomial
-    time, and this duality allows the maximum cut problem to also be solved in
-    polynomial time for planar graphs."
-
-    Ref: https://en.wikipedia.org/wiki/Maximum_cut
-
-    """
-    parameters = None
+class PlanarGraphSolver(dimod.Sampler, dimod.Initialized):
+    """An exact solver for planar Ising problems with no linear biases."""
+    parameters: typing.Dict[str, typing.Sequence[str]] = dict(pos=tuple())
     """Keyword arguments accepted by the sampling methods."""
-    properties = None
+    properties: typing.Dict[str, typing.Any] = dict()
     """Values for parameters accepted by the sampling methods."""
 
     def __init__(self):
-        self.parameters = {
-            'pos': []
-        }
-        self.properties = {}
+        self.parameters = copy.deepcopy(self.parameters)
+        self.properties = copy.deepcopy(self.properties)
 
     def sample(self,
                bqm: dimod.BinaryQuadraticModel,
-               pos: dict = None,
+               pos: typing.Optional[typing.Mapping[dimod.typing.Variable, typing.Tuple[float, float]]] = None,
                **kwargs) -> dimod.SampleSet:
         """Sample from a binary quadratic model.
 
@@ -62,13 +47,13 @@ class PlanarGraphSampler(dimod.Sampler, dimod.Initialized):
 
         Examples:
             >>> import dimod
-            >>> from dwave.samplers.planar import PlanarGraphSampler
+            >>> from dwave.samplers.planar import PlanarGraphSolver
             >>> bqm = dimod.BinaryQuadraticModel.empty(dimod.SPIN)
             >>> bqm.add_interaction('a', 'b', +1.0)
             >>> bqm.add_interaction('b', 'c', +1.0)
             >>> bqm.add_interaction('c', 'a', +1.0)
             >>> pos = {'a': (0, 0), 'b': (1, 0), 'c': (0, 1)}
-            >>> sample = PlanarGraphSampler().sample(bqm, pos)
+            >>> sample = PlanarGraphSolver().sample(bqm, pos)
             >>> sample.first
             Sample(sample={'a': 1, 'b': -1, 'c': -1}, energy=0, num_occurrences=1)
 

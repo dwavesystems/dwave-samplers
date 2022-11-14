@@ -1,0 +1,3 @@
+---
+features:
+  - Add ``PlanarGraphSolver``, an exact solver for planar Ising problems with no linear biases.
