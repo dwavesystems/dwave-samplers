@@ -17,7 +17,7 @@ samples.
 """
 
 import dimod
-import dwave.samplers.greedy
+from dwave.samplers.greedy.sampler import SteepestDescentSolver
 
 __all__ = ['SteepestDescentComposite']
 
@@ -77,6 +77,6 @@ class SteepestDescentComposite(dimod.ComposedSampler):
 
         sampleset = child.sample(bqm, **parameters)
 
-        greedy_sampler = greedy.SteepestDescentSolver()
+        greedy_sampler = SteepestDescentSolver()
 
         return greedy_sampler.sample(bqm, initial_states=sampleset)
