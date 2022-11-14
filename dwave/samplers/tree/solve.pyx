@@ -20,8 +20,9 @@ import dimod
 import numpy as np
 
 cimport numpy as np
+from cython.operator cimport dereference as deref
 from dimod cimport cyBQM_float64
-from dimod.libcpp cimport cppBinaryQuadraticModel
+from dimod.libcpp cimport BinaryQuadraticModel as cppBinaryQuadraticModel
 from dimod.binary.binary_quadratic_model import BinaryQuadraticModel
 
 from dwave.samplers.tree.orang cimport energies_type, samples_type, PyArray_ENABLEFLAGS
@@ -83,7 +84,7 @@ def solve_bqm_wrapper(bqm: BinaryQuadraticModel,
     cdef energies_type* energies_pointer
     cdef samples_type* samples_pointer
 
-    solveBQM(cybqm.cppbqm,
+    solveBQM(deref(cybqm.cppbqm),
              elimination_order_ptr,
              beta,
              low,

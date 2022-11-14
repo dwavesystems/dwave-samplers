@@ -20,13 +20,15 @@ from typing import Tuple
 from libcpp cimport bool
 from libc.stdlib cimport free
 
+
 import numpy as np
 import dimod
 from dimod.binary.binary_quadratic_model import BinaryQuadraticModel
 
 cimport numpy as np
+from cython.operator cimport dereference as deref
 from dimod cimport cyBQM_float64
-from dimod.libcpp cimport cppBinaryQuadraticModel
+from dimod.libcpp cimport BinaryQuadraticModel as cppBinaryQuadraticModel
 
 from dwave.samplers.tree.orang cimport samples_type, PyArray_ENABLEFLAGS
 
@@ -119,7 +121,7 @@ def sample_bqm_wrapper(bqm: BinaryQuadraticModel,
     cdef int* pair_pointer
     cdef int prows, pcols
 
-    sampleBQM(cybqm.cppbqm,
+    sampleBQM(deref(cybqm.cppbqm),
               elimination_order_ptr,
               _beta,
               low,
