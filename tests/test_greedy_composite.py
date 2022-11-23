@@ -20,46 +20,39 @@ from collections import abc
 import numpy as np
 
 import dimod
-# from dwave.system.testing import MockDWaveSampler
 
 from dwave.samplers.greedy.composite import SteepestDescentComposite
 
 
-# @dimod.testing.load_sampler_bqm_tests(SteepestDescentComposite(dimod.ExactSolver()))
-# class TestSteepestDescendComposite(unittest.TestCase):
-#     def test_instantiation_smoketest(self):
-#         sampler = SteepestDescentComposite(MockDWaveSampler())
+@dimod.testing.load_sampler_bqm_tests(SteepestDescentComposite(dimod.ExactSolver()))
+class TestSteepestDescendComposite(unittest.TestCase):
+    def test_sample_ising(self):
+        sampler = SteepestDescentComposite(dimod.ExactSolver())
 
-#         dimod.testing.assert_sampler_api(sampler)
+        h = {0: -1., 4: 2}
+        J = {(0, 4): 1.5}
 
-#     def test_sample_ising(self):
-#         sampler = SteepestDescentComposite(MockDWaveSampler())
+        response = sampler.sample_ising(h, J)
 
-#         h = {0: -1., 4: 2}
-#         J = {(0, 4): 1.5}
-#         num_reads = 100
+        self.assertEqual(len(response), 4)
 
-#         response = sampler.sample_ising(h, J, num_reads=num_reads)
+        for sample in response.samples():
+            self.assertIsInstance(sample, abc.Mapping)
+            self.assertEqual(set(sample), set(h))
 
-#         self.assertEqual(len(response), num_reads)
+        for sample, energy in response.data(['sample', 'energy']):
+            self.assertIsInstance(sample, abc.Mapping)
+            self.assertEqual(set(sample), set(h))
+            self.assertAlmostEqual(dimod.ising_energy(sample, h, J), energy)
 
-#         for sample in response.samples():
-#             self.assertIsInstance(sample, abc.Mapping)
-#             self.assertEqual(set(sample), set(h))
+    def test_convex(self):
+        # a convex section of hyperbolic paraboloid in the Ising space,
+        # with global minimum at (-1,-1)
+        bqm = dimod.BQM.from_ising({0: 2, 1: 2}, {(0, 1): -1})
+        ground = dimod.SampleSet.from_samples_bqm({0: -1, 1: -1}, bqm)
 
-#         for sample, energy in response.data(['sample', 'energy']):
-#             self.assertIsInstance(sample, abc.Mapping)
-#             self.assertEqual(set(sample), set(h))
-#             self.assertAlmostEqual(dimod.ising_energy(sample, h, J), energy)
+        sampler = SteepestDescentComposite(dimod.ExactSolver())
+        sampleset = sampler.sample(bqm).aggregate()
 
-#     def test_convex(self):
-#         # a convex section of hyperbolic paraboloid in the Ising space,
-#         # with global minimum at (-1,-1)
-#         bqm = dimod.BQM.from_ising({0: 2, 1: 2}, {(0, 1): -1})
-#         ground = dimod.SampleSet.from_samples_bqm({0: -1, 1: -1}, bqm)
-
-#         sampler = SteepestDescentComposite(dimod.ExactSolver())
-#         sampleset = sampler.sample(bqm).aggregate()
-
-#         np.testing.assert_array_almost_equal(
-#             sampleset.record.sample, ground.record.sample)
+        np.testing.assert_array_almost_equal(
+            sampleset.record.sample, ground.record.sample)

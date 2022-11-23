@@ -4,6 +4,34 @@ Reference Documentation
 
 .. currentmodule:: dwave.samplers
 
+Planar
+======
+
+PlanarGraphSolver
+-----------------
+
+.. autoclass:: PlanarGraphSolver
+
+Attributes
+~~~~~~~~~~
+
+.. autosummary::
+   :toctree: generated/
+
+   ~PlanarGraphSolver.parameters
+   ~PlanarGraphSolver.properties
+
+Methods
+~~~~~~~
+
+.. autosummary::
+   :toctree: generated/
+
+   ~PlanarGraphSolver.sample
+   ~PlanarGraphSolver.sample_ising
+   ~PlanarGraphSolver.sample_qubo
+
+
 Random
 =======
 

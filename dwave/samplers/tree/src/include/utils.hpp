@@ -99,8 +99,8 @@ vector<Table<double>::smartptr> getTables(
         auto var = i;
         auto span = bqm.neighborhood(var);
         while (span.first != span.second) {
-            auto neighbor = span.first->first;
-            auto bias = span.first->second;
+            auto neighbor = span.first->v;
+            auto bias = span.first->bias;
 
             if (neighbor > var && bias != 0.0) {
               vars2[0] = var;

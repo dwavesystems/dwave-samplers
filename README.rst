@@ -26,6 +26,7 @@ that run either remotely (for example, in D-Wave's
 `binary quadratic models <https://docs.ocean.dwavesys.com/en/stable/concepts/bqm.html>`_
 (BQM):
 
+* Planar: an exact solver for planar Ising problems with no linear biases.
 * Random: a sampler that draws uniform random samples.
 * `Simulated Annealing`_: a probabilistic heuristic for optimization and approximate
   Boltzmann sampling well suited to finding good solutions of large problems.
@@ -33,6 +34,25 @@ that run either remotely (for example, in D-Wave's
   machine learning, that quickly finds a local minimum.
 * `Tabu`_: a heuristic that employs local search with methods to escape local minima.
 * `Tree Decomposition`_: an exact solver for problems with low treewidth.
+
+Planar
+======
+
+There are polynomial-time algorithms for finding the ground state of a planar
+Ising model [#]_.
+
+.. [#] Nicol Schraudolph, Dmitry Kamenetsky. *Efficient Exact Inference in Planar Ising Models*.
+   Advances in Neural Information Processing Systems 21 (NIPS 2008).
+
+>>> from dwave.samplers import PlanarGraphSolver
+>>> solver = PlanarGraphSolver()
+
+Get the ground state of a planar Ising model
+
+>>> h = {}
+>>> J = {(0, 1): -1, (1, 2): -1, (0, 2): 1}
+
+>>> sampleset = solver.sample_ising(h, J)
 
 Random
 ======
