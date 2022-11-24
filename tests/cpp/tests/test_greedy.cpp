@@ -21,7 +21,7 @@
 TEST_CASE("Test steepest_gradient_descent") {
     int num_samples = 1;
 
-    char states[3] = {1, 1, 1}, min_states[3] = {-1, 1, 1};
+    int8_t states[3] = {1, 1, 1}, min_states[3] = {-1, 1, 1};
     double energies[1] = {0}, min_energies[1] = {-1};
     unsigned num_steps[1] = {0};
 

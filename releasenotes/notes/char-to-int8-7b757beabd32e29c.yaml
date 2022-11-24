@@ -1,0 +1,3 @@
+---
+fixes:
+  - Fix greedy and simulated annealing performance in wheels compiled for linux aarch64 systems.
