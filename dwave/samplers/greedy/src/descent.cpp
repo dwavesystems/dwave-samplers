@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
 #include <vector>
 #include <set>
 #include <cassert>
@@ -37,7 +38,7 @@ using std::runtime_error;
 // @return delta energy
 double get_flip_energy(
     int var,
-    int8_t *state,
+    std::int8_t *state,
     const vector<double>& linear_biases,
     const vector<vector<int>>& neighbors,
     const vector<vector<double>>& neighbour_couplings
@@ -71,7 +72,7 @@ double get_flip_energy(
 // @return A double corresponding to the energy for `state` on the problem
 //        defined by linear_biases and the couplers passed in
 double get_state_energy(
-    int8_t* state,
+    std::int8_t* state,
     const vector<double>& linear_biases,
     const vector<int>& coupler_starts,
     const vector<int>& coupler_ends,
@@ -112,7 +113,7 @@ double get_state_energy(
 //
 // @return number of downhill steps; `state` contains the result of the run.
 unsigned int steepest_gradient_descent_solver(
-    int8_t* state,
+    std::int8_t* state,
     const vector<double>& linear_biases,
     const vector<vector<int>>& neighbors,
     const vector<vector<double>>& neighbour_couplings,
@@ -217,7 +218,7 @@ struct EnergyVarCmp {
 //
 // @return number of downhill steps; `state` contains the result of the run.
 unsigned int steepest_gradient_descent_ls_solver(
-    int8_t* state,
+    std::int8_t* state,
     const vector<double>& linear_biases,
     const vector<vector<int>>& neighbors,
     const vector<vector<double>>& neighbour_couplings,
@@ -332,7 +333,7 @@ unsigned int steepest_gradient_descent_ls_solver(
 //
 // @return Nothing. Results are in `states` buffer.
 void steepest_gradient_descent(
-    int8_t* states,
+    std::int8_t* states,
     double* energies,
     unsigned* num_steps,
     const int num_samples,
@@ -383,7 +384,7 @@ void steepest_gradient_descent(
     // each time seeded with the initial state from `states`
     for (int sample = 0; sample < num_samples; sample++) {
         // get initial state from states buffer; the solution overwrites the same buffer
-        int8_t *state = states + sample * num_vars;
+        std::int8_t *state = states + sample * num_vars;
 
         if (large_sparse_opt) {
             num_steps[sample] = steepest_gradient_descent_ls_solver(
