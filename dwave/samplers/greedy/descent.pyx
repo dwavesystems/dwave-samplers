@@ -29,7 +29,7 @@ cimport decl
 def steepest_gradient_descent(num_samples,
                               linear_biases,
                               coupler_starts, coupler_ends, coupler_weights,
-                              np.ndarray[char, ndim=2, mode="c"] states_numpy,
+                              np.ndarray[np.int8_t, ndim=2, mode="c"] states_numpy,
                               large_sparse_opt=False):
 
     """Wraps `steepest_gradient_descent` from `descent.cpp`. Accepts
@@ -59,7 +59,7 @@ def steepest_gradient_descent(num_samples,
         A list of the J values or weight on each coupler, in the same
         order as `coupler_starts` and `coupler_ends`.
 
-    states_numpy : np.ndarray[char, ndim=2, mode="c"], values in (-1, 1)
+    states_numpy : np.ndarray[np.int8_t, ndim=2, mode="c"], values in (-1, 1)
         The initial seeded states of the gradient descent runs. Should be of
         a contiguous numpy.ndarray of shape (num_samples, num_variables).
 
@@ -95,7 +95,7 @@ def steepest_gradient_descent(num_samples,
     cdef unsigned[:] num_steps = num_steps_numpy
 
     # explicitly convert all Python types to C while we have the GIL
-    cdef char* _states = &states_numpy[0, 0]
+    cdef np.int8_t* _states = &states_numpy[0, 0]
     cdef double* _energies = &energies[0]
     cdef unsigned* _num_steps = &num_steps[0]
     cdef int _num_samples = num_samples

@@ -28,7 +28,7 @@ cdef extern from "cpu_sa.h":
     ctypedef bool (*callback)(void *function)
 
     int general_simulated_annealing(
-            char* samples,
+            np.int8_t* samples,
             double* energies,
             const int num_samples,
             const vector[double] & h,
@@ -44,7 +44,7 @@ cdef extern from "cpu_sa.h":
 
 def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                         coupler_weights, sweeps_per_beta, beta_schedule, seed,
-                        np.ndarray[char, ndim=2, mode="c"] states_numpy,
+                        np.ndarray[np.int8_t, ndim=2, mode="c"] states_numpy,
                         interrupt_function=None):
     """Wraps `general_simulated_annealing` from `cpu_sa.cpp`. Accepts
     an Ising problem defined on a general graph and returns samples
@@ -86,7 +86,7 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
         parameters are the same, the returned samples will be
         identical.
 
-    states_numpy : np.ndarray[char, ndim=2, mode="c"], values in (-1, 1)
+    states_numpy : np.ndarray[int8_t, ndim=2, mode="c"], values in (-1, 1)
         The initial seeded states of the simulated annealing runs. Should be of
         a contiguous numpy.ndarray of shape (num_samples, num_variables).
 
@@ -117,7 +117,7 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
     cdef double[:] energies = energies_numpy
 
     # explicitly convert all Python types to C while we have the GIL
-    cdef char* _states = &states_numpy[0, 0]
+    cdef np.int8_t* _states = &states_numpy[0, 0]
     cdef double* _energies = &energies[0]
     cdef int _num_samples = num_samples
     cdef vector[double] _h = h

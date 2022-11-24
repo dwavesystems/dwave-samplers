@@ -1,5 +1,4 @@
 coverage[toml]
 codecov
 
-networkx==2.6.3
 parameterized==0.7.4

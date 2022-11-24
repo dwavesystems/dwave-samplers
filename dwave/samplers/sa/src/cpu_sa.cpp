@@ -14,6 +14,7 @@
 //
 // ===========================================================================
 
+#include <cstdint>
 #include <math.h>
 #include <vector>
 #include <stdexcept>
@@ -49,7 +50,7 @@ thread_local uint64_t rng_state[2];
 // @return delta energy
 double get_flip_energy(
     int var,
-    char *state,
+    std::int8_t *state,
     const vector<double>& h,
     const vector<int>& degrees,
     const vector<vector<int>>& neighbors,
@@ -70,7 +71,7 @@ double get_flip_energy(
 }
 
 // Performs a single run of simulated annealing with the given inputs.
-// @param state a signed char array where each char holds the state of a
+// @param state a int8 array where each int8 holds the state of a
 //        variable. Note that this will be used as the initial state of the
 //        run.
 // @param h vector of h or field value on each variable
@@ -87,7 +88,7 @@ double get_flip_energy(
 //        sweeps at.
 // @return Nothing, but `state` now contains the result of the run.
 void simulated_annealing_run(
-    char* state,
+    std::int8_t* state,
     const vector<double>& h,
     const vector<int>& degrees,
     const vector<vector<int>>& neighbors,
@@ -148,7 +149,7 @@ void simulated_annealing_run(
                     // since we have accepted the spin flip of variable `var`, 
                     // we need to adjust the delta energies of all the 
                     // neighboring variables
-                    const char multiplier = 4 * state[var];
+                    const std::int8_t multiplier = 4 * state[var];
                     // iterate over the neighbors of `var`
                     for (int n_i = 0; n_i < degrees[var]; n_i++) {
                         int neighbor = neighbors[var][n_i];
@@ -176,7 +177,7 @@ void simulated_annealing_run(
 }
 
 // Returns the energy of a given state and problem
-// @param state a char array containing the spin state to compute the energy of
+// @param state a int8 array containing the spin state to compute the energy of
 // @param h vector of h or field value on each variable
 // @param coupler_starts an int vector containing the variables of one side of
 //        each coupler in the problem
@@ -187,7 +188,7 @@ void simulated_annealing_run(
 // @return A double corresponding to the energy for `state` on the problem
 //        defined by h and the couplers passed in
 double get_state_energy(
-    char* state,
+    std::int8_t* state,
     const vector<double>& h,
     const vector<int>& coupler_starts,
     const vector<int>& coupler_ends,
@@ -206,7 +207,7 @@ double get_state_energy(
 }
 
 // Perform simulated annealing on a general problem
-// @param states a char array of size num_samples * number of variables in the
+// @param states a int8 array of size num_samples * number of variables in the
 //        problem. Will be overwritten by this function as samples are filled
 //        in. The initial state of the samples are used to seed the simulated
 //        annealing runs.
@@ -230,7 +231,7 @@ double get_state_energy(
 // @param interrupt_function A pointer to contents that are passed to interrupt_callback.
 // @return the number of samples taken. If no interrupt occured, will equal num_samples.
 int general_simulated_annealing(
-    char* states,
+    std::int8_t* states,
     double* energies,
     const int num_samples,
     const vector<double> h,
@@ -244,7 +245,7 @@ int general_simulated_annealing(
     void * const interrupt_function
 ) {
     // TODO 
-    // assert len(states) == num_samples*num_vars*sizeof(char)
+    // assert len(states) == num_samples*num_vars*sizeof(int8_t)
     // assert len(coupler_starts) == len(coupler_ends) == len(coupler_weights)
     // assert max(coupler_starts + coupler_ends) < num_vars
     
@@ -299,7 +300,7 @@ int general_simulated_annealing(
         // states is a giant spin array that will hold the resulting states for
         // all the samples, so we need to get the location inside that vector
         // where we will store the sample for this sample
-        char *state = states + sample*num_vars;
+        std::int8_t *state = states + sample*num_vars;
         // then do the actual sample. this function will modify state, storing
         // the sample there
         simulated_annealing_run(state, h, degrees, 

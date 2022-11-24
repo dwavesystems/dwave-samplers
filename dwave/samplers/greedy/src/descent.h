@@ -15,6 +15,7 @@
 #ifndef _DESCENT_H
 #define _DESCENT_H
 
+#include <cstdint>
 #include <vector>
 
 using std::vector;
@@ -22,14 +23,14 @@ using std::vector;
 
 double get_flip_energy(
     int var,
-    char *state,
+    std::int8_t *state,
     const vector<double>& linear_biases,
     const vector<vector<int>>& neighbors,
     const vector<vector<double>>& neighbour_couplings
 );
 
 double get_state_energy(
-    char* state,
+    std::int8_t* state,
     const vector<double>& linear_biases,
     const vector<int>& coupler_starts,
     const vector<int>& coupler_ends,
@@ -37,21 +38,21 @@ double get_state_energy(
 );
 
 unsigned steepest_gradient_descent_solver(
-    char* state,
+    std::int8_t* state,
     const vector<double>& linear_biases,
     const vector<vector<int>>& neighbors,
     const vector<vector<double>>& neighbour_couplings
 );
 
 unsigned steepest_gradient_descent_ls_solver(
-    char* state,
+    std::int8_t* state,
     const vector<double>& linear_biases,
     const vector<vector<int>>& neighbors,
     const vector<vector<double>>& neighbour_couplings
 );
 
 void steepest_gradient_descent(
-    char* states,
+    std::int8_t* states,
     double* energies,
     unsigned* num_steps,
     const int num_samples,
