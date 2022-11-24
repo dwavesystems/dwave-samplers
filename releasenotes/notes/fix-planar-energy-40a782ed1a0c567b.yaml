@@ -1,0 +1,3 @@
+---
+fixes:
+  - Fix the energy in sample sets returned by ``PlanarGraphSolver``.
