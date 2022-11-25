@@ -113,19 +113,26 @@ class TestMarginals:
 
         exact = dimod.ExactSolver().sample(bqm)
 
-        # dev note: when migrating to python 3.4+ these should become subtests
         for beta in [.5, 1., 1.5, 2]:
-            sampleset = TreeDecompositionSampler().sample(bqm,
-                                              marginals=True, num_reads=10,
-                                              beta=beta)
+            with self.subTest(beta=beta):
+                sampleset = TreeDecompositionSampler().sample(bqm, num_reads=10, beta=beta)
+
+                logZ = sampleset.info['log_partition_function']
+
+                # use the exactsolver to get all of the samples/energies
+                calculated_logZ = np.log(np.sum(np.exp(-beta*exact.record.energy)))
+
+                self.assertAlmostEqual(logZ, calculated_logZ)
+
+        with self.subTest(beta='default'):
+            sampleset = TreeDecompositionSampler().sample(bqm, num_reads=10)
 
             logZ = sampleset.info['log_partition_function']
 
             # use the exactsolver to get all of the samples/energies
-            calculated_logZ = np.log(np.sum(np.exp(-beta*exact.record.energy)))
+            calculated_logZ = np.log(np.sum(np.exp(-1*exact.record.energy)))
 
-            self.assertAlmostEqual(logZ, calculated_logZ,
-                                   msg='beta={}'.format(beta))
+            self.assertAlmostEqual(logZ, calculated_logZ)
 
     def test_variable_marginals_analytic(self):
         bqm = self.bqm
