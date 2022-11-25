@@ -1,0 +1,5 @@
+---
+upgrade:
+  - |
+    Change the default value of the ``TreeDecompositionSampler.sample()`` ``beta``
+    keyword argument to 1.

@@ -190,36 +190,6 @@ class TreeDecompositionSampler(dimod.Sampler):
     .. Important:: The performance of this sampler is highly dependant on the
         treewidth of the problem.
 
-    Examples:
-        Create a sampler:
-
-        >>> from dwave.samplers import TreeDecompositionSampler
-        >>> sampler = TreeDecompositionSampler()
-
-        Create a simple Ising problem:
-
-        >>> h = {'a': .1, 'b': 0}
-        >>> J = {('a', 'b') : -1}
-
-        Sample from the given problem.
-
-        >>> sampleset = sampler.sample_ising(h, J, num_reads=100,
-        ...                                  elimination_order=['a', 'b'])
-        >>> sampleset.first.sample
-        {'a': -1, 'b': -1}
-
-        View information about the distribution.
-
-        >>> variable_marginals = sampleset.info['variable_marginals']
-        >>> round(variable_marginals['a'], 3)  # prob(a == 1)
-        0.354
-        >>> round(1 - variable_marginals['b'], 3)  # prob(b == -1)
-        0.645
-
-        >>> pair_marg = sampleset.info['interaction_marginals']
-        >>> round(pair_marg[('a', 'b')][(1, -1)], 3)  # prob(a == 1 & b == -1)
-        0.001
-
     .. _tree decomposition: https://en.wikipedia.org/wiki/Tree_decomposition
 
     .. _Boltzmann distribution: https://en.wikipedia.org/wiki/Boltzmann_distribution
@@ -261,7 +231,7 @@ class TreeDecompositionSampler(dimod.Sampler):
         self.properties = dict(self.properties)
 
     def sample(self, bqm: dimod.BinaryQuadraticModel, num_reads: Optional[int] = 1,
-               elimination_order: Optional[List[Variable]] = None, beta: Optional[float] = 3.0,
+               elimination_order: Optional[List[Variable]] = None, beta: Optional[float] = 1.0,
                marginals: Optional[bool] = True, seed: Optional[int] = None) -> dimod.SampleSet:
         """Draw samples and compute marginals of a binary quadratic model.
 
