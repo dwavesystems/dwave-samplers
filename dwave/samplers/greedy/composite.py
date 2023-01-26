@@ -58,7 +58,7 @@ class SteepestDescentComposite(dimod.ComposedSampler):
     """
 
     def sample(self, bqm: dimod.BinaryQuadraticModel, **parameters) -> dimod.SampleSet:
-        """Sample from the provided binary quadratic model.
+        """Find minima of a binary quadratic model.
 
         Args:
             bqm:

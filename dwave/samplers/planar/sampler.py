@@ -39,11 +39,11 @@ class PlanarGraphSolver(dimod.Sampler, dimod.Initialized):
                bqm: dimod.BinaryQuadraticModel,
                pos: typing.Optional[typing.Mapping[dimod.typing.Variable, typing.Tuple[float, float]]] = None,
                **kwargs) -> dimod.SampleSet:
-        """Sample from a binary quadratic model.
+        """Find a ground state of the problem.
 
         Args:
-            bqm: Binary quadratic model to be sampled.
-            pos: Position for each node
+            bqm: Binary quadratic model representing a planar Ising model with no linear biases.
+            pos: Position for each node.
 
         Examples:
             >>> import dimod
