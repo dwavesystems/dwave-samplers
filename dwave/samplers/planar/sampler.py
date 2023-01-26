@@ -39,11 +39,11 @@ class PlanarGraphSolver(dimod.Sampler, dimod.Initialized):
                bqm: dimod.BinaryQuadraticModel,
                pos: typing.Optional[typing.Mapping[dimod.typing.Variable, typing.Tuple[float, float]]] = None,
                **kwargs) -> dimod.SampleSet:
-        """Find a ground state of the problem.
+        """Find a ground state of a planar Ising problem without linear biases.
 
         Args:
             bqm: Binary quadratic model representing a planar Ising model with no linear biases.
-            pos: Position for each node.
+            pos: Position for each node as a dict of form ``{node: (x-coordinate, y-coordinate),...}``.
 
         Examples:
             >>> import dimod
