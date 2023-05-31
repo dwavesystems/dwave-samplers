@@ -26,8 +26,8 @@ that run either remotely (for example, in D-Wave's
 `binary quadratic models <https://docs.ocean.dwavesys.com/en/stable/concepts/bqm.html>`_
 (BQM):
 
-* Planar: an exact solver for planar Ising problems with no linear biases.
-* Random: a sampler that draws uniform random samples.
+* `Planar`_: an exact solver for planar Ising problems with no linear biases.
+* `Random`_: a sampler that draws uniform random samples.
 * `Simulated Annealing`_: a probabilistic heuristic for optimization and approximate
   Boltzmann sampling well suited to finding good solutions of large problems.
 * `Steepest Descent`_: a discrete analogue of gradient descent, often used in
@@ -76,7 +76,7 @@ Get the best 5 sample found in .1 seconds.
 Simulated Annealing
 ===================
 
-`Simulated annealing <https://en.wikipedia.org/wiki/Simulated_annealing>`_ can be
+`Simulated annealing <https://en.wikipedia.org/wiki/Simulated_annealing>`__ can be
 used for heuristic optimization or approximate Boltzmann sampling. The
 *dwave-samplers* implementation approaches the equilibrium distribution by
 performing updates at a sequence of decreasing temperatures, terminating at the
@@ -108,7 +108,7 @@ and a custom one.
 Steepest Descent
 ================
 
-`Steepest descent <https://en.wikipedia.org/wiki/Gradient_descent>`_ is the
+`Steepest descent <https://en.wikipedia.org/wiki/Gradient_descent>`__ is the
 discrete analogue of gradient descent, but the best move is computed using a local
 minimization rather rather than computing a gradient. The dimension along which
 to descend is determined, at each step, by the variable flip that causes the
@@ -150,7 +150,7 @@ If the solver starts in a local minimum, it gets stuck.
 Tabu
 ====
 
-`Tabu search <https://en.wikipedia.org/wiki/Tabu_search>`_ is a heuristic that
+`Tabu search <https://en.wikipedia.org/wiki/Tabu_search>`__ is a heuristic that
 employs local search and can escape local minima by maintaining a "tabu list" of
 recently explored states that it does not revisit. The length of this tabu list
 is called the "tenure". *dwave-samplers* implementats the
@@ -177,7 +177,7 @@ Sample using both default and custom values of tenure and number of restarts.
 Tree Decomposition
 ==================
 
-`Tree decomposition <https://en.wikipedia.org/wiki/Tree_decomposition>`_-based
+`Tree decomposition <https://en.wikipedia.org/wiki/Tree_decomposition>`__-based
 solvers have a runtime that is exponential in the
 `treewidth <https://en.wikipedia.org/wiki/Treewidth>`_ of the problem graph. For
 problems with low treewidth, the solver can find ground states very quickly.

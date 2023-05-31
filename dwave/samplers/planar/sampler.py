@@ -39,11 +39,11 @@ class PlanarGraphSolver(dimod.Sampler, dimod.Initialized):
                bqm: dimod.BinaryQuadraticModel,
                pos: typing.Optional[typing.Mapping[dimod.typing.Variable, typing.Tuple[float, float]]] = None,
                **kwargs) -> dimod.SampleSet:
-        """Sample from a binary quadratic model.
+        """Find a ground state of a planar Ising problem without linear biases.
 
         Args:
-            bqm: Binary quadratic model to be sampled.
-            pos: Position for each node
+            bqm: Binary quadratic model representing a planar Ising model with no linear biases.
+            pos: Position for each node as a dict of form ``{node: (x-coordinate, y-coordinate),...}``.
 
         Examples:
             >>> import dimod
@@ -55,7 +55,7 @@ class PlanarGraphSolver(dimod.Sampler, dimod.Initialized):
             >>> pos = {'a': (0, 0), 'b': (1, 0), 'c': (0, 1)}
             >>> sample = PlanarGraphSolver().sample(bqm, pos)
             >>> sample.first
-            Sample(sample={'a': 1, 'b': -1, 'c': -1}, energy=0, num_occurrences=1)
+            Sample(sample={'a': 1, 'b': -1, 'c': -1}, energy=-1.0, num_occurrences=1)
 
         """
 
@@ -89,8 +89,7 @@ class PlanarGraphSolver(dimod.Sampler, dimod.Initialized):
         if bqm.vartype is not dimod.BINARY:
             state = {v: 2 * b - 1 for v, b in state.items()}
 
-        ret = dimod.SampleSet.from_samples(state, bqm.vartype, 0)
-        return ret
+        return dimod.SampleSet.from_samples_bqm(state, bqm)
 
 
 def _determine_pos(G: nx.MultiGraph) -> dict:

@@ -20,6 +20,7 @@ import unittest
 import dimod
 import numpy as np
 import networkx as nx
+import parameterized
 
 from dwave.samplers.tree import TreeDecompositionSampler
 
@@ -107,25 +108,46 @@ class TestSample(unittest.TestCase):
         dimod.testing.assert_response_energies(samples, bqm)
 
 
-class TestMarginals:
+@parameterized.parameterized_class([
+        dict(bqm=dimod.BinaryQuadraticModel.from_ising({'a': -1}, {})),
+        dict(bqm=dimod.BinaryQuadraticModel.from_ising({'a': +1}, {})),
+        dict(bqm=dimod.BinaryQuadraticModel.from_qubo({(0, 0): -1})),
+        dict(bqm=dimod.BinaryQuadraticModel.from_qubo({(0, 0): +1})),
+        dict(bqm=dimod.BinaryQuadraticModel.from_ising({'a': -1}, {}, .5)),
+        dict(bqm=dimod.BinaryQuadraticModel.from_qubo({(0, 0): -1}, offset=.5)),
+        dict(bqm=dimod.BinaryQuadraticModel.from_ising({}, {'ab': -1})),
+        dict(bqm=dimod.BinaryQuadraticModel.from_ising({}, {'ab': 1})),
+        dict(bqm=dimod.BinaryQuadraticModel.from_ising({}, {'ab': .69, 'bc': 1, 'ac': .5})),
+        dict(bqm=dimod.BinaryQuadraticModel.from_qubo({'ab': .69, 'bc': 1, 'ac': .5})),
+        dict(bqm=dimod.BinaryQuadraticModel.from_qubo({'ab': .69, 'bc': 1})),
+        dict(bqm=dimod.AdjDictBQM({'a': 6.0, 0: 1}, {('a', 0): -3, (0, 'c'): 10}, 0, 'BINARY')),
+])
+class TestMarginals(unittest.TestCase):
     def test_spin_log_partition_function(self):
         bqm = self.bqm
 
         exact = dimod.ExactSolver().sample(bqm)
 
-        # dev note: when migrating to python 3.4+ these should become subtests
         for beta in [.5, 1., 1.5, 2]:
-            sampleset = TreeDecompositionSampler().sample(bqm,
-                                              marginals=True, num_reads=10,
-                                              beta=beta)
+            with self.subTest(beta=beta):
+                sampleset = TreeDecompositionSampler().sample(bqm, num_reads=10, beta=beta)
+
+                logZ = sampleset.info['log_partition_function']
+
+                # use the exactsolver to get all of the samples/energies
+                calculated_logZ = np.log(np.sum(np.exp(-beta*exact.record.energy)))
+
+                self.assertAlmostEqual(logZ, calculated_logZ)
+
+        with self.subTest(beta='default'):
+            sampleset = TreeDecompositionSampler().sample(bqm, num_reads=10)
 
             logZ = sampleset.info['log_partition_function']
 
             # use the exactsolver to get all of the samples/energies
-            calculated_logZ = np.log(np.sum(np.exp(-beta*exact.record.energy)))
+            calculated_logZ = np.log(np.sum(np.exp(-1*exact.record.energy)))
 
-            self.assertAlmostEqual(logZ, calculated_logZ,
-                                   msg='beta={}'.format(beta))
+            self.assertAlmostEqual(logZ, calculated_logZ)
 
     def test_variable_marginals_analytic(self):
         bqm = self.bqm
@@ -217,59 +239,3 @@ class TestMarginals:
             for pair, combos in interaction_marginals.items():
                 for config, p in combos.items():
                     self.assertAlmostEqual(p, analytic_marginals[pair][config])
-
-
-class TestSingleVariableSPIN(unittest.TestCase, TestMarginals):
-    bqm = dimod.BinaryQuadraticModel.from_ising({'a': -1}, {})
-
-
-class TestSingleVariableSPIN2(unittest.TestCase, TestMarginals):
-    bqm = dimod.BinaryQuadraticModel.from_ising({'a': 1}, {})
-
-
-class TestSingleVariableBINARY(unittest.TestCase, TestMarginals):
-    bqm = dimod.BinaryQuadraticModel.from_qubo({(0, 0): -1})
-
-
-class TestSingleVariableBINARY(unittest.TestCase, TestMarginals):
-    bqm = dimod.BinaryQuadraticModel.from_qubo({(0, 0): 1})
-
-
-class TestSingleVariableWithOffsetSPIN(unittest.TestCase, TestMarginals):
-    bqm = dimod.BinaryQuadraticModel.from_ising({'a': -1}, {}, .5)
-
-
-class TestSingleVariableWithOffsetBINARY(unittest.TestCase, TestMarginals):
-    bqm = dimod.BinaryQuadraticModel.from_qubo({(0, 0): -1}, offset=.5)
-
-
-class TestSingleInteractionSPIN(unittest.TestCase, TestMarginals):
-    bqm = dimod.BinaryQuadraticModel.from_ising({}, {'ab': -1})
-
-
-class TestSingleInteractionSPIN2(unittest.TestCase, TestMarginals):
-    bqm = dimod.BinaryQuadraticModel.from_ising({}, {'ab': 1})
-
-
-class TestK3SPIN(unittest.TestCase, TestMarginals):
-    bqm = dimod.BinaryQuadraticModel.from_ising({}, {'ab': .69, 'bc': 1, 'ac': .5})
-
-
-class TestK3BINARY(unittest.TestCase, TestMarginals):
-    bqm = dimod.BinaryQuadraticModel.from_qubo({'ab': .69, 'bc': 1, 'ac': .5})
-
-
-class Test3pathBINARY(unittest.TestCase, TestMarginals):
-    bqm = dimod.BinaryQuadraticModel.from_qubo({'ab': .69, 'bc': 1})
-
-
-class TestLongerPath(unittest.TestCase, TestMarginals):
-    g = nx.path_graph(10)
-    linear = {node: np.random.randint(-20,20) for node in g.nodes}
-    quadratic = {edge: np.random.randint(-20,20) for edge in g.edges}
-    bqm = dimod.BinaryQuadraticModel(linear, quadratic, "BINARY")
-
-
-class TestDictBQM(unittest.TestCase, TestMarginals):
-    bqm = dimod.AdjDictBQM({'a': 6.0, 0: 1}, {('a', 0): -3, (0, 'c'): 10}, 0, 'BINARY')
-

@@ -15,11 +15,17 @@
 import unittest
 
 import dimod
+import numpy as np
 
 from dwave.samplers.planar import PlanarGraphSolver
 
 
 class TestGroundStateBQM(unittest.TestCase):
+    def test_energy(self):
+        bqm = dimod.BinaryQuadraticModel({}, {(0, 1): 1, (1, 2): 1}, 0, "SPIN")
+        ss = PlanarGraphSolver().sample(bqm)
+        np.testing.assert_array_equal(ss.record.energy, bqm.energies(ss))
+
     def test_noPosProvided_threeVariables(self):
         bqm = dimod.BinaryQuadraticModel.empty(dimod.SPIN)
 

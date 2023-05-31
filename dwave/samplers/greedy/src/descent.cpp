@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cstdint>
 #include <vector>
 #include <set>
 #include <cassert>
@@ -37,7 +38,7 @@ using std::runtime_error;
 // @return delta energy
 double get_flip_energy(
     int var,
-    char *state,
+    std::int8_t *state,
     const vector<double>& linear_biases,
     const vector<vector<int>>& neighbors,
     const vector<vector<double>>& neighbour_couplings
@@ -59,7 +60,7 @@ double get_flip_energy(
 
 // Returns the energy of a given state for the input problem.
 //
-// @param state a char array containing the spin state to compute the energy of
+// @param state a int8 array containing the spin state to compute the energy of
 // @param linear_biases vector of h or field value on each variable
 // @param coupler_starts an int vector containing the variables of one side of
 //        each coupler in the problem
@@ -71,7 +72,7 @@ double get_flip_energy(
 // @return A double corresponding to the energy for `state` on the problem
 //        defined by linear_biases and the couplers passed in
 double get_state_energy(
-    char* state,
+    std::int8_t* state,
     const vector<double>& linear_biases,
     const vector<int>& coupler_starts,
     const vector<int>& coupler_ends,
@@ -98,7 +99,7 @@ double get_state_energy(
 // Linear search for the steepest descent variable. Fastest approach for
 // complete and/or dense problem graphs.
 //
-// @param state a signed char array where each char holds the state of a
+// @param state a int8 array where each int8 holds the state of a
 //        variable. Note that this will be used as the initial state of the
 //        run.
 // @param linear_biases vector of h or field value on each variable
@@ -112,7 +113,7 @@ double get_state_energy(
 //
 // @return number of downhill steps; `state` contains the result of the run.
 unsigned int steepest_gradient_descent_solver(
-    char* state,
+    std::int8_t* state,
     const vector<double>& linear_biases,
     const vector<vector<int>>& neighbors,
     const vector<vector<double>>& neighbour_couplings,
@@ -203,7 +204,7 @@ struct EnergyVarCmp {
 // maintaining the order. Scaling advantage only for very *large* (and *sparse*)
 // problem graphs.
 //
-// @param state a signed char array where each char holds the state of a
+// @param state a int8 array where each int8 holds the state of a
 //        variable. Note that this will be used as the initial state of the
 //        run.
 // @param linear_biases vector of h or field value on each variable
@@ -217,7 +218,7 @@ struct EnergyVarCmp {
 //
 // @return number of downhill steps; `state` contains the result of the run.
 unsigned int steepest_gradient_descent_ls_solver(
-    char* state,
+    std::int8_t* state,
     const vector<double>& linear_biases,
     const vector<vector<int>>& neighbors,
     const vector<vector<double>>& neighbour_couplings,
@@ -311,7 +312,7 @@ unsigned int steepest_gradient_descent_ls_solver(
 
 // Perform `num_samples` runs of steepest gradient descent on a general problem.
 //
-// @param states char array of size num_samples * number of variables in the
+// @param states int8 array of size num_samples * number of variables in the
 //        problem. Will be overwritten by this function as samples are filled
 //        in. The initial state of the samples are used to seed the gradient
 //        descent runs.
@@ -332,7 +333,7 @@ unsigned int steepest_gradient_descent_ls_solver(
 //
 // @return Nothing. Results are in `states` buffer.
 void steepest_gradient_descent(
-    char* states,
+    std::int8_t* states,
     double* energies,
     unsigned* num_steps,
     const int num_samples,
@@ -383,7 +384,7 @@ void steepest_gradient_descent(
     // each time seeded with the initial state from `states`
     for (int sample = 0; sample < num_samples; sample++) {
         // get initial state from states buffer; the solution overwrites the same buffer
-        char *state = states + sample * num_vars;
+        std::int8_t *state = states + sample * num_vars;
 
         if (large_sparse_opt) {
             num_steps[sample] = steepest_gradient_descent_ls_solver(

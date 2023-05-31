@@ -1,181 +1,362 @@
 version: 2.1
 
-parameters:
-  package:
-    type: string
-    default: dwave-samplers
-
 orbs:
-  ocean: dwave/ocean@1
+  win: circleci/windows@2.2.0
 
-environment:
+commands:
+  run-cibuildwheel:
+    parameters:
+      cibw-version:
+        type: string
+        default: 2.11.2
+    steps:
+      - run:
+          name: run cibuildwheel
+          shell: bash -eo pipefail
+          command: |
+            if [[ $OS == Windows_NT ]]; then
+              python -m pip install --user cibuildwheel==<< parameters.cibw-version >>
+              python -m cibuildwheel --output-dir dist
+            else
+              python3 -m pip install --user cibuildwheel==<< parameters.cibw-version >>
+              python3 -m cibuildwheel --output-dir dist
+            fi
+
+      - store_artifacts: &store-artifacts
+          path: ./dist
+      - persist_to_workspace: &persist-to-workspace
+          root: ./dist/
+          paths: .
+
+environment: &global-environment
   PIP_PROGRESS_BAR: 'off'
 
 jobs:
-  test-install:
+  build-and-test-linux:
+    parameters:
+      python-version:
+        type: string
+
     docker:
-      - image: circleci/python:3.7    # last version pip==8.1.0 works on
+      - image: circleci/python:3.9
+
+    environment:
+      <<: *global-environment
+      CIBW_PROJECT_REQUIRES_PYTHON: ~=<< parameters.python-version>>
+      CIBW_ARCHS_LINUX: x86_64
 
     steps:
       - checkout
+      - setup_remote_docker
+      - run-cibuildwheel
 
-      - attach_workspace: &attach-dist
+  build-and-test-linux-aarch64:
+    parameters:
+      python-version:
+        type: string
+
+    machine:
+      image: ubuntu-2004:202101-01
+
+    resource_class: arm.medium
+
+    environment:
+      <<: *global-environment
+      CIBW_PROJECT_REQUIRES_PYTHON: ~=<< parameters.python-version>>
+      CIBW_ARCHS_LINUX: aarch64
+
+    steps:
+      - checkout
+      - run-cibuildwheel
+
+  build-and-test-osx:
+    parameters:
+      python-version:
+        type: string
+      cibw-arch:
+        type: string
+
+    macos:
+      xcode: 12.5.1
+
+    environment:
+      <<: *global-environment
+      CIBW_PROJECT_REQUIRES_PYTHON: ~=<< parameters.python-version>>
+      CIBW_ARCHS_MACOS: << parameters.cibw-arch >>
+
+    steps:
+      - checkout
+      - run-cibuildwheel
+
+  build-sdist:
+    docker:
+      - image: circleci/python:3.9
+
+    steps:
+      - checkout
+      - run:
+          name: build sdist
+          command: |
+            python -m venv env
+            . env/bin/activate
+            pip install -r requirements.txt
+            python setup.py sdist -d ./dist
+      - store_artifacts: *store-artifacts
+      - persist_to_workspace: *persist-to-workspace
+
+  build-and-test-windows:
+    parameters:
+      python-version:
+        type: string
+
+    executor:
+      name: win/default
+
+    environment:
+      <<: *global-environment
+      CIBW_PROJECT_REQUIRES_PYTHON: ~=<< parameters.python-version>>
+      CIBW_ARCHS_WINDOWS: AMD64
+
+    steps:
+      - checkout
+      - run-cibuildwheel
+
+  deploy-all:
+    docker:
+      - image: circleci/python:3.9
+
+    steps:
+      - attach_workspace:
           at: dist
 
-      - run:
-          # pip 19.0 is the first to support pyproject.toml build config *with*
-          # environment markers (note: we split numpy on py310), and
-          # *manylinux2010* wheels (required by the numpy version we use)
-          name: Install from sdist with pip==19.0
-          command: |
-            python -m venv env-sdist-pip19
-            . env-sdist-pip19/bin/activate
-            pip install 'pip==19.0'
-            pip install ./dist/dwave-samplers*.tar.gz
+      - store_artifacts:
+          path: ./dist
 
       - run:
-          name: Install from sdist with latest pip
+          name: deploy
           command: |
-            python -m venv env-sdist
-            . env-sdist/bin/activate
-            pip install -U pip
-            pip install ./dist/dwave-samplers*.tar.gz
+            python -m venv env
+            . env/bin/activate
+            python -m pip install twine
+            twine upload -u "$PYPI_USERNAME" -p "$PYPI_PASSWORD" --skip-existing ./dist/*
 
-      - run:
-          name: Install from wheel with latest pip
-          command: |
-            python -m venv env-wheel
-            . env-wheel/bin/activate
-            pip install -U pip
-            pip install -r requirements.txt
-            pip install --no-index --find-links=dist --only-binary=dwave-samplers dwave-samplers
-
-  test-cpp:
+  # and configuration to work correctly is a pain. And since there is not
+  # significant different between the linux/osx/windows code I think it
+  # suffices to just do it once
+  test-codecov:
     docker:
-      # just use a python image, all we really want is debian
-      - image: cimg/python:3.10.4
+      - image: circleci/python:3.9
 
     steps:
       - checkout
       - run:
-          name: Run C++ tests
+          name: install dependencies
           command: |
+            python -m venv env
+            . env/bin/activate
+            pip install -r requirements.txt
+            pip install -r tests/requirements.txt
+      - run: &unix-build
+          name: build
+          command: |
+            . env/bin/activate
+            python setup.py build_ext --inplace
+      - run:
+          name: run coverage
+          command: |
+            . env/bin/activate
+            coverage run -m unittest
+      - run:
+          name: codecov
+          command: |
+            . env/bin/activate
+            codecov
+
+  test-doctest:
+    docker:
+      - image: circleci/python:3.7 # as of march 2019 RTD uses 3.7
+
+    steps:
+      - checkout
+      - run:
+          name: install doxygen
+          command: sudo apt-get install doxygen
+      - run:
+          name: install dependencies
+          command: |
+            python -m venv env
+            . env/bin/activate
+            pip install -r requirements.txt
+            pip install -r docs/requirements.txt
+            pip install .
+      - run: *unix-build
+      - run:
+          name: build docs
+          command: |
+            . env/bin/activate
+            make -C docs/ html
+      - store_artifacts:
+          path: ./docs/build/html
+      - run:
+          name: doctest
+          command: |
+            . env/bin/activate
+            make -C docs/ doctest
+      - run:
+          name: linkcheck
+          command: |
+            . env/bin/activate
+            make -C docs/ linkcheck
+
+  test-dependencies:
+    parameters:
+      python-version:
+        type: string
+      dimod-version:
+        type: string
+
+    docker:
+      - image: python:<< parameters.python-version >>-slim
+
+    steps:
+      - checkout
+      - attach_workspace:
+          at: dist
+      - run:
+          name: install
+          command: |
+            python -m venv env
+            . env/bin/activate
+            pip install -r requirements.txt
+            pip install dwave-samplers --no-index -f dist/ --no-deps --force-reinstall
+            pip install 'dimod<< parameters.dimod-version >>' --only-binary=dimod -U
+      - run: &unix-run-tests
+          name: run tests
+          command: |
+            . env/bin/activate
+            cd tests/
+            pip install -r requirements.txt
+            python -m unittest
+
+  test-linux-cpp11:
+    docker:
+      - image: circleci/python:3.9
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          key: v2-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ checksum "docs/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
+
+      - run:
+          name: Create virtual environment
+          command: |
+            python -m venv env
+
+      - run:
+          name: Install requirements
+          command: |
+            . env/bin/activate
+            pip install -r requirements.txt -r tests/requirements.txt -r docs/requirements.txt
+
+      - save_cache:
+          key: v2-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ checksum "docs/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
+          paths:
+            - env
+
+      - run:
+          name: run cpp tests
+          command: |
+            . env/bin/activate
             make -C tests/cpp/ --always-make
 
+  test-sdist:
+    docker:
+      - image: circleci/python:3.9
+
+    steps:
+      - checkout
+      - attach_workspace:
+          at: dist
+      - run:
+          name: install from sdist
+          command: |
+            python -m venv env
+            . env/bin/activate
+            pip install dist/dwave-samplers*.tar.gz
+      - run: *unix-run-tests
+
 workflows:
-  build-test-deploy:
+  tests:
     jobs:
-      - ocean/build-sdist:
-          filters: &always-run  # required because it's indirectly required by the deploy job that runs on tags only
-            tags:
-              only: /.*/
-
-      - ocean/build-manylinux-wheel:
-          name: build-<< matrix.manylinux-tag >>_<< matrix.manylinux-arch >>-py<< matrix.python-version >>
+      - build-and-test-linux: &build
           matrix:
             parameters:
-              manylinux-tag: ["manylinux2014"]
-              manylinux-arch: ["x86_64"]
-              python-version: &python-versions ["3.7.9", "3.8.9", "3.9.4", "3.10.0"]
-          filters:
-            <<: *always-run
-
-      - ocean/cibw-build-linux-aarch64-wheel:
-          name: build-<< matrix.manylinux-tag >>_aarch64-py<< matrix.python-version >>
+              python-version: &python-versions [3.7.9, 3.8.9, 3.9.4, 3.10.0, 3.11.0]
+      - build-and-test-linux-aarch64:
           matrix:
             parameters:
-              manylinux-tag: ["manylinux2014"]
               python-version: *python-versions
-          filters:
-            <<: *always-run
-
-      - ocean/test-linux-from-dist:
-          name: test-linux-py<< matrix.python-version >>|<< matrix.constraints >>
+            exclude:
+              - python-version: 3.7.9
+      - build-sdist
+      - build-and-test-osx: &build-and-test-osx
+          matrix:
+            parameters:
+              python-version: *python-versions
+              cibw-arch: [x86_64, arm64]
+            exclude:
+              - python-version: 3.7.9
+                cibw-arch: arm64
+      - build-and-test-windows: *build
+      - test-codecov
+      - test-doctest
+      - test-dependencies:
+          name: test-dependencies-dimod<< matrix.dimod-version >>-py<< matrix.python-version >>
           requires:
-            - ocean/build-sdist
-            - ocean/build-manylinux-wheel
+            - build-and-test-linux
           matrix:
             parameters:
+              # test the lowest and highest of each minor for the dependencies
+              dimod-version: [==0.12.0, ~=0.12.0]
               python-version: *python-versions
-              package: [<< pipeline.parameters.package >>]
-              constraints: ["dimod==0.12.0", "dimod~=0.12.0"]
-          filters:
-            <<: *always-run
-
-      # - test-install:
-      #     requires:
-      #       - ocean/build-sdist
-      #       - ocean/build-manylinux-wheel
-      #     filters:
-      #       <<: *always-run
-
-      - ocean/test-docs:
-          name: test-docs
+      - test-linux-cpp11  
+      - test-sdist:
           requires:
-            - ocean/build-sdist
-            - ocean/build-manylinux-wheel
-          matrix:
-            parameters:
-              package: [<< pipeline.parameters.package >>]
-          filters:
-            <<: *always-run
-
-      - ocean/cibw-build-macos-wheel:
-          name: build-macos-py<< matrix.python-version >>
-          matrix:
-            parameters:
-              python-version: *python-versions
-              cibw-archs: ["x86_64 universal2"]
-          filters:
-            <<: *always-run
-
-      - ocean/test-macos-from-dist:
-          name: test-macos-py<< matrix.python-version >>
-          requires:
-            - ocean/build-sdist
-            - ocean/cibw-build-macos-wheel
-          matrix:
-            parameters:
-              python-version: *python-versions
-              xcode: ["13.2.0"]
-              package: [<< pipeline.parameters.package >>]
-          filters:
-            <<: *always-run
-
-      - ocean/build-windows-wheel:
-          name: build-win-<< matrix.python-arch >>-py<< matrix.python-version >>
-          matrix:
-            parameters:
-              python-version: *python-versions
-              python-arch: &python-archs-win [""]
-          filters:
-            <<: *always-run
-
-      - ocean/test-windows-from-dist:
-          name: test-win-<< matrix.python-arch >>-py<< matrix.python-version >>
-          requires:
-            - ocean/build-windows-wheel
-          matrix:
-            parameters:
-              python-version: *python-versions
-              python-arch: *python-archs-win
-              package: [<< pipeline.parameters.package >>]
-          filters:
-            <<: *always-run
-
-      - test-cpp:
-          filters:
-            <<: *always-run
-
-      - ocean/pypi-deploy:
-          requires:
-            - ocean/test-linux-from-dist
-            - ocean/test-macos-from-dist
-            - ocean/test-windows-from-dist
-            - ocean/test-docs
-            # - test-install
+            - build-sdist
+  deploy:
+    jobs:
+      - build-and-test-linux: &deploy-build
+          <<: *build
           filters:
             tags:
               only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
             branches:
               ignore: /.*/
+      - build-and-test-linux-aarch64: *deploy-build
+      - build-and-test-osx:
+          <<: *build-and-test-osx
+          filters:
+            tags:
+              only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
+            branches:
+              ignore: /.*/
+      - build-sdist:
+          filters:
+            tags:
+              only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
+            branches:
+              ignore: /.*/
+      - build-and-test-windows: *deploy-build
+      - deploy-all:
+          filters:
+            tags:
+              only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
+            branches:
+              ignore: /.*/
+          requires:
+            - build-and-test-linux
+            - build-and-test-linux-aarch64
+            - build-and-test-osx
+            - build-sdist
+            - build-and-test-windows

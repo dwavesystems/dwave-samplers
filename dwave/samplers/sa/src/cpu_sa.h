@@ -17,6 +17,8 @@
 #ifndef _cpu_sa_h
 #define _cpu_sa_h
 
+#include <cstdint>
+
 #ifdef _MSC_VER
     // add uint64_t definition for windows
     typedef __int64 int64_t;
@@ -30,14 +32,14 @@
 #endif
 
 double get_flip_energy(
-    int var, char *state, const std::vector<double> & h,
+    int var, std::int8_t *state, const std::vector<double> & h,
     const std::vector<int>& degrees,
     const std::vector<std::vector<int>>& neighbors,
     const std::vector<std::vector<double>>& neighbour_couplings
 );
 
 void simulated_annealing_run(
-    char *state, const std::vector<double>& h,
+    std::int8_t *state, const std::vector<double>& h,
     const std::vector<int>& degrees,
     const std::vector<std::vector<int>>& neighbors,
     const std::vector<std::vector<double>>& neighbour_couplings,
@@ -48,7 +50,7 @@ void simulated_annealing_run(
 typedef bool (*const callback)(void * const function);
 
 int general_simulated_annealing(
-    char *states,
+    std::int8_t *states,
     double *energies,
     const int num_samples,
     const std::vector<double> h,

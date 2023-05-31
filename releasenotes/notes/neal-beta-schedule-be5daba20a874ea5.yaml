@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    Fix several errors and inconsistencies in the calculation of the simulated
+    annealing algorithm's beta schedule.
+    Note that for very small problems this may result in slower execution, because
+    the schedule no longer does a discretization of 1000 sweeps at each beta.
+    See `dwavesystems/dwave-neal#91 <https://github.com/dwavesystems/dwave-neal/pull/91>`_.

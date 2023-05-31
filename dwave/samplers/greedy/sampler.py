@@ -123,7 +123,7 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
                initial_states_generator: InitialStateGenerator = "random",
                seed: Optional[int] = None,
                large_sparse_opt: bool = False, **kwargs) -> dimod.SampleSet:
-        """Sample from a binary quadratic model.
+        """Find minima of a binary quadratic model.
 
         Starts from ``initial_states``, and converges to local minima using
         discrete steepest-descent method.
@@ -170,7 +170,7 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
                 next descent variable instead of linear array).
 
         Note:
-            Number of descends (single variable flips) taken to reach the local
+            Number of descents (single variable flips) taken to reach the local
             minimum for each sample is stored in a data vector called ``num_steps``.
 
         Examples:
