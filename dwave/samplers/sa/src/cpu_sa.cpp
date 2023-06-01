@@ -87,6 +87,7 @@ double get_flip_energy(
 // @param beta_schedule A list of the beta values to run `sweeps_per_beta`
 //        sweeps at.
 // @return Nothing, but `state` now contains the result of the run.
+template <bool randomize_order>
 void simulated_annealing_run(
     std::int8_t* state,
     const vector<double>& h,
@@ -94,8 +95,7 @@ void simulated_annealing_run(
     const vector<vector<int>>& neighbors,
     const vector<vector<double>>& neighbour_couplings,
     const int sweeps_per_beta,
-    const vector<double>& beta_schedule,
-    const bool & randomize_order
+    const vector<double>& beta_schedule
 ) {
     const int num_vars = h.size();
 
@@ -126,14 +126,13 @@ void simulated_annealing_run(
             // greater than 44.361 / beta, then we can safely skip computing
             // the probability.
             const double threshold = 44.36142 / beta;
-
             for (int varI = 0; varI < num_vars; varI++) {
                 int var;
-                if(randomize_order){
+                if constexpr (randomize_order) {
                     FASTRAND(rand);
                     var = rand%num_vars;
                 }
-                else{
+                else {
                     var = varI;
                 }
                 if (delta_energy[var] >= threshold) continue;
@@ -313,10 +312,16 @@ int general_simulated_annealing(
         std::int8_t *state = states + sample*num_vars;
         // then do the actual sample. this function will modify state, storing
         // the sample there
-        simulated_annealing_run(state, h, degrees, 
-                                neighbors, neighbour_couplings, 
-                                sweeps_per_beta, beta_schedule, randomize_order);
-
+        if (randomize_order) { 
+          simulated_annealing_run<true>(state, h, degrees,
+                                neighbors, neighbour_couplings,
+                                sweeps_per_beta, beta_schedule);
+        }
+        else {
+          simulated_annealing_run<false>(state, h, degrees,
+                                neighbors, neighbour_couplings,
+                                sweeps_per_beta, beta_schedule);
+        }
         // compute the energy of the sample and store it in `energies`
         energies[sample] = get_state_energy(state, h, coupler_starts, 
                                             coupler_ends, coupler_weights);
