@@ -39,6 +39,7 @@ cdef extern from "cpu_sa.h":
             const vector[double] & beta_schedule,
             const unsigned long long seed,
             const bool randomize_order,
+            const bool metropolis_update,
             callback interrupt_callback,
             void *interrupt_function) nogil
 
@@ -46,7 +47,8 @@ cdef extern from "cpu_sa.h":
 def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                         coupler_weights, sweeps_per_beta, beta_schedule, seed,
                         np.ndarray[np.int8_t, ndim=2, mode="c"] states_numpy,
-                        randomize_order=False, interrupt_function=None):
+                        randomize_order=False, metropolis_update=True,
+                        interrupt_function=None):
     """Wraps `general_simulated_annealing` from `cpu_sa.cpp`. Accepts
     an Ising problem defined on a general graph and returns samples
     using simulated annealing.
@@ -97,15 +99,25 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
         will return early with the samples it already has.
 
     randomize_order: bool
+        When True, each spin update selects a variable uniformly at random.
         When False, updates proceed sequentially through the labeled variables 
-        on each sweep so that all variables are updated once.
-        When True, each spin update selects a variable uniformly at random. 
-        Both methods obey detailed balance. The False method 
-        - is non-ergodic in the pathological limits of zero temperature and 
-          infinite temperature. Convergence can be slow approaching these limits.
-        - breaks symmetries of the distribution via the fixed sequential 
-          sampling order. 
-        - can nevertheless be more performant in some applications.
+        on each sweep so that all variables are updated once per sweep.
+        The True method is ergodic and obeys detailed balance at all temperatures.
+        Symmetries of the Boltzmann distribution(s) are not broken by the
+        update order.
+        The False method:
+            - when combined with ``metropolis_update=True`` can be
+            non-ergodic in the limits of zero or infinite temperature,
+            and converge slowly near these limits.
+            - can introduce a dynamical bias as a function of variable
+            labeling convention.
+            - has faster per spin update than the True method.
+
+    metropolis_update bool
+        When True, each spin flip proposal is accepted according to the
+        Metropolis-Hastings criteria.
+        When False, each spin flip proposal is accepted according to the
+        Gibbs criteria.
         
     Returns
     -------
@@ -140,6 +152,7 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
     cdef vector[double] _beta_schedule = beta_schedule
     cdef unsigned long long _seed = seed
     cdef bool _randomize_order = randomize_order
+    cdef bool _metropolis_update = metropolis_update
     
     cdef void* _interrupt_function
     if interrupt_function is None:
@@ -160,6 +173,7 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                                           _beta_schedule,
                                           _seed,
                                           _randomize_order,
+                                          _metropolis_update,
                                           interrupt_callback,
                                           _interrupt_function)
 

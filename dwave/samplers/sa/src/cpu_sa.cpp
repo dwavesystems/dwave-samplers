@@ -87,7 +87,7 @@ double get_flip_energy(
 // @param beta_schedule A list of the beta values to run `sweeps_per_beta`
 //        sweeps at.
 // @return Nothing, but `state` now contains the result of the run.
-template <bool randomize_order>
+template <bool randomize_order, bool metropolis_update>
 void simulated_annealing_run(
     std::int8_t* state,
     const vector<double>& h,
@@ -139,16 +139,27 @@ void simulated_annealing_run(
 
                 flip_spin = false;
 
-                if (delta_energy[var] <= 0.0) {
-                    // automatically accept any flip that results in a lower 
-                    // energy
-                    flip_spin = true;
+                if constexpr (metropolis_update) {
+                    // Metropolis-Hastings acceptance rule
+                    if (delta_energy[var] <= 0.0) {
+                        // automatically accept any flip that results in a lower
+                        // energy
+                        flip_spin = true;
+                    }
+                    else {
+                        // get a random number, storing it in rand
+                        FASTRAND(rand);
+                        // accept the flip if exp(-delta_energy*beta) > random(0, 1)
+                        if (exp(-delta_energy[var]*beta) * RANDMAX > rand) {
+                            flip_spin = true;
+                        }
+                    }
                 }
                 else {
-                    // get a random number, storing it in rand
-                    FASTRAND(rand); 
-                    // accept the flip if exp(-delta_energy*beta) > random(0, 1)
-                    if (exp(-delta_energy[var]*beta) * RANDMAX > rand) {
+                    // Gibbs update: Sample fairly from the two available states,
+                    // independent of the current value
+                    FASTRAND(rand);
+                    if (RANDMAX > rand * (1+exp(delta_energy[var]*beta))) {
                         flip_spin = true;
                     }
                 }
@@ -250,6 +261,7 @@ int general_simulated_annealing(
     const vector<double> beta_schedule,
     const uint64_t seed,
     const bool randomize_order,
+    const bool metropolis_update,
     callback interrupt_callback,
     void * const interrupt_function
 ) {
@@ -312,15 +324,29 @@ int general_simulated_annealing(
         std::int8_t *state = states + sample*num_vars;
         // then do the actual sample. this function will modify state, storing
         // the sample there
-        if (randomize_order) { 
-          simulated_annealing_run<true>(state, h, degrees,
-                                neighbors, neighbour_couplings,
-                                sweeps_per_beta, beta_schedule);
+        if (randomize_order) {
+            if (metropolis_update) {
+                simulated_annealing_run<true, true>(state, h, degrees,
+                                                    neighbors, neighbour_couplings,
+                                                    sweeps_per_beta, beta_schedule);
+            }
+            else {
+                simulated_annealing_run<true, false>(state, h, degrees,
+                                                     neighbors, neighbour_couplings,
+                                                     sweeps_per_beta, beta_schedule);
+          }
         }
         else {
-          simulated_annealing_run<false>(state, h, degrees,
-                                neighbors, neighbour_couplings,
-                                sweeps_per_beta, beta_schedule);
+            if (metropolis_update) {
+                simulated_annealing_run<false, true>(state, h, degrees,
+                                                     neighbors, neighbour_couplings,
+                                                     sweeps_per_beta, beta_schedule);
+            }
+            else {
+                simulated_annealing_run<false, false>(state, h, degrees,
+                                                      neighbors, neighbour_couplings,
+                                                      sweeps_per_beta, beta_schedule);
+            }
         }
         // compute the energy of the sample and store it in `energies`
         energies[sample] = get_state_energy(state, h, coupler_starts, 
