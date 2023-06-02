@@ -61,6 +61,7 @@ int general_simulated_annealing(
     const std::vector<double> beta_schedule,
     const uint64_t seed,
     const bool randomize_order,
+    const bool metropolis_update,
     callback interrupt_callback,
     void * const interrupt_function
 );

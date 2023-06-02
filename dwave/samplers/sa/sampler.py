@@ -44,7 +44,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
     can be used for heuristic optimization or approximate Boltzmann sampling. This
     implementation approaches the equilibrium distribution by performing updates
     at a sequence of decreasing temperatures, terminating at the target
-    :math:`\\beta`.\ [#]_ Each spin is updated once in a fixed order per point
+    :math:`\\beta`.\ [#]_ By default each spin is updated once in a fixed order per point
     per :math:`\\beta` according to a Metropolis-Hastings update. When :math:`\\beta`
     is large the target distribution concentrates, at equilibrium, over ground
     states of the model. Samples are guaranteed to match the equilibrium for
@@ -142,6 +142,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                initial_states: Optional[dimod.typing.SamplesLike] = None,
                initial_states_generator: InitialStateGenerator = "random",
                randomize_order = False,
+               metropolis_update = True,
                **kwargs) -> dimod.SampleSet:
         """Sample from a binary quadratic model.
 
@@ -225,19 +226,22 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                 When True, each spin update selects a variable uniformly at random.
                 When False, updates proceed sequentially through the labeled variables 
                 on each sweep so that all variables are updated once per sweep.
-                Each update is of the Metropolis-Hasting type.
                 The True method is ergodic and obeys detailed balance at all temperatures.
-                Symmetries of the Boltzmann distribution(s) are not broken by the update
-                order. 
+                Symmetries of the Boltzmann distribution(s) are not broken by the
+                update order.
                 The False method 
-                    - can be non-ergodic in the pathological limits of zero temperature and 
-                    infinite temperature. Convergence can be slow approaching these limits.
-                    - can break symmetries of the model distribution via the fixed sequential 
-                    sampling order, hence introducting some bias related to variable order. 
-                    - has faster per spin update.
-                    - can be more or less performant in application than the True method
-                    owing to guaranteed variable update frequency or an advantageous 
-                    alignment of the update order with the bqm variable ordering. 
+                    - when combined with ``metropolis_update=True`` can be
+                    non-ergodic in the limits of zero or infinite temperature,
+                    and converge slowly near these limits.
+                    - can introduce a dynamical bias as a function of variable
+                    labeling convention.
+                    - has faster per spin update than the True method.
+
+            metropolis_update (bool, optional, default=True)
+                When True, each spin flip proposal is accepted according to the
+                Metropolis-Hastings criteria.
+                When False, each spin flip proposal is accepted according to the
+                Gibbs criteria.
 
             interrupt_function (function, optional):
                 A function called with no parameters between each sample of
@@ -405,7 +409,9 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
         samples, energies = simulated_annealing(
             num_reads, ldata, irow, icol, qdata,
             num_sweeps_per_beta, beta_schedule,
-            seed, initial_states_array, randomize_order, interrupt_function)
+            seed, initial_states_array,
+            randomize_order, metropolis_update,
+            interrupt_function)
 
         timestamp_postprocess = perf_counter_ns()
 
@@ -488,7 +494,6 @@ def _default_ising_beta_range(h, J,
     """
     if not 0 < max_single_qubit_excitation_rate < 1:
         raise ValueError('Targeted single qubit excitations rates must be in range (0,1)')
-
 
     # Approximate worst and best cases of the [non-zero] energy signal (effective field)
     # experienced per spin as function of neighbors: bias = h_i + sum_j Jij s_j:
