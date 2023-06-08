@@ -131,8 +131,7 @@ void simulated_annealing_run(
                 if constexpr (randomize_order) {
                     FASTRAND(rand);
                     var = rand%num_vars;
-                }
-                else {
+                } else {
                     var = varI;
                 }
                 if (delta_energy[var] >= threshold) continue;
@@ -145,8 +144,7 @@ void simulated_annealing_run(
                         // automatically accept any flip that results in a lower
                         // energy
                         flip_spin = true;
-                    }
-                    else {
+                    } else {
                         // get a random number, storing it in rand
                         FASTRAND(rand);
                         // accept the flip if exp(-delta_energy*beta) > random(0, 1)

@@ -140,7 +140,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                beta_schedule: Optional[Union[Sequence[float], np.ndarray]] = None,
                initial_states: Optional[dimod.typing.SamplesLike] = None,
                initial_states_generator: InitialStateGenerator = "random",
-               randomize_order = False,
+               randomize_order: bool = False,
                metropolis_update = True,
                **kwargs) -> dimod.SampleSet:
         """Sample from a binary quadratic model.
