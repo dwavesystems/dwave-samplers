@@ -142,7 +142,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                initial_states: Optional[dimod.typing.SamplesLike] = None,
                initial_states_generator: InitialStateGenerator = "random",
                randomize_order: bool = False,
-               metropolis_update = True,
+               proposal_acceptance_criteria = 'Metropolis',
                **kwargs) -> dimod.SampleSet:
         """Sample from a binary quadratic model.
 
@@ -237,11 +237,11 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                     labeling convention.
                     - has faster per spin update than the True method.
 
-            metropolis_update (bool, optional, default=True)
-                When True, each spin flip proposal is accepted according to the
-                Metropolis-Hastings criteria.
-                When False, each spin flip proposal is accepted according to the
-                Gibbs criteria.
+            proposal_acceptance_criteria (str, optional, default=True)
+                When `Gibbs`, each spin flip proposal is accepted according
+                to the Gibbs criteria.
+                When `Metropolis', each spin flip proposal is accepted according
+                to the Metropolis-Hastings criteria.
 
             interrupt_function (function, optional):
                 A function called with no parameters between each sample of
@@ -410,7 +410,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
             num_reads, ldata, irow, icol, qdata,
             num_sweeps_per_beta, beta_schedule,
             seed, initial_states_array,
-            randomize_order, metropolis_update,
+            randomize_order, proposal_acceptance_criteria,
             interrupt_function)
 
         timestamp_postprocess = perf_counter_ns()
