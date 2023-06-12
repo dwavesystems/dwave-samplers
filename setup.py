@@ -24,10 +24,8 @@ class build_ext_with_args(build_ext):
     """Add compiler-specific compile/link flags."""
 
     extra_compile_args = {
-        'msvc': ['/std:c++17', '/EHsc'],
-        'unix': [
-            '-std=c++17', 
-        ],
+        'msvc': ['/std:c++17'],
+        'unix': ['-std=c++17'],
     }
 
     extra_link_args = {
