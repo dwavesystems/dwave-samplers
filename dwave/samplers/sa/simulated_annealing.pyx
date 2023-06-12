@@ -39,7 +39,7 @@ cdef extern from "cpu_sa.h":
             const vector[double] & beta_schedule,
             const unsigned long long seed,
             const bool randomize_order,
-            const bool metropolis_update,
+            const bool proposal_acceptance_criteria,
             callback interrupt_callback,
             void *interrupt_function) nogil
 
@@ -47,7 +47,7 @@ cdef extern from "cpu_sa.h":
 def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                         coupler_weights, sweeps_per_beta, beta_schedule, seed,
                         np.ndarray[np.int8_t, ndim=2, mode="c"] states_numpy,
-                        randomize_order=False, metropolis_update=True,
+                        randomize_order=False, proposal_acceptance_criteria=True,
                         interrupt_function=None):
     """Wraps `general_simulated_annealing` from `cpu_sa.cpp`. Accepts
     an Ising problem defined on a general graph and returns samples
@@ -113,12 +113,12 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
             labeling convention.
             - has faster per spin update than the True method.
 
-    metropolis_update bool
-        When True, each spin flip proposal is accepted according to the
-        Metropolis-Hastings criteria.
-        When False, each spin flip proposal is accepted according to the
+    proposal_acceptance_criteria str
+        When `Gibbs`, each spin flip proposal is accepted according to the
         Gibbs criteria.
-        
+        When `Metropolis`, each spin flip proposal is accepted according to the
+        Metropolis-Hastings criteria.
+
     Returns
     -------
     samples : numpy.ndarray
@@ -152,8 +152,13 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
     cdef vector[double] _beta_schedule = beta_schedule
     cdef unsigned long long _seed = seed
     cdef bool _randomize_order = randomize_order
-    cdef bool _metropolis_update = metropolis_update
-    
+    cdef bool _metropolis_update
+    if proposal_acceptance_criteria == 'Gibbs':
+        _metropolis_update = False
+    elif proposal_acceptance_criteria == 'Metropolis':
+        _metropolis_update = True
+    else:
+        raise ValueError('Unknown proposal_acceptance_criteria')
     cdef void* _interrupt_function
     if interrupt_function is None:
         _interrupt_function = NULL
