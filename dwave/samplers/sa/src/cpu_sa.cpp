@@ -322,6 +322,7 @@ int general_simulated_annealing(
         std::int8_t *state = states + sample*num_vars;
         // then do the actual sample. this function will modify state, storing
         // the sample there
+	// Branching here is designed to make expicit compile time optimizations
         if (randomize_order) {
             if (metropolis_update) {
                 simulated_annealing_run<true, true>(state, h, degrees,

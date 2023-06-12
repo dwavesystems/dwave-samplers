@@ -24,13 +24,15 @@ class build_ext_with_args(build_ext):
     """Add compiler-specific compile/link flags."""
 
     extra_compile_args = {
-        'msvc': ['/std:c++14'],
-        'unix': ['-std=c++11'],
+        'msvc': ['/std:c++17', '/EHsc'],
+        'unix': [
+            '-std=c++17', 
+        ],
     }
 
     extra_link_args = {
         'msvc': [],
-        'unix': ['-std=c++11'],
+        'unix': ['-std=c++17'],
     }
 
     def build_extensions(self):
