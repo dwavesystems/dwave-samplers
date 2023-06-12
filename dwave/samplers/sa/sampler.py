@@ -17,6 +17,7 @@ import math
 from numbers import Integral
 from numpy.random import randint
 from collections import defaultdict
+from datetime import datetime
 from typing import List, Sequence, Tuple, Optional, Union
 try:
     from typing import Literal
@@ -255,6 +256,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                Boltzmann's constant.
 
         """
+        t0 = datetime.now()
         # get the original vartype so we can return consistently
         original_vartype = bqm.vartype
 
@@ -360,11 +362,16 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                     beta_schedule = np.geomspace(*beta_range, num=num_betas)
                 else:
                     raise ValueError("Beta schedule type {} not implemented".format(beta_schedule_type))
+
+        t1 = datetime.now()
+
         # run the simulated annealing algorithm
         samples, energies = simulated_annealing(
             num_reads, ldata, irow, icol, qdata,
             num_sweeps_per_beta, beta_schedule,
             seed, initial_states_array, interrupt_function)
+
+        t2 = datetime.now()
 
         info = {
             "beta_range": beta_range,
@@ -378,6 +385,13 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
         )
 
         response.change_vartype(original_vartype, inplace=True)
+
+        # Update timing info last to capture the full postprocessing time
+        response.info.update(dict(timing=dict(
+            preprocessing=t1 - t0,
+            sampling=t2 - t1,
+            postprocessing=datetime.now() - t2
+        )))
 
         return response
 
