@@ -64,8 +64,6 @@ private:
 
   virtual double marginalizeImpl(std::size_t n, const table_type& mrgTable) {
     using std::transform;
-    using std::divides;
-    using std::bind2nd;
     using std::make_pair;
     typedef std::vector<double>::iterator value_iterator;
 
@@ -83,15 +81,13 @@ private:
       ++tblIter;
     }
     fsum += exp(*tblIter - yMax);
-    transform(cpBegin, cpEnd, cpBegin, bind2nd(divides<double>(), fsum));
+    transform(cpBegin, cpEnd, cpBegin, [&](double a){ return a / fsum; });
 
     return yMax + log(fsum);
   }
 
   virtual void solveImpl(DomIndexVector& s) const {
     using std::find_if;
-    using std::less;
-    using std::bind1st;
     using std::make_pair;
     typedef std::vector<double>::const_iterator value_const_iterator;
 
@@ -103,7 +99,8 @@ private:
 
     value_const_iterator cpBegin = cumProbs_.begin() + n;
     value_const_iterator cpEnd = cpBegin + outStepSize_;
-    value_const_iterator cpFound = find_if(cpBegin, cpEnd, bind1st(less<double>(), rng_()));
+    const double rng = rng_();
+    value_const_iterator cpFound = find_if(cpBegin, cpEnd, [&](double a){ return rng < a; });
     DomIndex outI = static_cast<DomIndex>(cpFound - cpBegin);
 
     s[outVar_] = outI;
