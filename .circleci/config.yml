@@ -180,7 +180,7 @@ jobs:
       - checkout
       - run:
           name: install doxygen
-          command: sudo apt-get install doxygen
+          command: sudo apt update && sudo apt install doxygen
       - run:
           name: install dependencies
           command: |
