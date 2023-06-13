@@ -17,7 +17,7 @@ import math
 from numbers import Integral
 from numpy.random import randint
 from collections import defaultdict
-from datetime import datetime
+from time import process_time as timer
 from typing import List, Sequence, Tuple, Optional, Union
 try:
     from typing import Literal
@@ -144,6 +144,14 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                **kwargs) -> dimod.SampleSet:
         """Sample from a binary quadratic model.
 
+        The returned timing information is categorized into three: preprocessing, sampling, and
+        postprocessing time. All timings are reported in units of seconds.
+
+        Preprocessing time includes the time used to convert the BQM variable type (if required), to
+        parse input arguments, and to determine an annealing schedule. Sampling time includes the
+        bulk of the heavy lifting of the algorithm, i.e., the time spent sampling. Postprocessing
+        time includes the time to revert variable type conversion and to create a `dimod.SampleSet`.
+
         Args:
             bqm: Binary quadratic model to be sampled.
 
@@ -256,7 +264,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                Boltzmann's constant.
 
         """
-        t0 = datetime.now()
+        t0 = timer()
         # get the original vartype so we can return consistently
         original_vartype = bqm.vartype
 
@@ -363,7 +371,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                 else:
                     raise ValueError("Beta schedule type {} not implemented".format(beta_schedule_type))
 
-        t1 = datetime.now()
+        t1 = timer()
 
         # run the simulated annealing algorithm
         samples, energies = simulated_annealing(
@@ -371,7 +379,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
             num_sweeps_per_beta, beta_schedule,
             seed, initial_states_array, interrupt_function)
 
-        t2 = datetime.now()
+        t2 = timer()
 
         info = {
             "beta_range": beta_range,
@@ -387,10 +395,10 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
         response.change_vartype(original_vartype, inplace=True)
 
         # Update timing info last to capture the full postprocessing time
-        response.info.update(dict(timing=dict(
+        response.info.update(dict(timing_s=dict(
             preprocessing=t1 - t0,
             sampling=t2 - t1,
-            postprocessing=datetime.now() - t2
+            postprocessing=timer() - t2
         )))
 
         return response
