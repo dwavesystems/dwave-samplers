@@ -145,12 +145,12 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
         """Sample from a binary quadratic model.
 
         The returned timing information is categorized into three: preprocessing, sampling, and
-        postprocessing time. All timings are reported in units of seconds using `time.process_time`.
+        postprocessing time. All timings are reported in units of nanoseconds.
 
-        Preprocessing time includes the time used to convert the BQM variable type (if required), to
-        parse input arguments, and to determine an annealing schedule. Sampling time includes the
-        bulk of the heavy lifting of the algorithm, i.e., the time spent sampling. Postprocessing
-        time includes the time to revert variable type conversion and to create a `dimod.SampleSet`.
+        Preprocessing time is the total time spent converting the BQM variable type (if required),
+        parsing input arguments, and determining an annealing schedule. Sampling time is the total
+        time the algorithm spent in sampling states of the binary quadratic model. Postprocessing
+        time is the total time spent reverting variable type and creating a `dimod.SampleSet`.
 
         Args:
             bqm: Binary quadratic model to be sampled.
