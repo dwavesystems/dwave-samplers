@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from time import process_time_ns as timer
+from typing import Dict
 
 
 class Stopwatch():
@@ -59,7 +60,7 @@ class Stopwatch():
             raise RepeatedTimestampError()
         self.timestamp_end = timer()
 
-    def report(self) -> dict[str: float]:
+    def report(self) -> Dict[str, float]:
         """Reports the duration of each process.
 
         - Preprocessing time is the duration from the beginning of preprocessing until the beginning
@@ -70,7 +71,7 @@ class Stopwatch():
           postprocessing.
 
         Returns:
-            dict[str: float]: timings of each category.
+            Dict[str: float]: timings of each category.
         """
         ordered_timestamps = [self.timestamp_preprocessing, self.timestamp_sampling,
                               self.timestamp_postprocessing, self.timestamp_end]
