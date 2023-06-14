@@ -17,7 +17,6 @@ import math
 from numbers import Integral
 from numpy.random import randint
 from collections import defaultdict
-from time import process_time as timer
 from typing import List, Sequence, Tuple, Optional, Union
 try:
     from typing import Literal
@@ -31,6 +30,7 @@ import dimod
 import numpy as np
 
 from dwave.samplers.sa.simulated_annealing import simulated_annealing
+from dwave.samplers.stopwatch import Stopwatch
 
 import warnings
 
@@ -264,7 +264,8 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                Boltzmann's constant.
 
         """
-        t0 = timer()
+        stopwatch = Stopwatch()
+        stopwatch.start_preprocessing()
         # get the original vartype so we can return consistently
         original_vartype = bqm.vartype
 
@@ -371,7 +372,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                 else:
                     raise ValueError("Beta schedule type {} not implemented".format(beta_schedule_type))
 
-        t1 = timer()
+        stopwatch.start_sampling()
 
         # run the simulated annealing algorithm
         samples, energies = simulated_annealing(
@@ -379,7 +380,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
             num_sweeps_per_beta, beta_schedule,
             seed, initial_states_array, interrupt_function)
 
-        t2 = timer()
+        stopwatch.start_postprocessing()
 
         info = {
             "beta_range": beta_range,
@@ -395,11 +396,8 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
         response.change_vartype(original_vartype, inplace=True)
 
         # Update timing info last to capture the full postprocessing time
-        response.info.update(dict(timing=dict(
-            preprocessing_s=t1 - t0,
-            sampling_s=t2 - t1,
-            postprocessing_s=timer() - t2
-        )))
+        stopwatch.end_postprocessing()
+        response.info.update(stopwatch.report())
 
         return response
 
