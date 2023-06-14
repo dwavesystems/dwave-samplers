@@ -396,7 +396,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
         response.change_vartype(original_vartype, inplace=True)
 
         # Update timing info last to capture the full postprocessing time
-        stopwatch.end_postprocessing()
+        stopwatch.stop_postprocessing()
         response.info.update(stopwatch.report())
 
         return response

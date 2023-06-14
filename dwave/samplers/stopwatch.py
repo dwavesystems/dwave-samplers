@@ -23,7 +23,7 @@ class Stopwatch():
     1. `start_preprocessing`; this marks the beginning of the preprocessing phase
     2. `start_sampling`; this marks the beginning of the sampling phase (end of preprocessing)
     3. `start_postprocessing`; this marks the beginning of the postprocessing phase (end of sampling)
-    4. `end_postprocessing`; this marks the end of the postprocessing phase
+    4. `stop_postprocessing`; this marks the end of the postprocessing phase
     """
 
     def __init__(self) -> None:
@@ -53,7 +53,7 @@ class Stopwatch():
             raise RepeatedTimestampError()
         self.timestamp_postprocessing = timer()
 
-    def end_postprocessing(self):
+    def stop_postprocessing(self):
         """Records the final timestamp. This should be invoked last.
         """
         if self.timestamp_end is not None:

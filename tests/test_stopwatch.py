@@ -23,7 +23,7 @@ from dwave.samplers.stopwatch import (Stopwatch, NonmonotonicTimestampError,
 class TestStopwatch(unittest.TestCase):
     # Validity of some tests depend on this order; do not change list order!
     TIMING_METHOD_NAMES = ["start_preprocessing", "start_sampling",
-                           "start_postprocessing", "end_postprocessing"]
+                           "start_postprocessing", "stop_postprocessing"]
 
     def test_missing_timestamps(self):
         # Skipping any one timestamp should raise an error
@@ -37,33 +37,38 @@ class TestStopwatch(unittest.TestCase):
                 timing_method()
             self.assertRaises(MissingTimestampError, sw.report)
 
-    def test_monotonicity_and_report(self):
+    def test_monotonicity(self):
         num_timestamps = 4
-
         # Any nonmonotonic call order should raise an error
-        # otherwise, the check all keys are present and that the timings are nonnegative
         invocation_orders = permutations(range(num_timestamps))
         for invocation_order in invocation_orders:
             sw = Stopwatch()
-
             timing_methods = [getattr(sw, method) for method in self.TIMING_METHOD_NAMES]
             for method_index in invocation_order:
                 timing_methods[method_index]()
 
+            # Montonic case
             monotonic = invocation_order == (0, 1, 2, 3)
-            if not monotonic:
-                self.assertRaises(NonmonotonicTimestampError, sw.report)
-            else:
-                report = sw.report()
-                self.assertIn("timing", report)
-
-                for category, timing in report['timing'].items():
+            if monotonic:
+                for category, timing in sw.report()['timing'].items():
                     self.assertGreaterEqual(timing, 0)
+            else:
+                self.assertRaises(NonmonotonicTimestampError, sw.report)
 
-                timings = report['timing']
-                self.assertIn("preprocessing_ns", timings)
-                self.assertIn("sampling_ns", timings)
-                self.assertIn("postprocessing_ns", timings)
+    def test_simple_case(self):
+        sw = Stopwatch()
+        sw.start_preprocessing()
+        sw.start_sampling()
+        sw.start_postprocessing()
+        sw.stop_postprocessing()
+        report = sw.report()
+
+        self.assertIn("timing", report)
+
+        timings = report['timing']
+        self.assertIn("preprocessing_ns", timings)
+        self.assertIn("sampling_ns", timings)
+        self.assertIn("postprocessing_ns", timings)
 
     def test_repeated_timestamps(self):
         sw = Stopwatch()
