@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from time import process_time_ns as timer
+from time import perf_counter_ns as timer
 from typing import Dict
 
 
@@ -73,13 +73,15 @@ class Stopwatch():
         Returns:
             Dict[str: float]: timings of each category.
         """
-        ordered_timestamps = [self.timestamp_preprocessing, self.timestamp_sampling,
-                              self.timestamp_postprocessing, self.timestamp_end]
 
-        if None in ordered_timestamps:
+        if None in {self.timestamp_preprocessing, self.timestamp_sampling,
+                    self.timestamp_postprocessing, self.timestamp_end}:
             raise MissingTimestampError()
 
-        monotonic = all(t0 <= t1 for t0, t1 in zip(ordered_timestamps, ordered_timestamps[1:]))
+        monotonic = (self.timestamp_preprocessing
+                     <= self.timestamp_sampling
+                     <= self.timestamp_postprocessing
+                     <= self.timestamp_end)
 
         if not monotonic:
             raise NonmonotonicTimestampError()
