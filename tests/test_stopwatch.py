@@ -50,8 +50,7 @@ class TestStopwatch(unittest.TestCase):
             for method_index in invocation_order:
                 timing_methods[method_index]()
 
-            monotonic = all(t0 <= t1 for t0, t1 in zip(invocation_order, invocation_order[1:]))
-
+            monotonic = invocation_order == (0, 1, 2, 3)
             if not monotonic:
                 self.assertRaises(NonmonotonicTimestampError, sw.report)
             else:
