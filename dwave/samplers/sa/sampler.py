@@ -395,10 +395,10 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
         response.change_vartype(original_vartype, inplace=True)
 
         # Update timing info last to capture the full postprocessing time
-        response.info.update(dict(timing_s=dict(
-            preprocessing=t1 - t0,
-            sampling=t2 - t1,
-            postprocessing=timer() - t2
+        response.info.update(dict(timing=dict(
+            preprocessing_s=t1 - t0,
+            sampling_s=t2 - t1,
+            postprocessing_s=timer() - t2
         )))
 
         return response
