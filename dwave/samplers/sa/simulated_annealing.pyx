@@ -26,7 +26,10 @@ cimport numpy as np
 
 cdef extern from "cpu_sa.h":
     ctypedef bool (*callback)(void *function)
-
+    ctypedef enum mcmc_t:
+        GIBBS, METROPOLIS
+    ctypedef enum varorder_t:
+        SEQUENTIAL, RANDOM
     int general_simulated_annealing(
             np.int8_t* samples,
             double* energies,
@@ -38,8 +41,8 @@ cdef extern from "cpu_sa.h":
             const int sweeps_per_beta,
             const vector[double] & beta_schedule,
             const unsigned long long seed,
-            const bool randomize_order,
-            const bool proposal_acceptance_criteria,
+            const varorder_t varorder,
+            const mcmc_t proposal_acceptance_criteria,
             callback interrupt_callback,
             void *interrupt_function) nogil
 
@@ -47,7 +50,7 @@ cdef extern from "cpu_sa.h":
 def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                         coupler_weights, sweeps_per_beta, beta_schedule, seed,
                         np.ndarray[np.int8_t, ndim=2, mode="c"] states_numpy,
-                        randomize_order=False,
+                        randomize_order: bool = False,
                         proposal_acceptance_criteria: str = "metropolis",
                         interrupt_function=None):
     """Wraps `general_simulated_annealing` from `cpu_sa.cpp`. Accepts
@@ -103,21 +106,21 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
         When True, each spin update selects a variable uniformly at random.
         When False, updates proceed sequentially through the labeled variables 
         on each sweep so that all variables are updated once per sweep.
-        The True method is ergodic and obeys detailed balance at all temperatures.
+        The random method is ergodic and obeys detailed balance at all temperatures.
         Symmetries of the Boltzmann distribution(s) are not broken by the
         update order.
-        The False method:
-            - when combined with ``metropolis_update=True`` can be
+        The sequential method:
+            - when combined with ``proposal_acceptance_criteria=metropolis`` can be
             non-ergodic in the limits of zero or infinite temperature,
             and converge slowly near these limits.
             - can introduce a dynamical bias as a function of variable
             labeling convention.
-            - has faster per spin update than the True method.
+            - has faster per spin update than the random method.
 
     proposal_acceptance_criteria str
-        When `Gibbs`, each spin flip proposal is accepted according to the
+        When `gibbs`, each spin flip proposal is accepted according to the
         Gibbs criteria.
-        When `Metropolis`, each spin flip proposal is accepted according to the
+        When `metropolis`, each spin flip proposal is accepted according to the
         Metropolis-Hastings criteria.
 
     Returns
@@ -152,12 +155,16 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
     cdef int _sweeps_per_beta = sweeps_per_beta
     cdef vector[double] _beta_schedule = beta_schedule
     cdef unsigned long long _seed = seed
-    cdef bool _randomize_order = randomize_order
-    cdef bool _metropolis_update
+    cdef varorder_t _varorder
+    if randomize_order:
+        _varorder = SEQUENTIAL
+    else:
+        _varorder = RANDOM
+    cdef mcmc_t _proposal_acceptance_criteria
     if proposal_acceptance_criteria.lower() == 'gibbs':
-        _metropolis_update = False
+        _proposal_acceptance_criteria = GIBBS
     elif proposal_acceptance_criteria.lower() == 'metropolis':
-        _metropolis_update = True
+        _proposal_acceptance_criteria = METROPOLIS
     else:
         raise ValueError(f'Unknown proposal_acceptance_criteria: {proposal_acceptance_criteria}')
     cdef void* _interrupt_function
@@ -178,8 +185,8 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                                           _sweeps_per_beta,
                                           _beta_schedule,
                                           _seed,
-                                          _randomize_order,
-                                          _metropolis_update,
+                                          _varorder,
+                                          _proposal_acceptance_criteria,
                                           interrupt_callback,
                                           _interrupt_function)
 

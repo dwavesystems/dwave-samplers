@@ -20,6 +20,7 @@
 #include <stdexcept>
 #include "cpu_sa.h"
 
+
 // xorshift128+ as defined https://en.wikipedia.org/wiki/Xorshift#xorshift.2B
 #define FASTRAND(rand) do {                       \
     uint64_t x = rng_state[0];                    \
@@ -87,7 +88,7 @@ double get_flip_energy(
 // @param beta_schedule A list of the beta values to run `sweeps_per_beta`
 //        sweeps at.
 // @return Nothing, but `state` now contains the result of the run.
-template <bool randomize_order, bool metropolis_update>
+template <varorder_t varorder, mcmc_t proposal_acceptance_criteria>
 void simulated_annealing_run(
     std::int8_t* state,
     const vector<double>& h,
@@ -128,7 +129,7 @@ void simulated_annealing_run(
             const double threshold = 44.36142 / beta;
             for (int varI = 0; varI < num_vars; varI++) {
                 int var;
-                if constexpr (randomize_order) {
+                if constexpr (varorder == RANDOM) {
                     FASTRAND(rand);
                     var = rand%num_vars;
                 } else {
@@ -138,7 +139,7 @@ void simulated_annealing_run(
 
                 flip_spin = false;
 
-                if constexpr (metropolis_update) {
+                if constexpr (proposal_acceptance_criteria == METROPOLIS) {
                     // Metropolis-Hastings acceptance rule
                     if (delta_energy[var] <= 0.0) {
                         // automatically accept any flip that results in a lower
@@ -258,8 +259,8 @@ int general_simulated_annealing(
     const int sweeps_per_beta,
     const vector<double> beta_schedule,
     const uint64_t seed,
-    const bool randomize_order,
-    const bool metropolis_update,
+    const varorder_t varorder,
+    const mcmc_t proposal_acceptance_criteria,
     callback interrupt_callback,
     void * const interrupt_function
 ) {
@@ -323,26 +324,26 @@ int general_simulated_annealing(
         // then do the actual sample. this function will modify state, storing
         // the sample there
 	// Branching here is designed to make expicit compile time optimizations
-        if (randomize_order) {
-            if (metropolis_update) {
-                simulated_annealing_run<true, true>(state, h, degrees,
+        if (varorder == RANDOM) {
+            if (proposal_acceptance_criteria == METROPOLIS) {
+                simulated_annealing_run<RANDOM, METROPOLIS>(state, h, degrees,
                                                     neighbors, neighbour_couplings,
                                                     sweeps_per_beta, beta_schedule);
             }
             else {
-                simulated_annealing_run<true, false>(state, h, degrees,
+                simulated_annealing_run<RANDOM, GIBBS>(state, h, degrees,
                                                      neighbors, neighbour_couplings,
                                                      sweeps_per_beta, beta_schedule);
           }
         }
         else {
-            if (metropolis_update) {
-                simulated_annealing_run<false, true>(state, h, degrees,
+            if (proposal_acceptance_criteria == METROPOLIS) {
+                simulated_annealing_run<SEQUENTIAL, METROPOLIS>(state, h, degrees,
                                                      neighbors, neighbour_couplings,
                                                      sweeps_per_beta, beta_schedule);
             }
             else {
-                simulated_annealing_run<false, false>(state, h, degrees,
+                simulated_annealing_run<SEQUENTIAL, GIBBS>(state, h, degrees,
                                                       neighbors, neighbour_couplings,
                                                       sweeps_per_beta, beta_schedule);
             }
