@@ -403,6 +403,8 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
 
         response.change_vartype(original_vartype, inplace=True)
 
+        # Developer note: the specific keys of the timing dict are chosen to be consistent with
+        #                 other samplers' timing dict.
         response.info.update(dict(timing=dict(
             preprocessing_ns=timestamp_sample - timestamp_preprocess,
             sampling_ns=timestamp_postprocess - timestamp_sample,
