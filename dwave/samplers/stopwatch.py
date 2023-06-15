@@ -1,4 +1,4 @@
-# Copyright 2019 D-Wave Systems Inc.
+# Copyright 2023 D-Wave Systems Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,28 +32,28 @@ class Stopwatch():
         self.timestamp_postprocessing = None
         self.timestamp_end = None
 
-    def start_preprocessing(self):
+    def start_preprocessing(self) -> None:
         """Records the timestamp of the beginning of the preprocessing step.
         """
         if self.timestamp_preprocessing is not None:
             raise RepeatedTimestampError()
         self.timestamp_preprocessing = timer()
 
-    def start_sampling(self):
+    def start_sampling(self) -> None:
         """Records the timestamp of the beginning of the sampling step.
         """
         if self.timestamp_sampling is not None:
             raise RepeatedTimestampError()
         self.timestamp_sampling = timer()
 
-    def start_postprocessing(self):
+    def start_postprocessing(self) -> None:
         """Records the timestamp of the beginning of the postprocessing step.
         """
         if self.timestamp_postprocessing is not None:
             raise RepeatedTimestampError()
         self.timestamp_postprocessing = timer()
 
-    def stop_postprocessing(self):
+    def stop_postprocessing(self) -> None:
         """Records the final timestamp. This should be invoked last.
         """
         if self.timestamp_end is not None:
@@ -93,19 +93,19 @@ class Stopwatch():
         ))
 
 
-class RepeatedTimestampError(RuntimeError):
+class RepeatedTimestampError(Exception):
     def __init__(self) -> None:
         super().__init__("Timestamp already exists")
 
 
-class MissingTimestampError(RuntimeError):
+class MissingTimestampError(Exception):
     def __init__(self) -> None:
         super().__init__(
             "Missing at least one timestamp; check all start and end times have been called."
         )
 
 
-class NonmonotonicTimestampError(RuntimeError):
+class NonmonotonicTimestampError(Exception):
     def __init__(self) -> None:
         super().__init__("Timings are non-monotonic; order of timestamps should be: "
                          + "preprocessing, sampling, postprocessing, then end.")
