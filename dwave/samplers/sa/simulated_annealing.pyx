@@ -47,7 +47,8 @@ cdef extern from "cpu_sa.h":
 def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                         coupler_weights, sweeps_per_beta, beta_schedule, seed,
                         np.ndarray[np.int8_t, ndim=2, mode="c"] states_numpy,
-                        randomize_order=False, proposal_acceptance_criteria=True,
+                        randomize_order=False,
+                        proposal_acceptance_criteria: str = "metropolis",
                         interrupt_function=None):
     """Wraps `general_simulated_annealing` from `cpu_sa.cpp`. Accepts
     an Ising problem defined on a general graph and returns samples
@@ -153,12 +154,12 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
     cdef unsigned long long _seed = seed
     cdef bool _randomize_order = randomize_order
     cdef bool _metropolis_update
-    if proposal_acceptance_criteria == 'Gibbs':
+    if proposal_acceptance_criteria.lower() == 'gibbs':
         _metropolis_update = False
-    elif proposal_acceptance_criteria == 'Metropolis':
+    elif proposal_acceptance_criteria.lower() == 'metropolis':
         _metropolis_update = True
     else:
-        raise ValueError('Unknown proposal_acceptance_criteria')
+        raise ValueError(f'Unknown proposal_acceptance_criteria: {proposal_acceptance_criteria}')
     cdef void* _interrupt_function
     if interrupt_function is None:
         _interrupt_function = NULL
