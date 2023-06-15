@@ -71,7 +71,7 @@ class Stopwatch():
           postprocessing.
 
         Returns:
-            Dict[str: float]: timings of each category.
+            Dict[str, float]: timings of each category.
         """
 
         if None in {self.timestamp_preprocessing, self.timestamp_sampling,
