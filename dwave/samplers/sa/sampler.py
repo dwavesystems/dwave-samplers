@@ -18,6 +18,7 @@ from numbers import Integral
 from numpy.random import randint
 from collections import defaultdict
 from typing import List, Sequence, Tuple, Optional, Union
+from time import perf_counter_ns
 try:
     from typing import Literal
     BetaScheduleType = Literal['linear', 'geometric', 'custom']
@@ -30,7 +31,6 @@ import dimod
 import numpy as np
 
 from dwave.samplers.sa.simulated_annealing import simulated_annealing
-from dwave.samplers.stopwatch import Stopwatch
 
 import warnings
 
@@ -264,8 +264,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                Boltzmann's constant.
 
         """
-        stopwatch = Stopwatch()
-        stopwatch.start_preprocessing()
+        timestamp_preprocess = perf_counter_ns()
         # get the original vartype so we can return consistently
         original_vartype = bqm.vartype
 
@@ -372,7 +371,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                 else:
                     raise ValueError("Beta schedule type {} not implemented".format(beta_schedule_type))
 
-        stopwatch.start_sampling()
+        timestamp_sample = perf_counter_ns()
 
         # run the simulated annealing algorithm
         samples, energies = simulated_annealing(
@@ -380,7 +379,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
             num_sweeps_per_beta, beta_schedule,
             seed, initial_states_array, interrupt_function)
 
-        stopwatch.start_postprocessing()
+        timestamp_postprocess = perf_counter_ns()
 
         info = {
             "beta_range": beta_range,
@@ -395,9 +394,12 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
 
         response.change_vartype(original_vartype, inplace=True)
 
-        # Update timing info last to capture the full postprocessing time
-        stopwatch.stop_postprocessing()
-        response.info.update(stopwatch.report())
+        response.info.update(dict(timing=dict(
+            preprocessing_ns=timestamp_sample - timestamp_preprocess,
+            sampling_ns=timestamp_postprocess - timestamp_sample,
+            # Update timing info last to capture the full postprocessing time
+            postprocessing_ns=perf_counter_ns() - timestamp_postprocess,
+        )))
 
         return response
 
