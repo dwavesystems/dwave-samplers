@@ -280,3 +280,36 @@ class TestSteepestDescentSampler(unittest.TestCase):
         # result is identical to initial state, with zero downhill moves
         np.testing.assert_array_equal(ss.record.sample, [[-1, -1]])
         np.testing.assert_array_equal(ss.record.num_steps, [0])
+
+
+class TestTimingInfo(unittest.TestCase):
+    def setUp(self) -> None:
+        empty = dimod.BQM(dimod.SPIN)
+        one = dimod.BQM.from_ising({"a": 1}, {})
+        two = dimod.BQM.from_ising({}, {("abc", (1, 2)): -1})
+
+        sampler = SteepestDescentSampler()
+        rng = np.random.default_rng(59921)
+
+        self.sample_sets = []
+        for bqm in [empty, one, two]:
+            sample_set = sampler.sample(bqm, seed=rng.integers(2**30))
+            self.sample_sets.append(sample_set)
+
+        self.timing_keys = ["preprocessing_ns", "postprocessing_ns", "sampling_ns"]
+
+    def test_keys_exist(self):
+        for sample_set in self.sample_sets:
+            self.assertIn("timing", sample_set.info)
+            timing = sample_set.info['timing']
+            for timing_key in self.timing_keys:
+                self.assertIn(timing_key, timing)
+
+    def test_strictly_postive_timings(self):
+        for sample_set in self.sample_sets:
+            for category, duration in sample_set.info['timing'].items():
+                self.assertGreater(duration, 0)
+
+
+if __name__ == "__main__":
+    unittest.main()

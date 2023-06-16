@@ -15,6 +15,7 @@
 """A dimod sampler that uses the steepest gradient descent."""
 
 from numbers import Integral
+from time import perf_counter_ns
 from typing import Optional
 
 from dimod.core.initialized import InitialStateGenerator
@@ -169,6 +170,17 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
                 Use optimizations for large and sparse problems (search tree for
                 next descent variable instead of linear array).
 
+        Returns:
+            A `dimod.SampleSet` for the binary quadratic model.
+
+            The `info` field of the sample set contains three categories of timing information:
+            preprocessing, sampling, and postprocessing time. All timings are reported in units of
+            nanoseconds. Preprocessing time is the total time spent converting the BQM variable type
+            (if required), parsing input arguments, and determining an annealing schedule. Sampling
+            time is the total time the algorithm spent in sampling states of the binary quadratic
+            model. Postprocessing time is the total time spent reverting variable type and creating
+            a `dimod.SampleSet`.
+
         Note:
             Number of descents (single variable flips) taken to reach the local
             minimum for each sample is stored in a data vector called ``num_steps``.
@@ -219,7 +231,7 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
             column) to reach the minimum state, ``(-1, -1)``, from the initial
             state, ``(1, 1)``.
         """
-
+        timestamp_preprocess = perf_counter_ns()
         # get the original vartype so we can return consistently
         original_vartype = bqm.vartype
 
@@ -252,11 +264,15 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
         initial_states_array = \
             np.ascontiguousarray(initial_states.record.sample, dtype=np.int8)
 
+        timestamp_sample = perf_counter_ns()
+
         # run the steepest descent
         samples, energies, num_steps = steepest_gradient_descent(
             num_reads,
             linear, coupler_starts, coupler_ends, coupler_weights,
             initial_states_array, large_sparse_opt)
+
+        timestamp_postprocess = perf_counter_ns()
 
         # resulting sampleset
         result = dimod.SampleSet.from_samples(
@@ -267,6 +283,15 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
         )
 
         result.change_vartype(original_vartype, inplace=True)
+
+        # Developer note: the specific keys of the timing dict are chosen to be consistent with
+        #                 other samplers' timing dict.
+        result.info.update(dict(timing=dict(
+            preprocessing_ns=timestamp_sample - timestamp_preprocess,
+            sampling_ns=timestamp_postprocess - timestamp_sample,
+            # Update timing info last to capture the full postprocessing time
+            postprocessing_ns=perf_counter_ns() - timestamp_postprocess,
+        )))
 
         return result
 
