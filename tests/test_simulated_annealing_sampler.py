@@ -23,6 +23,34 @@ import dimod
 import dwave.samplers.sa as sa
 from dwave.samplers.sa import SimulatedAnnealingSampler
 
+class TestTimingInfo(unittest.TestCase):
+    def setUp(self) -> None:
+        empty = dimod.BQM(dimod.SPIN)
+        one = dimod.BQM.from_ising({"a": 1}, {})
+        two = dimod.BQM.from_ising({}, {("abc", (1, 2)): -1})
+
+        sampler = SimulatedAnnealingSampler()
+        rng = np.random.default_rng(48448418563)
+
+        self.sample_sets = []
+        for bqm in [empty, one, two]:
+            sample_set = sampler.sample(bqm, seed=rng.integers(2**30))
+            self.sample_sets.append(sample_set)
+
+        self.timing_keys = ["preprocessing_ns", "postprocessing_ns", "sampling_ns"]
+
+    def test_keys_exist(self):
+        for sample_set in self.sample_sets:
+            self.assertIn("timing", sample_set.info)
+            timing = sample_set.info['timing']
+            for timing_key in self.timing_keys:
+                self.assertIn(timing_key, timing)
+
+    def test_strictly_postive_timings(self):
+        for sample_set in self.sample_sets:
+            for category, duration in sample_set.info['timing'].items():
+                self.assertGreater(duration, 0)
+
 
 class TestSchedules(unittest.TestCase):
     def test_schedules(self):
@@ -35,7 +63,7 @@ class TestSchedules(unittest.TestCase):
             resp = sampler.sample_ising(h, J, num_reads=num_reads, beta_schedule_type=schedule_type)
 
             row, col = resp.record.sample.shape
-            
+
             self.assertEqual(row, num_reads)
             self.assertEqual(col, num_vars)  # should get back two variables
             self.assertIs(resp.vartype, dimod.SPIN)  # should be ising
@@ -59,9 +87,9 @@ class TestSchedules(unittest.TestCase):
         with self.assertRaises(ValueError):
             #numeric
             resp = sampler.sample_ising(h, J, num_reads=num_reads, beta_schedule_type='custom',beta_schedule=['asd',1])
-            
+
         resp = sampler.sample_ising(h, J, num_reads=num_reads, beta_schedule_type='custom',beta_schedule=[0.1,1])
-        
+
 class TestSimulatedAnsaingSampler(unittest.TestCase):
     def test_instantiation(self):
         sampler = SimulatedAnnealingSampler()
@@ -372,7 +400,7 @@ class TestDefaultBetaRange(unittest.TestCase):
         bqm = dimod.BinaryQuadraticModel.from_ising({'a': 1}, {'bc': 1})
         self.assertEqual(sa.sampler.default_beta_range(bqm),
                          sa.sampler.default_beta_range(bqm.binary))
-        
+
     def test_scale_T_with_N(self):
         res1 = sa.sampler._default_ising_beta_range({x: 1 for x in range(10)}, {}, scale_T_with_N=False)
         res2 = sa.sampler._default_ising_beta_range({x: 1 for x in range(10)}, {}, scale_T_with_N=True)

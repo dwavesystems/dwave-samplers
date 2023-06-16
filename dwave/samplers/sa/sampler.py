@@ -18,6 +18,7 @@ from numbers import Integral
 from numpy.random import randint
 from collections import defaultdict
 from typing import List, Sequence, Tuple, Optional, Union
+from time import perf_counter_ns
 try:
     from typing import Literal
     BetaScheduleType = Literal['linear', 'geometric', 'custom']
@@ -225,6 +226,23 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                 annealing terminates and returns with all of the samples and
                 energies found so far.
 
+        Returns:
+            A `dimod.SampleSet` for the binary quadratic model.
+
+            The `info` field of the sample set contains information about the sampling procedure:
+            1. the beta range used,
+            2. the beta schedule type used, and
+            3. timing information (details below).
+
+            Timing information is categorized into three: preprocessing, sampling, and
+            postprocessing time. All timings are reported in units of nanoseconds.
+
+            Preprocessing time is the total time spent converting the BQM variable type (if
+            required), parsing input arguments, and determining an annealing schedule. Sampling time
+            is the total time the algorithm spent in sampling states of the binary quadratic model.
+            Postprocessing time is the total time spent reverting variable type and creating a
+            `dimod.SampleSet`.
+
         Examples:
             This example runs simulated annealing on a binary quadratic model
             with various input parameters.
@@ -255,6 +273,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                Boltzmann's constant.
 
         """
+        timestamp_preprocess = perf_counter_ns()
         # get the original vartype so we can return consistently
         original_vartype = bqm.vartype
 
@@ -360,11 +379,16 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                     beta_schedule = np.geomspace(*beta_range, num=num_betas)
                 else:
                     raise ValueError("Beta schedule type {} not implemented".format(beta_schedule_type))
+
+        timestamp_sample = perf_counter_ns()
+
         # run the simulated annealing algorithm
         samples, energies = simulated_annealing(
             num_reads, ldata, irow, icol, qdata,
             num_sweeps_per_beta, beta_schedule,
             seed, initial_states_array, interrupt_function)
+
+        timestamp_postprocess = perf_counter_ns()
 
         info = {
             "beta_range": beta_range,
@@ -378,6 +402,15 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
         )
 
         response.change_vartype(original_vartype, inplace=True)
+
+        # Developer note: the specific keys of the timing dict are chosen to be consistent with
+        #                 other samplers' timing dict.
+        response.info.update(dict(timing=dict(
+            preprocessing_ns=timestamp_sample - timestamp_preprocess,
+            sampling_ns=timestamp_postprocess - timestamp_sample,
+            # Update timing info last to capture the full postprocessing time
+            postprocessing_ns=perf_counter_ns() - timestamp_postprocess,
+        )))
 
         return response
 
