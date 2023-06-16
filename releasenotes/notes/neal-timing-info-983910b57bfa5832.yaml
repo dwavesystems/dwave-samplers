@@ -1,4 +1,4 @@
 ---
 features:
   - |
-    Add timing information for SimulatedAnnealingSampler in units of nanoseconds.
+    Add timing information for ``SimulatedAnnealingSampler``.
