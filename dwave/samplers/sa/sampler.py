@@ -412,7 +412,6 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
             seed, initial_states_array,
             randomize_order, proposal_acceptance_criteria,
             interrupt_function)
-
         timestamp_postprocess = perf_counter_ns()
 
         info = {
