@@ -25,6 +25,7 @@ try:
 except ImportError:
     BetaScheduleType = str
 
+    
 from dimod.core.initialized import InitialStateGenerator
 
 import dimod
@@ -135,14 +136,14 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                num_reads: Optional[int] = None,
                num_sweeps: Optional[int] = None,
                num_sweeps_per_beta: int = 1,
-               beta_schedule_type: BetaScheduleType = "geometric",
+               beta_schedule_type: Optional[BetaScheduleType] = "geometric",
                seed: Optional[int] = None,
                interrupt_function=None,
                beta_schedule: Optional[Union[Sequence[float], np.ndarray]] = None,
                initial_states: Optional[dimod.typing.SamplesLike] = None,
                initial_states_generator: InitialStateGenerator = "random",
-               randomize_order: bool = False,
-               proposal_acceptance_criteria = 'Metropolis',
+               randomize_order: Optional[bool] = False,
+               proposal_acceptance_criteria: Optional[str] = 'Metropolis',
                **kwargs) -> dimod.SampleSet:
         """Sample from a binary quadratic model.
 
@@ -222,25 +223,24 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                     Expands the specified initial states with randomly generated
                     states if fewer than ``num_reads`` or truncates if greater.
 
-            randomize_order (bool, optional, default=False)
-                When True, each spin update selects a variable uniformly at random.
-                When False, updates proceed sequentially through the labeled variables 
-                on each sweep so that all variables are updated once per sweep.
-                The True method is ergodic and obeys detailed balance at all temperatures.
-                Symmetries of the Boltzmann distribution(s) are not broken by the
-                update order.
-                The False method 
-                    - when combined with ``metropolis_update=True`` can be
-                    non-ergodic in the limits of zero or infinite temperature,
-                    and converge slowly near these limits.
-                    - can introduce a dynamical bias as a function of variable
-                    labeling convention.
-                    - has faster per spin update than the True method.
+            randomize_order:
+                When `True`, each spin update selects a variable uniformly at random.
+                This method is ergodic, obeys detailed balance and preserves symmetries 
+                of the model.
 
-            proposal_acceptance_criteria (str, optional, default=True)
-                When `Gibbs`, each spin flip proposal is accepted according
+                When `False`, updates proceed sequentially through the labeled variables 
+                on each sweep so that all variables are updated once per sweep. This method:
+                
+                * can be non-ergodic in special cases when used with ``proposal_acceptance_critera=="Metropolis"``.
+
+                * can introduce a dynamical bias as a function of variable order.
+
+                * has faster per spin update than the True method.
+
+            proposal_acceptance_criteria:
+                When "Gibbs", each spin flip proposal is accepted according
                 to the Gibbs criteria.
-                When `Metropolis', each spin flip proposal is accepted according
+                When "Metropolis", each spin flip proposal is accepted according
                 to the Metropolis-Hastings criteria.
 
             interrupt_function (function, optional):
