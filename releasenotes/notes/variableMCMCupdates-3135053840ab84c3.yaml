@@ -1,0 +1,3 @@
+features:
+  - Gibbs variable updates
+  - Randomized variable update order
