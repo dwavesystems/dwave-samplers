@@ -38,6 +38,7 @@ cdef extern from "cpu_sa.h":
             const int sweeps_per_beta,
             const vector[double] & beta_schedule,
             const unsigned long long seed,
+            const bool randomize_order,
             callback interrupt_callback,
             void *interrupt_function) nogil
 
@@ -45,7 +46,7 @@ cdef extern from "cpu_sa.h":
 def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                         coupler_weights, sweeps_per_beta, beta_schedule, seed,
                         np.ndarray[np.int8_t, ndim=2, mode="c"] states_numpy,
-                        interrupt_function=None):
+                        randomize_order=False, interrupt_function=None):
     """Wraps `general_simulated_annealing` from `cpu_sa.cpp`. Accepts
     an Ising problem defined on a general graph and returns samples
     using simulated annealing.
@@ -95,6 +96,17 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
         called between samples and if it returns True, simulated annealing
         will return early with the samples it already has.
 
+    randomize_order: bool
+        When False, updates proceed sequentially through the labeled variables 
+        on each sweep so that all variables are updated once.
+        When True, each spin update selects a variable uniformly at random. 
+        Both methods obey detailed balance. The False method 
+        - is non-ergodic in the pathological limits of zero temperature and 
+          infinite temperature. Convergence can be slow approaching these limits.
+        - breaks symmetries of the distribution via the fixed sequential 
+          sampling order. 
+        - can nevertheless be more performant in some applications.
+        
     Returns
     -------
     samples : numpy.ndarray
@@ -127,12 +139,14 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
     cdef int _sweeps_per_beta = sweeps_per_beta
     cdef vector[double] _beta_schedule = beta_schedule
     cdef unsigned long long _seed = seed
-
+    cdef bool _randomize_order = randomize_order
+    
     cdef void* _interrupt_function
     if interrupt_function is None:
         _interrupt_function = NULL
     else:
         _interrupt_function = <void *>interrupt_function
+
 
     with nogil:
         num = general_simulated_annealing(_states,
@@ -145,6 +159,7 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                                           _sweeps_per_beta,
                                           _beta_schedule,
                                           _seed,
+                                          _randomize_order,
                                           interrupt_callback,
                                           _interrupt_function)
 

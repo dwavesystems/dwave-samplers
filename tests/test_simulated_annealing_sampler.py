@@ -89,8 +89,8 @@ class TestSchedules(unittest.TestCase):
             resp = sampler.sample_ising(h, J, num_reads=num_reads, beta_schedule_type='custom',beta_schedule=['asd',1])
 
         resp = sampler.sample_ising(h, J, num_reads=num_reads, beta_schedule_type='custom',beta_schedule=[0.1,1])
-
-class TestSimulatedAnsaingSampler(unittest.TestCase):
+        
+class TestSimulatedAnnealingSampler(unittest.TestCase):
     def test_instantiation(self):
         sampler = SimulatedAnnealingSampler()
         dimod.testing.assert_sampler_api(sampler)
@@ -528,6 +528,22 @@ class TestHeuristicResponse(unittest.TestCase):
         self.assertLess(response_energy, threshold, ("response_energy, {}, exceeds "
             "threshold").format(response_energy))
 
-
+class TestCoreSpinUpdate(unittest.TestCase):
+    def test_metropolis(self):
+        #Metropolis sequential sweep, or metropolis fully randomized
+        sampler = SimulatedAnnealingSampler()
+        num_vars = 100
+        num_reads = 1
+        bqm = dimod.BinaryQuadraticModel.from_ising({i : 0 for i in range(num_vars)},{})
+        initial_states = dimod.SampleSet.from_samples_bqm({i : 1 for i in range(num_vars)}, bqm)
+        # Roughly half of spins should randomize, a stronger (probabilistic) test could be applied
+        response = SimulatedAnnealingSampler().sample(bqm, initial_states=initial_states, num_reads=1, seed = 1, randomize_order=True)
+        self.assertTrue(abs(np.sum(response.record.sample)) < num_vars) 
+        # With zero effective field spins oscillate under randomize_order=False (default)
+        # With zero effective field spins randomize under randomize_order=True (probability 1/2^N of oscillation).
+        for num_sweeps in [1,2]:
+                response = SimulatedAnnealingSampler().sample(bqm, initial_states=initial_states, num_reads=1, num_sweeps=num_sweeps)
+                self.assertTrue(np.sum(response.record.sample) == num_vars * (-1)**num_sweeps) 
+                
 if __name__ == "__main__":
     unittest.main()

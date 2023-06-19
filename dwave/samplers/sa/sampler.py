@@ -141,6 +141,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                beta_schedule: Optional[Union[Sequence[float], np.ndarray]] = None,
                initial_states: Optional[dimod.typing.SamplesLike] = None,
                initial_states_generator: InitialStateGenerator = "random",
+               randomize_order = False,
                **kwargs) -> dimod.SampleSet:
         """Sample from a binary quadratic model.
 
@@ -219,6 +220,24 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                 * "random":
                     Expands the specified initial states with randomly generated
                     states if fewer than ``num_reads`` or truncates if greater.
+
+            randomize_order (bool, optional, default=False)
+                When True, each spin update selects a variable uniformly at random.
+                When False, updates proceed sequentially through the labeled variables 
+                on each sweep so that all variables are updated once per sweep.
+                Each update is of the Metropolis-Hasting type.
+                The True method is ergodic and obeys detailed balance at all temperatures.
+                Symmetries of the Boltzmann distribution(s) are not broken by the update
+                order. 
+                The False method 
+                    - can be non-ergodic in the pathological limits of zero temperature and 
+                    infinite temperature. Convergence can be slow approaching these limits.
+                    - can break symmetries of the model distribution via the fixed sequential 
+                    sampling order, hence introducting some bias related to variable order. 
+                    - has faster per spin update.
+                    - can be more or less performant in application than the True method
+                    owing to guaranteed variable update frequency or an advantageous 
+                    alignment of the update order with the bqm variable ordering. 
 
             interrupt_function (function, optional):
                 A function called with no parameters between each sample of
@@ -386,7 +405,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
         samples, energies = simulated_annealing(
             num_reads, ldata, irow, icol, qdata,
             num_sweeps_per_beta, beta_schedule,
-            seed, initial_states_array, interrupt_function)
+            seed, initial_states_array, randomize_order, interrupt_function)
 
         timestamp_postprocess = perf_counter_ns()
 

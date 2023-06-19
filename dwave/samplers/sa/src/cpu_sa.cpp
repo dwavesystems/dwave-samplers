@@ -94,7 +94,8 @@ void simulated_annealing_run(
     const vector<vector<int>>& neighbors,
     const vector<vector<double>>& neighbour_couplings,
     const int sweeps_per_beta,
-    const vector<double>& beta_schedule
+    const vector<double>& beta_schedule,
+    const bool & randomize_order
 ) {
     const int num_vars = h.size();
 
@@ -127,8 +128,14 @@ void simulated_annealing_run(
             const double threshold = 44.36142 / beta;
 
             for (int varI = 0; varI < num_vars; varI++) {
-	        FASTRAND(rand);
-		int var = rand%num_vars;
+                int var;
+                if(randomize_order){
+                    FASTRAND(rand);
+                    var = rand%num_vars;
+                }
+                else{
+                    var = varI;
+                }
                 if (delta_energy[var] >= threshold) continue;
 
                 flip_spin = false;
@@ -243,6 +250,7 @@ int general_simulated_annealing(
     const int sweeps_per_beta,
     const vector<double> beta_schedule,
     const uint64_t seed,
+    const bool randomize_order,
     callback interrupt_callback,
     void * const interrupt_function
 ) {
@@ -307,7 +315,7 @@ int general_simulated_annealing(
         // the sample there
         simulated_annealing_run(state, h, degrees, 
                                 neighbors, neighbour_couplings, 
-                                sweeps_per_beta, beta_schedule);
+                                sweeps_per_beta, beta_schedule, randomize_order);
 
         // compute the energy of the sample and store it in `energies`
         energies[sample] = get_state_energy(state, h, coupler_starts, 

@@ -60,6 +60,7 @@ int general_simulated_annealing(
     const int sweeps_per_beta,
     const std::vector<double> beta_schedule,
     const uint64_t seed,
+    const bool randomize_order,
     callback interrupt_callback,
     void * const interrupt_function
 );
