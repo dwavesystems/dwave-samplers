@@ -296,14 +296,12 @@ class TestTimingInfo(unittest.TestCase):
             sample_set = sampler.sample(bqm, seed=rng.integers(2**30))
             self.sample_sets.append(sample_set)
 
-        self.timing_keys = ["preprocessing_ns", "postprocessing_ns", "sampling_ns"]
+        self.timing_keys = {"preprocessing_ns", "postprocessing_ns", "sampling_ns"}
 
     def test_keys_exist(self):
         for sample_set in self.sample_sets:
-            self.assertIn("timing", sample_set.info)
-            timing = sample_set.info['timing']
-            for timing_key in self.timing_keys:
-                self.assertIn(timing_key, timing)
+            with self.subTest(ss=sample_set):
+                self.timing_keys.issubset(sample_set.info['timing'])
 
     def test_strictly_postive_timings(self):
         for sample_set in self.sample_sets:
