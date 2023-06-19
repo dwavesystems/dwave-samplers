@@ -31,8 +31,14 @@
     #endif
 #endif
 
-typedef enum {GIBBS, METROPOLIS} mcmc_t;
-typedef enum {SEQUENTIAL, RANDOM} varorder_t;
+enum Proposal {
+    Gibbs,       /// Gibbs acceptance critera on each variable update
+    Metropolis,  /// Metropolis acceptance criteria one each variable update
+};
+enum VariableOrder {
+    Sequential,   /// Variables updated sequentially on each sweep
+    Random,       /// Variable updated uniformly at random per spin-update
+};
 
 double get_flip_energy(
     int var, std::int8_t *state, const std::vector<double> & h,
@@ -63,8 +69,8 @@ int general_simulated_annealing(
     const int sweeps_per_beta,
     const std::vector<double> beta_schedule,
     const uint64_t seed,
-    const varorder_t randomize_order,
-    const mcmc_t metropolis_update,
+    const VariableOrder varorder,
+    const Proposal proposal_acceptance_criteria,
     callback interrupt_callback,
     void * const interrupt_function
 );

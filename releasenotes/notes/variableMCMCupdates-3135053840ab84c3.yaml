@@ -1,3 +1,3 @@
 features:
   - Add ``randomize_order`` keyword argument to the ``SimulatedAnnealingSampler.sample()`` method. This controls whether the variables are updated in a random order or not.
-  - Add ``acceptance_criteria`` keyword argument to the ``SimulatedAnnealingSampler.sample()`` method. This controls whether the sampler will use Gibbs or Metropolis updates.
+  - Add ``proposal_acceptance_criteria`` keyword argument to the ``SimulatedAnnealingSampler.sample()`` method. This controls whether the sampler will use Gibbs or Metropolis updates.

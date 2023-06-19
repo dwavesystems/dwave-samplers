@@ -26,10 +26,10 @@ cimport numpy as np
 
 cdef extern from "cpu_sa.h":
     ctypedef bool (*callback)(void *function)
-    ctypedef enum mcmc_t:
-        GIBBS, METROPOLIS
-    ctypedef enum varorder_t:
-        SEQUENTIAL, RANDOM
+    ctypedef enum Proposal:
+        Gibbs, Metropolis
+    ctypedef enum VariableOrder:
+        Sequential, Random
     int general_simulated_annealing(
             np.int8_t* samples,
             double* energies,
@@ -41,8 +41,8 @@ cdef extern from "cpu_sa.h":
             const int sweeps_per_beta,
             const vector[double] & beta_schedule,
             const unsigned long long seed,
-            const varorder_t varorder,
-            const mcmc_t proposal_acceptance_criteria,
+            const VariableOrder varorder,
+            const Proposal proposal_acceptance_criteria,
             callback interrupt_callback,
             void *interrupt_function) nogil
 
@@ -50,8 +50,8 @@ cdef extern from "cpu_sa.h":
 def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                         coupler_weights, sweeps_per_beta, beta_schedule, seed,
                         np.ndarray[np.int8_t, ndim=2, mode="c"] states_numpy,
-                        randomize_order: bool = False,
-                        proposal_acceptance_criteria: str = "metropolis",
+                        randomize_order=False,
+                        proposal_acceptance_criteria='Metropolis',
                         interrupt_function=None):
     """Wraps `general_simulated_annealing` from `cpu_sa.cpp`. Accepts
     an Ising problem defined on a general graph and returns samples
@@ -110,17 +110,17 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
         Symmetries of the Boltzmann distribution(s) are not broken by the
         update order.
         The sequential method:
-            - when combined with ``proposal_acceptance_criteria=metropolis`` can be
+            - when combined with ``proposal_acceptance_criteria=Metropolis`` can be
             non-ergodic in the limits of zero or infinite temperature,
             and converge slowly near these limits.
             - can introduce a dynamical bias as a function of variable
             labeling convention.
             - has faster per spin update than the random method.
 
-    proposal_acceptance_criteria str
-        When `gibbs`, each spin flip proposal is accepted according to the
+    proposal_acceptance_criteria: str
+        When `Gibbs`, each spin flip proposal is accepted according to the
         Gibbs criteria.
-        When `metropolis`, each spin flip proposal is accepted according to the
+        When `Metropolis`, each spin flip proposal is accepted according to the
         Metropolis-Hastings criteria.
 
     Returns
@@ -155,16 +155,16 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
     cdef int _sweeps_per_beta = sweeps_per_beta
     cdef vector[double] _beta_schedule = beta_schedule
     cdef unsigned long long _seed = seed
-    cdef varorder_t _varorder
+    cdef VariableOrder _varorder
     if randomize_order:
-        _varorder = SEQUENTIAL
+        _varorder = Random
     else:
-        _varorder = RANDOM
-    cdef mcmc_t _proposal_acceptance_criteria
+        _varorder = Sequential
+    cdef Proposal _proposal_acceptance_criteria
     if proposal_acceptance_criteria.lower() == 'gibbs':
-        _proposal_acceptance_criteria = GIBBS
+        _proposal_acceptance_criteria = Gibbs
     elif proposal_acceptance_criteria.lower() == 'metropolis':
-        _proposal_acceptance_criteria = METROPOLIS
+        _proposal_acceptance_criteria = Metropolis
     else:
         raise ValueError(f'Unknown proposal_acceptance_criteria: {proposal_acceptance_criteria}')
     cdef void* _interrupt_function

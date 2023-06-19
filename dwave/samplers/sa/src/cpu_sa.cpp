@@ -88,7 +88,7 @@ double get_flip_energy(
 // @param beta_schedule A list of the beta values to run `sweeps_per_beta`
 //        sweeps at.
 // @return Nothing, but `state` now contains the result of the run.
-template <varorder_t varorder, mcmc_t proposal_acceptance_criteria>
+template <VariableOrder varorder, Proposal proposal_acceptance_criteria>
 void simulated_annealing_run(
     std::int8_t* state,
     const vector<double>& h,
@@ -129,7 +129,7 @@ void simulated_annealing_run(
             const double threshold = 44.36142 / beta;
             for (int varI = 0; varI < num_vars; varI++) {
                 int var;
-                if constexpr (varorder == RANDOM) {
+                if constexpr (varorder == Random) {
                     FASTRAND(rand);
                     var = rand%num_vars;
                 } else {
@@ -139,7 +139,7 @@ void simulated_annealing_run(
 
                 flip_spin = false;
 
-                if constexpr (proposal_acceptance_criteria == METROPOLIS) {
+                if constexpr (proposal_acceptance_criteria == Metropolis) {
                     // Metropolis-Hastings acceptance rule
                     if (delta_energy[var] <= 0.0) {
                         // automatically accept any flip that results in a lower
@@ -259,8 +259,8 @@ int general_simulated_annealing(
     const int sweeps_per_beta,
     const vector<double> beta_schedule,
     const uint64_t seed,
-    const varorder_t varorder,
-    const mcmc_t proposal_acceptance_criteria,
+    const VariableOrder varorder,
+    const Proposal proposal_acceptance_criteria,
     callback interrupt_callback,
     void * const interrupt_function
 ) {
@@ -324,26 +324,23 @@ int general_simulated_annealing(
         // then do the actual sample. this function will modify state, storing
         // the sample there
 	// Branching here is designed to make expicit compile time optimizations
-        if (varorder == RANDOM) {
-            if (proposal_acceptance_criteria == METROPOLIS) {
-                simulated_annealing_run<RANDOM, METROPOLIS>(state, h, degrees,
+        if (varorder == Random) {
+            if (proposal_acceptance_criteria == Metropolis) {
+                simulated_annealing_run<Random, Metropolis>(state, h, degrees,
                                                     neighbors, neighbour_couplings,
                                                     sweeps_per_beta, beta_schedule);
-            }
-            else {
-                simulated_annealing_run<RANDOM, GIBBS>(state, h, degrees,
+            } else {
+                simulated_annealing_run<Random, Gibbs>(state, h, degrees,
                                                      neighbors, neighbour_couplings,
                                                      sweeps_per_beta, beta_schedule);
           }
-        }
-        else {
-            if (proposal_acceptance_criteria == METROPOLIS) {
-                simulated_annealing_run<SEQUENTIAL, METROPOLIS>(state, h, degrees,
+        } else {
+            if (proposal_acceptance_criteria == Metropolis) {
+                simulated_annealing_run<Sequential, Metropolis>(state, h, degrees,
                                                      neighbors, neighbour_couplings,
                                                      sweeps_per_beta, beta_schedule);
-            }
-            else {
-                simulated_annealing_run<SEQUENTIAL, GIBBS>(state, h, degrees,
+            } else {
+                simulated_annealing_run<Sequential, Gibbs>(state, h, degrees,
                                                       neighbors, neighbour_couplings,
                                                       sweeps_per_beta, beta_schedule);
             }
