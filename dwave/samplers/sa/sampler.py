@@ -136,14 +136,14 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                num_reads: Optional[int] = None,
                num_sweeps: Optional[int] = None,
                num_sweeps_per_beta: int = 1,
-               beta_schedule_type: Optional[BetaScheduleType] = "geometric",
+               beta_schedule_type: BetaScheduleType = "geometric",
                seed: Optional[int] = None,
-               interrupt_function=None,
+               interrupt_function = None,
                beta_schedule: Optional[Union[Sequence[float], np.ndarray]] = None,
                initial_states: Optional[dimod.typing.SamplesLike] = None,
                initial_states_generator: InitialStateGenerator = "random",
-               randomize_order: Optional[bool] = False,
-               proposal_acceptance_criteria: Optional[str] = 'Metropolis',
+               randomize_order: bool = False,
+               proposal_acceptance_criteria: str = 'Metropolis',
                **kwargs) -> dimod.SampleSet:
         """Sample from a binary quadratic model.
 
@@ -230,7 +230,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
 
                 When `False`, updates proceed sequentially through the labeled variables 
                 on each sweep so that all variables are updated once per sweep. This method:
-                
+
                 * can be non-ergodic in special cases when used with ``proposal_acceptance_critera=="Metropolis"``.
 
                 * can introduce a dynamical bias as a function of variable order.
