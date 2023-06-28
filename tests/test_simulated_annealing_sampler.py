@@ -88,7 +88,8 @@ class TestSchedules(unittest.TestCase):
 
         resp = sampler.sample_ising(h, J, num_reads=num_reads, beta_schedule_type='custom',beta_schedule=[0.1,1])
 
-class TestSimulatedAnsaingSampler(unittest.TestCase):
+class TestSimulatedAnnealingSampler(unittest.TestCase):
+
     def test_instantiation(self):
         sampler = SimulatedAnnealingSampler()
         dimod.testing.assert_sampler_api(sampler)
@@ -171,12 +172,16 @@ class TestSimulatedAnsaingSampler(unittest.TestCase):
         h = {'a': 0, 'b': -1}
         J = {('a', 'b'): -1}
         eh, eJ = {}, {}
-
+        beta_range = [0.1,1]
         for h in (h, eh):
             for J in (J, eJ):
                 _h = copy.deepcopy(h)
                 _J = copy.deepcopy(J)
-                r = sampler.sample_ising(_h, _J)
+                r = sampler.sample_ising(_h, _J, beta_range=beta_range)
+        # An empty problem does not allow for beta_range
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            r = sampler.sample_ising(eh, eJ, beta_range=beta_range)
 
     def test_seed(self):
         sampler = SimulatedAnnealingSampler()
@@ -361,12 +366,13 @@ class TestSimulatedAnsaingSampler(unittest.TestCase):
         self.assertTrue(np.array_equal(result.record.sample, expected))
         self.assertEqual(len(result), 4)
 
-
 class TestDefaultBetaRange(unittest.TestCase):
     def test_empty_problem(self):
         #Values have no impact on behaviour, but should conform to documented structure
-        beta_range = sa.sampler._default_ising_beta_range({}, {})
-        self.assertTrue(len(beta_range)==2 and min(beta_range)>= 0)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            beta_range = sa.sampler._default_ising_beta_range({}, {})
+            self.assertTrue(len(beta_range)==2 and min(beta_range)>= 0)
 
     def test_single_variable_ising_problem(self):
         h1, c1 = sa.sampler._default_ising_beta_range({'a': 0.1}, {})
@@ -500,7 +506,7 @@ class TestHeuristicResponse(unittest.TestCase):
         _, response_energy, _ = next(response.data())
 
         # Compare energies
-        threshold = 0.1	 # Arbitrary threshold
+        threshold = 0.1         # Arbitrary threshold
         self.assertLess(response_energy, optimal_energy + threshold)
 
     def test_cubic_lattice_with_geometric(self):
@@ -526,6 +532,153 @@ class TestHeuristicResponse(unittest.TestCase):
         self.assertLess(response_energy, threshold, ("response_energy, {}, exceeds "
             "threshold").format(response_energy))
 
+class TestCoreSpinUpdate(unittest.TestCase):
+    sampler = SimulatedAnnealingSampler()
+    # Tighter randomized unit tests can fail randomly, using a seed prevents rare (but
+    # confusing) false alarms.
+    seed = 2023
+    
+    def make_confidence_interval(self, p, num_samples, k=3):
+        # Spins flip with probability p
+        # mean number of flips per sweep = num_var*p
+        # variance = num_var*p*(1-p)
+        # A k sigma interval for number of flips is roughly mean +/- k root(var)
+
+        mu = num_samples*p
+        sig = np.sqrt(num_samples*p*(1-p))
+        upper_bound = mu + k*sig
+        lower_bound = mu - k*sig
+        
+        return lower_bound, upper_bound
+    
+    def test_Metropolis_ergodicity_breaking(self):
+        # Default operation, Metropolis sequential order - deterministic in
+        # Null BQM (flat energy landscape) given fixed initial condition.
+        num_vars = 100
+        # test result is independent of the realization, so no need for seed
+        init_vector = 1 - 2*np.random.randint(2, size=num_vars)
+        bqm = dimod.BinaryQuadraticModel.from_ising(
+            {i : 0 for i in range(num_vars)},{})
+        initial_states = dimod.SampleSet.from_samples_bqm(
+            {i : init_vector[i] for i in range(num_vars)}, bqm)
+        beta_range = [0.1,1] # Bypass ill-conditioned (pathological context) routine.
+        # Spins oscillate (ergodicity breaking):
+        for num_sweeps in range(3):
+            response = SimulatedAnnealingSampler().sample(
+                bqm, initial_states=initial_states, num_reads=1,
+                num_sweeps=num_sweeps, beta_range=beta_range)
+            self.assertTrue(np.all(response.record.sample == (-1)**num_sweeps * init_vector))
+
+    def test_central_limits_random_updates(self):
+        # Gibbs update, and random ordering, produce probabilistic results
+        # We can however be quite confident in central limits. To avoid rare
+        # failures, the seed is set. If a failure is encountered (because the
+        # pseudo random number generator is changed and we are simply unlucky
+        # a new seed can be hard coded (and that should with high probability
+        # resolve the problem in the absence of real bugs.
+        num_vars = 10000
+        bqm = dimod.BinaryQuadraticModel.from_ising(
+            {i : 0 for i in range(num_vars)},{})
+        initial_states = dimod.SampleSet.from_samples_bqm(
+            {i : 1 for i in range(num_vars)}, bqm)
+        k = 3 # Significance threshold
+        beta_range = [0.1,1] #Bypass ill-conditioned (pathological context) routine.
+        # Gibbs sequential order sweep (test of central limit):
+        p = 0.5
+        lower_bound, upper_bound = self.make_confidence_interval(p, num_vars, k)
+        response = SimulatedAnnealingSampler().sample(
+            bqm, initial_states=initial_states, num_reads=1, seed=self.seed,
+            num_sweeps=1, proposal_acceptance_criteria='Gibbs',
+            beta_range=beta_range)
+        stat = np.sum(response.record.sample==1)
+        self.assertLess(stat, upper_bound)
+        self.assertGreater(stat, lower_bound)
+        # Metropolis random order sweep (test of central limit):
+        # A spin will flip on a sweep if selected (with replacement) an odd
+        # number of times. We anticipate roughly Poissonian statistics for
+        # large num_var (large enough here). P(x = num selections) =
+        # exp(-1)/x!, P(selected twice) = (1/2)^2 exp(-1)/2!, etc.
+        # p = P(flipped) = exp(-1)*[1 + 1/2! + 1/4! ..] = exp(-1)*cosh(1) = 0.568
+        # Roughly a Bernouilli random number, hence:
+        p = np.cosh(1)*np.exp(-1)
+        lower_bound, upper_bound = self.make_confidence_interval(p, num_vars, k)
+        # proposal_acceptance_critera = 'Metropois' by default:
+        response = SimulatedAnnealingSampler().sample(
+            bqm, initial_states=initial_states, num_reads=1, seed=self.seed,
+            num_sweeps=1, randomize_order=True, beta_range=beta_range) 
+        stat = np.sum(response.record.sample==1)
+        self.assertLess(stat, upper_bound)
+        self.assertGreater(stat, lower_bound)
+        # Gibbs randomized order: 50:50 on states sampled once.
+        p = 1/np.exp(1) + (1-1/np.exp(1))*0.5;
+        lower_bound, upper_bound = self.make_confidence_interval(p, num_vars, k)
+        response = SimulatedAnnealingSampler().sample(
+            bqm, initial_states=initial_states, num_reads=1, seed=self.seed,
+            num_sweeps=1, randomize_order=True, proposal_acceptance_criteria='Gibbs',
+            beta_range=beta_range)
+        stat = np.sum(response.record.sample==1)
+        self.assertLess(stat, upper_bound)
+        self.assertGreater(stat, lower_bound)
+        # Gibbs with energy signal, regardless of num_sweeps and initial condition expect +1
+        # state with probability exp(beta_final)/[exp(beta_final) + exp(-beta_final)] on every
+        # updated state (all states given sequential order)
+        bqm = dimod.BinaryQuadraticModel.from_ising(
+            {i : 1 for i in range(num_vars)}, {})
+        betas = [1, 1.5]
+        p = np.exp(-betas[-1])/(2*np.cosh(betas[-1]))
+        lower_bound, upper_bound = self.make_confidence_interval(p, num_vars, k)
+        response = SimulatedAnnealingSampler().sample(
+            bqm, initial_states=initial_states, num_reads=1, seed=self.seed,
+            proposal_acceptance_criteria='Gibbs',
+            beta_schedule_type='custom', beta_schedule=betas, num_sweeps_per_beta=1)
+        stat = np.sum(response.record.sample==1)
+        self.assertLess(stat, upper_bound)
+        self.assertGreater(stat, lower_bound)
+        
+    def test_greedy_limit_independent_spins(self):
+        num_vars = 10000
+        # test result is independent of the realization, so no need for seed
+        init_vector = np.random.normal(size=num_vars)
+        bqm = dimod.BinaryQuadraticModel.from_ising(
+            {i : init_vector[i] for i in range(num_vars)},{})
+        beta_schedule_type = 'custom'
+        beta_schedule = [float('inf')]
+        k = 3 # Significance threshold
+        # Check escape from/to trivial ground state, all methods:
+        ground_state_vec = np.array([-int(np.sign(bqm.linear[i]))
+                                     for i in range(num_vars)])
+        ground_state = dimod.SampleSet.from_samples_bqm(
+            {i : ground_state_vec[i] for i in range(num_vars)}, bqm)
+        sky_state = dimod.SampleSet.from_samples_bqm(
+            {i : -ground_state_vec[i] for i in range(num_vars)}, bqm)
+        # All touched spins escape to the ground state.
+        p = 1 - np.exp(-1) # ~Probability index sampled atleast once:
+        lower_bound, upper_bound = self.make_confidence_interval(p, num_vars, k)
+        for randomize_order in [False, True]:
+            for proposal_acceptance_criteria in ['Metropolis', 'Gibbs']:
+                response = SimulatedAnnealingSampler().sample(
+                    bqm, initial_states=ground_state, num_reads=1,
+                    num_sweeps=1, randomize_order=randomize_order,
+                    proposal_acceptance_criteria=proposal_acceptance_criteria,
+                    beta_schedule_type=beta_schedule_type,
+                    beta_schedule=beta_schedule, seed=self.seed)
+                self.assertTrue(np.all(response.record.sample==
+                                       ground_state_vec))
+                response = SimulatedAnnealingSampler().sample(
+                    bqm, initial_states=sky_state, num_reads=1,
+                    num_sweeps=1, randomize_order=randomize_order,
+                    proposal_acceptance_criteria=proposal_acceptance_criteria,
+                    beta_schedule_type=beta_schedule_type,
+                    beta_schedule=beta_schedule, seed=self.seed)
+                if randomize_order == False:
+                    # Recovers ground state
+                    self.assertTrue(np.all(response.record.sample==
+                                           ground_state_vec))
+                else:
+                    # Partial recovery only (inline with sampled indices)
+                    stat = np.sum(response.record.sample==ground_state_vec)
+                    self.assertLess(stat, upper_bound)
+                    self.assertGreater(stat, lower_bound)
 
 if __name__ == "__main__":
     unittest.main()

@@ -20,6 +20,7 @@
 #include <stdexcept>
 #include "cpu_sa.h"
 
+
 // xorshift128+ as defined https://en.wikipedia.org/wiki/Xorshift#xorshift.2B
 #define FASTRAND(rand) do {                       \
     uint64_t x = rng_state[0];                    \
@@ -87,6 +88,7 @@ double get_flip_energy(
 // @param beta_schedule A list of the beta values to run `sweeps_per_beta`
 //        sweeps at.
 // @return Nothing, but `state` now contains the result of the run.
+template <VariableOrder varorder, Proposal proposal_acceptance_criteria>
 void simulated_annealing_run(
     std::int8_t* state,
     const vector<double>& h,
@@ -125,22 +127,38 @@ void simulated_annealing_run(
             // greater than 44.361 / beta, then we can safely skip computing
             // the probability.
             const double threshold = 44.36142 / beta;
-
-            for (int var = 0; var < num_vars; var++) {
+            for (int varI = 0; varI < num_vars; varI++) {
+                int var;
+                if constexpr (varorder == Random) {
+                    FASTRAND(rand);
+                    var = rand%num_vars;
+                } else {
+                    var = varI;
+                }
                 if (delta_energy[var] >= threshold) continue;
 
                 flip_spin = false;
 
-                if (delta_energy[var] <= 0.0) {
-                    // automatically accept any flip that results in a lower 
-                    // energy
-                    flip_spin = true;
+                if constexpr (proposal_acceptance_criteria == Metropolis) {
+                    // Metropolis-Hastings acceptance rule
+                    if (delta_energy[var] <= 0.0) {
+                        // automatically accept any flip that results in a lower
+                        // energy
+                        flip_spin = true;
+                    } else {
+                        // get a random number, storing it in rand
+                        FASTRAND(rand);
+                        // accept the flip if exp(-delta_energy*beta) > random(0, 1)
+                        if (exp(-delta_energy[var]*beta) * RANDMAX > rand) {
+                            flip_spin = true;
+                        }
+                    }
                 }
                 else {
-                    // get a random number, storing it in rand
-                    FASTRAND(rand); 
-                    // accept the flip if exp(-delta_energy*beta) > random(0, 1)
-                    if (exp(-delta_energy[var]*beta) * RANDMAX > rand) {
+                    // Gibbs update: Sample fairly from the two available states,
+                    // independent of the current value
+                    FASTRAND(rand);
+                    if (RANDMAX > rand * (1+exp(delta_energy[var]*beta))) {
                         flip_spin = true;
                     }
                 }
@@ -241,6 +259,8 @@ int general_simulated_annealing(
     const int sweeps_per_beta,
     const vector<double> beta_schedule,
     const uint64_t seed,
+    const VariableOrder varorder,
+    const Proposal proposal_acceptance_criteria,
     callback interrupt_callback,
     void * const interrupt_function
 ) {
@@ -303,10 +323,28 @@ int general_simulated_annealing(
         std::int8_t *state = states + sample*num_vars;
         // then do the actual sample. this function will modify state, storing
         // the sample there
-        simulated_annealing_run(state, h, degrees, 
-                                neighbors, neighbour_couplings, 
-                                sweeps_per_beta, beta_schedule);
-
+	// Branching here is designed to make expicit compile time optimizations
+        if (varorder == Random) {
+            if (proposal_acceptance_criteria == Metropolis) {
+                simulated_annealing_run<Random, Metropolis>(state, h, degrees,
+                                                    neighbors, neighbour_couplings,
+                                                    sweeps_per_beta, beta_schedule);
+            } else {
+                simulated_annealing_run<Random, Gibbs>(state, h, degrees,
+                                                     neighbors, neighbour_couplings,
+                                                     sweeps_per_beta, beta_schedule);
+          }
+        } else {
+            if (proposal_acceptance_criteria == Metropolis) {
+                simulated_annealing_run<Sequential, Metropolis>(state, h, degrees,
+                                                     neighbors, neighbour_couplings,
+                                                     sweeps_per_beta, beta_schedule);
+            } else {
+                simulated_annealing_run<Sequential, Gibbs>(state, h, degrees,
+                                                      neighbors, neighbour_couplings,
+                                                      sweeps_per_beta, beta_schedule);
+            }
+        }
         // compute the energy of the sample and store it in `energies`
         energies[sample] = get_state_energy(state, h, coupler_starts, 
                                             coupler_ends, coupler_weights);

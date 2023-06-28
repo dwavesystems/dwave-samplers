@@ -26,7 +26,10 @@ cimport numpy as np
 
 cdef extern from "cpu_sa.h":
     ctypedef bool (*callback)(void *function)
-
+    ctypedef enum Proposal:
+        Gibbs, Metropolis
+    ctypedef enum VariableOrder:
+        Sequential, Random
     int general_simulated_annealing(
             np.int8_t* samples,
             double* energies,
@@ -38,6 +41,8 @@ cdef extern from "cpu_sa.h":
             const int sweeps_per_beta,
             const vector[double] & beta_schedule,
             const unsigned long long seed,
+            const VariableOrder varorder,
+            const Proposal proposal_acceptance_criteria,
             callback interrupt_callback,
             void *interrupt_function) nogil
 
@@ -45,6 +50,8 @@ cdef extern from "cpu_sa.h":
 def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                         coupler_weights, sweeps_per_beta, beta_schedule, seed,
                         np.ndarray[np.int8_t, ndim=2, mode="c"] states_numpy,
+                        randomize_order=False,
+                        proposal_acceptance_criteria='Metropolis',
                         interrupt_function=None):
     """Wraps `general_simulated_annealing` from `cpu_sa.cpp`. Accepts
     an Ising problem defined on a general graph and returns samples
@@ -95,6 +102,27 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
         called between samples and if it returns True, simulated annealing
         will return early with the samples it already has.
 
+    randomize_order: bool
+        When True, each spin update selects a variable uniformly at random.
+        When False, updates proceed sequentially through the labeled variables 
+        on each sweep so that all variables are updated once per sweep.
+        The random method is ergodic and obeys detailed balance at all temperatures.
+        Symmetries of the Boltzmann distribution(s) are not broken by the
+        update order.
+        The sequential method:
+            - when combined with ``proposal_acceptance_criteria=Metropolis`` can be
+            non-ergodic in the limits of zero or infinite temperature,
+            and converge slowly near these limits.
+            - can introduce a dynamical bias as a function of variable
+            labeling convention.
+            - has faster per spin update than the random method.
+
+    proposal_acceptance_criteria: str
+        When `Gibbs`, each spin flip proposal is accepted according to the
+        Gibbs criteria.
+        When `Metropolis`, each spin flip proposal is accepted according to the
+        Metropolis-Hastings criteria.
+
     Returns
     -------
     samples : numpy.ndarray
@@ -127,12 +155,24 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
     cdef int _sweeps_per_beta = sweeps_per_beta
     cdef vector[double] _beta_schedule = beta_schedule
     cdef unsigned long long _seed = seed
-
+    cdef VariableOrder _varorder
+    if randomize_order:
+        _varorder = Random
+    else:
+        _varorder = Sequential
+    cdef Proposal _proposal_acceptance_criteria
+    if proposal_acceptance_criteria.lower() == 'gibbs':
+        _proposal_acceptance_criteria = Gibbs
+    elif proposal_acceptance_criteria.lower() == 'metropolis':
+        _proposal_acceptance_criteria = Metropolis
+    else:
+        raise ValueError(f'Unknown proposal_acceptance_criteria: {proposal_acceptance_criteria}')
     cdef void* _interrupt_function
     if interrupt_function is None:
         _interrupt_function = NULL
     else:
         _interrupt_function = <void *>interrupt_function
+
 
     with nogil:
         num = general_simulated_annealing(_states,
@@ -145,6 +185,8 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                                           _sweeps_per_beta,
                                           _beta_schedule,
                                           _seed,
+                                          _varorder,
+                                          _proposal_acceptance_criteria,
                                           interrupt_callback,
                                           _interrupt_function)
 
