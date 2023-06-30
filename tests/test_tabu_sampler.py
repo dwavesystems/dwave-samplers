@@ -65,17 +65,23 @@ class TestTabuSampler(unittest.TestCase):
         dimod.testing.assert_response_energies(resp, bqm)
 
     def test_empty(self):
-        resp = tabu.TabuSampler().sample(dimod.BinaryQuadraticModel.empty(dimod.SPIN))
-        dimod.testing.assert_response_energies(resp, dimod.BinaryQuadraticModel.empty(dimod.SPIN))
+        resp = tabu.TabuSampler().sample(
+            dimod.BinaryQuadraticModel.empty(dimod.SPIN))
+        dimod.testing.assert_response_energies(
+            resp, dimod.BinaryQuadraticModel.empty(dimod.SPIN))
 
-        resp = tabu.TabuSampler().sample(dimod.BinaryQuadraticModel.empty(dimod.BINARY))
-        dimod.testing.assert_response_energies(resp, dimod.BinaryQuadraticModel.empty(dimod.BINARY))
+        resp = tabu.TabuSampler().sample(
+            dimod.BinaryQuadraticModel.empty(dimod.BINARY))
+        dimod.testing.assert_response_energies(
+            resp, dimod.BinaryQuadraticModel.empty(dimod.BINARY))
 
         resp = tabu.TabuSampler().sample_qubo({})
-        dimod.testing.assert_response_energies(resp, dimod.BinaryQuadraticModel.empty(dimod.BINARY))
+        dimod.testing.assert_response_energies(
+            resp, dimod.BinaryQuadraticModel.empty(dimod.BINARY))
 
         resp = tabu.TabuSampler().sample_ising({}, {})
-        dimod.testing.assert_response_energies(resp, dimod.BinaryQuadraticModel.empty(dimod.SPIN))
+        dimod.testing.assert_response_energies(
+            resp, dimod.BinaryQuadraticModel.empty(dimod.SPIN))
 
     def test_single_variable_problem(self):
         bqm = dimod.BinaryQuadraticModel({'a': 1}, {}, 0.0, dimod.SPIN)
@@ -94,64 +100,77 @@ class TestTabuSampler(unittest.TestCase):
         dimod.testing.assert_response_energies(resp, bqm)
 
     def test_initial_states(self):
-        bqm = dimod.BinaryQuadraticModel.from_ising({}, {'ab': -1, 'bc': 1, 'ac': 1})
-        init = dimod.SampleSet.from_samples({'a': 0, 'b': 0, 'c': 0}, vartype=dimod.BINARY, energy=0)
+        bqm = dimod.BinaryQuadraticModel.from_ising(
+            {}, {'ab': -1, 'bc': 1, 'ac': 1})
+        init = dimod.SampleSet.from_samples(
+            {'a': 0, 'b': 0, 'c': 0}, vartype=dimod.BINARY, energy=0)
 
         resp = tabu.TabuSampler().sample(bqm, initial_states=init)
         dimod.testing.assert_response_energies(resp, bqm)
 
     def test_initial_states_generator(self):
-        bqm = dimod.BinaryQuadraticModel.from_ising({}, {'ab': -1, 'bc': 1, 'ac': 1})
-        init = dimod.SampleSet.from_samples_bqm([{'a': 1, 'b': 1, 'c': 1},
-                                                 {'a': -1, 'b': -1, 'c': -1}], bqm)
+        bqm = dimod.BinaryQuadraticModel.from_ising(
+            {}, {'ab': -1, 'bc': 1, 'ac': 1})
+        init = dimod.SampleSet.from_samples_bqm(
+            [{'a': 1, 'b': 1, 'c': 1},
+             {'a': -1, 'b': -1, 'c': -1}], bqm)
 
         # 2 fixed initial state, 8 random
-        resp = tabu.TabuSampler().sample(bqm, initial_states=init, num_reads=10)
+        resp = tabu.TabuSampler().sample(
+            bqm, initial_states=init, num_reads=10)
         self.assertEqual(len(resp), 10)
 
         # 2 fixed initial states, 8 random, explicit
-        resp = tabu.TabuSampler().sample(bqm, initial_states=init, initial_states_generator='random', num_reads=10)
+        resp = tabu.TabuSampler().sample(
+            bqm, initial_states=init, initial_states_generator='random', num_reads=10)
         self.assertEqual(len(resp), 10)
 
         # all random
-        resp = tabu.TabuSampler().sample(bqm, initial_states_generator='random', num_reads=10)
+        resp = tabu.TabuSampler().sample(
+            bqm, initial_states_generator='random', num_reads=10)
         self.assertEqual(len(resp), 10)
 
         # all random
         resp = tabu.TabuSampler().sample(bqm, num_reads=10)
         self.assertEqual(len(resp), 10)
 
-
         # initial_states truncated to num_reads?
-        resp = tabu.TabuSampler().sample(bqm, initial_states=init, initial_states_generator='none', num_reads=1)
+        resp = tabu.TabuSampler().sample(
+            bqm, initial_states=init, initial_states_generator='none', num_reads=1)
         self.assertEqual(len(resp), 1)
 
-        resp = tabu.TabuSampler().sample(bqm, initial_states=init, initial_states_generator='tile', num_reads=1)
+        resp = tabu.TabuSampler().sample(
+            bqm, initial_states=init, initial_states_generator='tile', num_reads=1)
         self.assertEqual(len(resp), 1)
 
-        resp = tabu.TabuSampler().sample(bqm, initial_states=init, initial_states_generator='random', num_reads=1)
+        resp = tabu.TabuSampler().sample(
+            bqm, initial_states=init, initial_states_generator='random', num_reads=1)
         self.assertEqual(len(resp), 1)
-
 
         # 2 fixed initial states, repeated 5 times
-        resp = tabu.TabuSampler().sample(bqm, initial_states=init, initial_states_generator='tile', num_reads=10)
+        resp = tabu.TabuSampler().sample(
+            bqm, initial_states=init, initial_states_generator='tile', num_reads=10)
         self.assertEqual(len(resp), 10)
 
         # can't tile empty states
         with self.assertRaises(ValueError):
-            resp = tabu.TabuSampler().sample(bqm, initial_states_generator='tile', num_reads=10)
+            resp = tabu.TabuSampler().sample(
+                bqm, initial_states_generator='tile', num_reads=10)
 
         # not enough initial states
         with self.assertRaises(ValueError):
-            resp = tabu.TabuSampler().sample(bqm, initial_states_generator='none', num_reads=3)
+            resp = tabu.TabuSampler().sample(
+                bqm, initial_states_generator='none', num_reads=3)
 
         # initial_states incompatible with the bqm
-        init = dimod.SampleSet.from_samples({'a': 1, 'b': 1}, vartype='SPIN', energy=0)
+        init = dimod.SampleSet.from_samples(
+            {'a': 1, 'b': 1}, vartype='SPIN', energy=0)
         with self.assertRaises(ValueError):
             resp = tabu.TabuSampler().sample(bqm, initial_states=init)
 
     def test_input_validation(self):
-        bqm = dimod.BinaryQuadraticModel.from_ising({}, {'ab': -1, 'bc': 1, 'ac': 1})
+        bqm = dimod.BinaryQuadraticModel.from_ising(
+            {}, {'ab': -1, 'bc': 1, 'ac': 1})
         empty = dimod.BinaryQuadraticModel.empty(dimod.SPIN)
 
         # empty bqm
@@ -213,16 +232,20 @@ class TestTabuSampler(unittest.TestCase):
 
         all_samples = []
         for seed in (1, 25, 2352):
-            response0 = sampler.sample(bqm, num_reads=1, tenure=tenure, num_restarts=1, timeout=None, seed=seed)
-            response1 = sampler.sample(bqm, num_reads=1, tenure=tenure, num_restarts=1, timeout=None, seed=seed)
+            response0 = sampler.sample(
+                bqm, num_reads=1, tenure=tenure, num_restarts=1, timeout=None, seed=seed)
+            response1 = sampler.sample(
+                bqm, num_reads=1, tenure=tenure, num_restarts=1, timeout=None, seed=seed)
 
             samples0 = response0.record.sample
             samples1 = response1.record.sample
 
-            self.assertTrue(np.array_equal(samples0, samples1), "Same seed returned different results")
+            self.assertTrue(np.array_equal(samples0, samples1),
+                            "Same seed returned different results")
 
             for previous_sample in all_samples:
-                self.assertFalse(np.array_equal(samples0, previous_sample), "Different seed returned same results")
+                self.assertFalse(np.array_equal(samples0, previous_sample),
+                                 "Different seed returned same results")
 
             all_samples.append(samples0)
 
@@ -238,10 +261,10 @@ class TestTabuSampler(unittest.TestCase):
             response = sampler.sample(bqm, num_reads=3, timeout=200, seed=123)
         self.assertAlmostEqual(tt.dt, 0.6, places=1)
 
-        #Run as simple-tabu-search with timeout:
+        # Run as simple-tabu-search with timeout:
         with tictoc() as tt:
             response = sampler.sample(bqm, num_reads=2, timeout=300, seed=123,
-                                      num_restarts=0, lower_bound_z= 2147483647)
+                                      num_restarts=0, lower_bound_z=2147483647)
         self.assertAlmostEqual(tt.dt, 0.6, places=1)
 
     def test_num_restarts(self):
@@ -249,9 +272,10 @@ class TestTabuSampler(unittest.TestCase):
         bqm = dimod.generators.random.randint(10, 'SPIN', seed=123)
         target_restarts = 100
 
-        response = sampler.sample(bqm, num_reads=1, timeout=None, num_restarts=target_restarts, seed=345)
+        response = sampler.sample(
+            bqm, num_reads=1, timeout=None, num_restarts=target_restarts, seed=345)
 
-        num_restarts = response.record['num_restarts']  
+        num_restarts = response.record['num_restarts']
         self.assertEqual(target_restarts, num_restarts)
 
     def test_energy_threshold(self):
@@ -261,48 +285,61 @@ class TestTabuSampler(unittest.TestCase):
 
         # Expect that energy_threshold is met before timeout
         with tictoc() as tt:
-            response = sampler.sample(bqm, timeout=100000, energy_threshold=energy_threshold, seed=345)
+            response = sampler.sample(
+                bqm, timeout=100000, energy_threshold=energy_threshold, seed=345)
 
         self.assertLessEqual(tt.dt, 1.0)
 
     def test_coeff_z(self):
-        # bqm with excited state initialization should relax if and only if updated:
-        # num_var large enough that 'steepest ascent' subroutine does not cover all variables:
-        # single spin model (trivially solved by MIS), with initialization in
-        # an excited state
+        # bqm with excited state initialization should relax if and only if
+        # updated:
+        # num_var large enough that 'steepest ascent' subroutine does not
+        # cover all variables:
+        # single spin model (trivially solved by MIS), with initialization
+        # in an excited state
         num_var = 11
-        bqm = dimod.BinaryQuadraticModel.from_ising({i : 1 for i in range(num_var)},{})
-        init = dimod.SampleSet.from_samples_bqm([{i: bqm.linear[i] for i in range(num_var)}], bqm)
+        bqm = dimod.BinaryQuadraticModel.from_ising(
+            {i: 1 for i in range(num_var)}, {})
+        init = dimod.SampleSet.from_samples_bqm(
+            [{i: bqm.linear[i] for i in range(num_var)}], bqm)
         sampler = tabu.TabuSampler()
-        
-        response = sampler.sample(bqm, num_reads=1, timeout=None, num_restarts=0,
+
+        response = sampler.sample(bqm, num_reads=1, timeout=None,
+                                  num_restarts=0,
                                   coefficient_z_first=0, lower_bound_z=0,
                                   initial_states=init)
-        self.assertEqual(response.record.energy[0], num_var) #No updates, insufficient to find global minima.
-        
-        response = sampler.sample(bqm, num_reads=1, timeout=None, num_restarts=0,
+        # No updates, insufficient to find global minima.
+        self.assertEqual(response.record.energy[0], num_var)
+
+        response = sampler.sample(bqm, num_reads=1, timeout=None,
+                                  num_restarts=0,
                                   coefficient_z_first=0, lower_bound_z=1,
                                   initial_states=init)
-        self.assertEqual(response.record.energy[0], -num_var) #Updated once, sufficient to find global minima.
-        
-        response = sampler.sample(bqm, num_reads=1, timeout=None, num_restarts=0,
+        # Updated once, sufficient to find global minima.
+        self.assertEqual(response.record.energy[0], -num_var)
+
+        response = sampler.sample(bqm, num_reads=1, timeout=None,
+                                  num_restarts=0,
                                   coefficient_z_first=1, lower_bound_z=0,
                                   initial_states=init)
-        self.assertEqual(response.record.energy[0], -num_var) #Updated once, sufficient to find global minima.
+        # Updated once, sufficient to find global minima.
+        self.assertEqual(response.record.energy[0], -num_var)
 
-        response = sampler.sample(bqm, num_reads=1, timeout=None, num_restarts=1,
+        response = sampler.sample(bqm, num_reads=1, timeout=None,
+                                  num_restarts=1,
                                   coefficient_z_first=0, lower_bound_z=0,
-                                  coefficient_z_restart=1, 
+                                  coefficient_z_restart=1,
                                   initial_states=init)
-        self.assertEqual(response.record.energy[0], -num_var) #Updated once, sufficient to find global minima.
-        
-        # subset steepest ascent (meaning descent, if we think of qubo minimization)
-        # alone is insufficient to establish global minima, but is sufficient to
-        # escape the global maxima:        
-        response = sampler.sample(bqm, num_reads=1, timeout=None, num_restarts=1,
+        # Updated once, sufficient to find global minima.
+        self.assertEqual(response.record.energy[0], -num_var)
+
+        # subset steepest ascent (meaning descent, if we think of qubo
+        # minimization) alone is insufficient to establish global minima, but
+        # is sufficient to escape the global maxima:
+        response = sampler.sample(bqm, num_reads=1, timeout=None,
+                                  num_restarts=1,
                                   coefficient_z_first=0, lower_bound_z=0,
-                                  coefficient_z_restart=0, 
+                                  coefficient_z_restart=0,
                                   initial_states=init)
         self.assertLess(response.record.energy[0], num_var)
         self.assertGreater(response.record.energy[0], -num_var)
-
