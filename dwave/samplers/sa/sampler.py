@@ -564,7 +564,7 @@ def _default_ising_beta_range(h, J,
     # least 50%, which ensures mixing across all states is fast.
     # The most unlikely flip is related to the largest energy gap that must be
     # overcome, with Metropolis updates we require:
-    #   0.50 = exp(-hot_beta * max_delta_energy)                         - (1)
+    #   0.50 = exp(-hot_beta * max_delta_energy)                          - (1)
     # This is solved as hot_beta = log(2)/max_delta_energy, max_delta energy is
     # twice the effective field, we take a worst case of the effective field to
     # be conservative. Max delta energy occurs when all biases are aligned, and
