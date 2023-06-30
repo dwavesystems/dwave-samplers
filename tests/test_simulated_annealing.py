@@ -12,11 +12,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import time
 import unittest
 import contextlib
-from concurrent.futures import ThreadPoolExecutor, wait
-from copy import deepcopy
+# from concurrent.futures import ThreadPoolExecutor, wait  # disable for github
+# from copy import deepcopy           # disable multithreading tests for github
 from time import perf_counter
 
 import numpy as np

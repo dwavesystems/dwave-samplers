@@ -31,10 +31,11 @@ class TestTimingInfo(unittest.TestCase):
 
         sampler = SimulatedAnnealingSampler()
         rng = np.random.default_rng(48448418563)
-
+        beta_range = [0.1, 1]  # suppress warning for bqm=empty
         self.sample_sets = []
         for bqm in [empty, one, two]:
-            sample_set = sampler.sample(bqm, seed=rng.integers(2**30))
+            sample_set = sampler.sample(bqm, seed=rng.integers(2**30),
+                                        beta_range = beta_range)
             self.sample_sets.append(sample_set)
 
         self.timing_keys = {"preprocessing_ns", "postprocessing_ns", "sampling_ns"}
@@ -78,15 +79,23 @@ class TestSchedules(unittest.TestCase):
         J = {(u, v): -1 for u in range(num_vars) for v in range(u, num_vars) if u != v}
         num_reads = 1
         with self.assertRaises(ValueError):
-            resp = sampler.sample_ising(h, J, num_reads=num_reads, beta_schedule_type='custom')
+            # Not empty
+            sampler.sample_ising(h, J, num_reads=num_reads,
+                                 beta_schedule_type='custom')
         with self.assertRaises(ValueError):
-            #Positivity
-            resp = sampler.sample_ising(h, J, num_reads=num_reads, beta_schedule_type='custom',beta_schedule=[-1,1])
+            # Positivity
+            sampler.sample_ising(h, J, num_reads=num_reads,
+                                 beta_schedule_type='custom',
+                                 beta_schedule=[-1,1])
         with self.assertRaises(ValueError):
-            #numeric
-            resp = sampler.sample_ising(h, J, num_reads=num_reads, beta_schedule_type='custom',beta_schedule=['asd',1])
-
-        resp = sampler.sample_ising(h, J, num_reads=num_reads, beta_schedule_type='custom',beta_schedule=[0.1,1])
+            # Numeric
+            sampler.sample_ising(h, J, num_reads=num_reads,
+                                 beta_schedule_type='custom',
+                                 beta_schedule=['asd',1])
+        # Properly specified
+        sampler.sample_ising(h, J, num_reads=num_reads,
+                             beta_schedule_type='custom',
+                             beta_schedule=[0.1, 1])
 
 class TestSimulatedAnnealingSampler(unittest.TestCase):
 
@@ -181,7 +190,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
         # An empty problem does not allow for beta_range
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            r = sampler.sample_ising(eh, eJ, beta_range=beta_range)
+            sampler.sample_ising(eh, eJ, beta_range=beta_range)
 
     def test_seed(self):
         sampler = SimulatedAnnealingSampler()
