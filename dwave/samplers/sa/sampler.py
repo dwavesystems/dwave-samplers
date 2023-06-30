@@ -564,7 +564,7 @@ def _default_ising_beta_range(h, J,
     # least 50%, which ensures mixing across all states is fast.
     # The most unlikely flip is related to the largest energy gap that must be
     # overcome, with Metropolis updates we require:
-    #   0.50 = exp(-hot_beta * max_delta_energy) - (1)
+    #   0.50 = exp(-hot_beta * max_delta_energy)                         - (1)
     # This is solved as hot_beta = log(2)/max_delta_energy, max_delta energy is
     # twice the effective field, we take a worst case of the effective field to
     # be conservative. Max delta energy occurs when all biases are aligned, and
@@ -585,7 +585,7 @@ def _default_ising_beta_range(h, J,
     # final iteration.
     # This means that the probability to excite any spin must be bounded by
     # 0.01 on the final sweep
-    #   0.01 = sum_i exp(-cold_beta * min_delta_energy_i) - (2)
+    #   0.01 = sum_i exp(-cold_beta * min_delta_energy_i)                 - (2)
     # We can approximate min_delta_energy_i as the cost of frustrating the
     # smallest J or h. This approximation can be tight for low precision
     # problems, but can be improved for higher precision ones. In the worst
@@ -596,7 +596,7 @@ def _default_ising_beta_range(h, J,
     # (2) is a convex optimization problem, and easy to solve with a root
     # finder. However, for brevity we can further simplify,
     # by assuming only spins experiencing minimal gaps are excitable
-    # 0.01 ~ #minimal_gaps exp(- cold_beta min_i min_delta_energy_i) - (2)
+    # 0.01 ~ #minimal_gaps exp(- cold_beta min_i min_delta_energy_i)      - (3)
     # Where #minimal_gaps counts the number of cases i for
     # which min_delta_energy_i = min_i(min_delta_energy_i)
     # i.e. the number of spins which are most easily excited out of the ground
