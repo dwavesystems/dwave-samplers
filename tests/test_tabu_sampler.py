@@ -263,8 +263,8 @@ class TestTabuSampler(unittest.TestCase):
 
         # Run as simple-tabu-search with timeout:
         with tictoc() as tt:
-            response = sampler.sample(bqm, num_reads=2, timeout=300, seed=123,
-                                      num_restarts=0, lower_bound_z=2147483647)
+            sampler.sample(bqm, num_reads=2, timeout=300, seed=123,
+                           num_restarts=0, lower_bound_z=2147483647)
         self.assertAlmostEqual(tt.dt, 0.6, places=1)
 
     def test_num_restarts(self):
@@ -285,7 +285,7 @@ class TestTabuSampler(unittest.TestCase):
 
         # Expect that energy_threshold is met before timeout
         with tictoc() as tt:
-            response = sampler.sample(
+            sampler.sample(
                 bqm, timeout=100000, energy_threshold=energy_threshold, seed=345)
 
         self.assertLessEqual(tt.dt, 1.0)
