@@ -321,11 +321,11 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
             seed = randint(2**31)
         elif not isinstance(seed, Integral):
             error_msg = ("'seed' should be None or an integer between 0 and "
-                         "2^32 - 1: value = {}".format(seed))
+                         f"2^32 - 1: value = {seed}")
             raise TypeError(error_msg)
         elif not (0 <= seed < 2**31):
             error_msg = ("'seed' should be an integer between 0 and 2^32 - 1: "
-                         "value = {}".format(seed))
+                         f"value = {seed}")
             raise ValueError(error_msg)
 
         # parse the inputs
@@ -353,11 +353,11 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
 
         if not isinstance(num_sweeps_per_beta, Integral):
             error_msg = ("'num_sweeps_per_beta' should be a positive integer: "
-                         "value = {}".format(num_sweeps_per_beta))
+                         f"value = {num_sweeps_per_beta}")
             raise TypeError(error_msg)
         if num_sweeps_per_beta < 1:
             error_msg = ("'num_sweeps_per_beta' should be a positive integer: "
-                         "value = {}".format(num_sweeps_per_beta))
+                         f"value = {num_sweeps_per_beta}")
             raise ValueError(error_msg)
 
         # handle beta_schedule et al
@@ -376,7 +376,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                         "'num_sweeps' should be set to None, or a value "
                         " consistent with 'beta_schedule' and "
                         " 'num_sweeps_per_beta' for 'beta_schedule_type' = "
-                        " 'custom': value = ".format(num_sweeps))
+                        f" 'custom': value = {num_sweeps}")
                     raise ValueError(error_msg)
                 if (beta_range is not None and
                     (beta_range[0] != beta_schedule[0]
@@ -428,8 +428,8 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                     # interpolate a geometric beta schedule
                     beta_schedule = np.geomspace(*beta_range, num=num_betas)
                 else:
-                    error_msg = "Beta schedule type {} not implemented".format(
-                        beta_schedule_type)
+                    error_msg = (f"Beta schedule type {beta_schedule_type}"
+                                 "not implemented")
                     raise ValueError(error_msg)
 
         timestamp_sample = perf_counter_ns()
