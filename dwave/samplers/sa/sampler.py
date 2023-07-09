@@ -323,9 +323,9 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
             raise TypeError("'seed' should be None or an integer between 0 "
                             f"and 2^32 - 1: value = {seed}")
         elif not (0 <= seed < 2**31):
-            error_msg = ("'seed' should be an integer between 0 and 2^32 - 1: "
-                         f"value = {seed}")
-            raise ValueError(error_msg)
+            raise ValueError(
+                "'seed' should be an integer between 0 and 2^32 - 1: "
+                f"value = {seed}")
 
         # parse the inputs
         parsed = self.parse_initial_states(
@@ -351,66 +351,65 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
             raise TypeError("'interrupt_function' should be a callable")
 
         if not isinstance(num_sweeps_per_beta, Integral):
-            error_msg = ("'num_sweeps_per_beta' should be a positive integer: "
-                         f"value = {num_sweeps_per_beta}")
-            raise TypeError(error_msg)
+            raise TypeError(
+                "'num_sweeps_per_beta' should be a positive integer: "
+                f"value = {num_sweeps_per_beta}")
         if num_sweeps_per_beta < 1:
-            error_msg = ("'num_sweeps_per_beta' should be a positive integer: "
-                         f"value = {num_sweeps_per_beta}")
-            raise ValueError(error_msg)
+            raise ValueError(
+                "'num_sweeps_per_beta' should be a positive integer: "
+                f"value = {num_sweeps_per_beta}")
 
         # handle beta_schedule et al
         if beta_schedule_type == "custom":
 
             if beta_schedule is None:
-                error_msg = ("'beta_schedule' must be provided for "
-                             "beta_schedule_type = 'custom': value is None")
-                raise ValueError(error_msg)
+                raise ValueError(
+                    "'beta_schedule' must be provided for "
+                    "beta_schedule_type = 'custom': value is None")
             else:
                 beta_schedule = np.array(beta_schedule, dtype=float)
 
-                if (num_sweeps is not None 
-                    and num_sweeps != len(beta_schedule)*num_sweeps_per_beta):
-                    error_msg = (
+                if all((num_sweeps is not None,
+                        num_sweeps != len(beta_schedule)*num_sweeps_per_beta)):
+                    raise ValueError(
                         "'num_sweeps' should be set to None, or a value "
                         " consistent with 'beta_schedule' and "
                         " 'num_sweeps_per_beta' for 'beta_schedule_type' = "
                         f" 'custom': value = {num_sweeps}")
-                    raise ValueError(error_msg)
                 if (beta_range is not None and
                     (beta_range[0] != beta_schedule[0]
                      or beta_range[-1] != beta_schedule[-1])):
-                    error_msg = ("'beta_range' should be set to None, or a "
-                                 "value consistent with 'beta_schedule', for "
-                                 "'beta_schedule_type'='custom'.")
-                    raise ValueError(error_msg)
+                    raise ValueError(
+                        "'beta_range' should be set to None, or a "
+                        "value consistent with 'beta_schedule', for "
+                        "'beta_schedule_type'='custom'.")
                 if np.min(beta_schedule) < 0:
-                    error_msg = ("'beta_schedule' cannot include negative "
-                                 "values.")
-                    raise ValueError(error_msg)
+                    raise ValueError(
+                        "'beta_schedule' cannot include negative "
+                        "values.")
         else:
             if beta_schedule is not None:
-                error_msg = ("'beta_schedule' must be set to None for "
-                             "'beta_schedule_type' not equal to 'custom'")
-                raise ValueError(error_msg)
+                raise ValueError(
+                    "'beta_schedule' must be set to None for "
+                    "'beta_schedule_type' not equal to 'custom'")
             if num_sweeps is None:
                 num_sweeps = 1000
 
             num_betas, rem = divmod(num_sweeps, num_sweeps_per_beta)
 
             if rem > 0 or num_betas < 0:
-                error_msg = ("'num_sweeps' must be a non-negative value "
-                             "divisible by 'num_sweeps_per_beta'.")
-                raise ValueError(error_msg)
+                raise ValueError(
+                    "'num_sweeps' must be a non-negative value "
+                    "divisible by 'num_sweeps_per_beta'.")
 
             if beta_range is None:
                 beta_range = _default_ising_beta_range(bqm.linear,
                                                        bqm.quadratic)
             elif len(beta_range) != 2 or min(beta_range) < 0:
-                error_msg = ("'beta_range' should be a 2-tuple, or 2 element "
-                             "list of positive numbers. The latter value is "
-                             "the target value.")
-                raise ValueError(error_msg)
+                raise ValueError(
+                    "'beta_range' should be a 2-tuple, or 2 element "
+                    "list of positive numbers. The latter value is "
+                    "the target value.")
 
             if num_betas == 1:
                 # One sweep in the target model
@@ -421,15 +420,15 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                     beta_schedule = np.linspace(*beta_range, num=num_betas)
                 elif beta_schedule_type == "geometric":
                     if min(beta_range) <= 0:
-                        error_msg = ("'beta_range' requires non-zero values "
-                                     "for 'beta_schedule_type' = 'geometric'")
-                        raise ValueError(error_msg)
+                        raise ValueError(
+                            "'beta_range' requires non-zero values "
+                            "for 'beta_schedule_type' = 'geometric'")
                     # interpolate a geometric beta schedule
                     beta_schedule = np.geomspace(*beta_range, num=num_betas)
                 else:
-                    error_msg = (f"Beta schedule type {beta_schedule_type}"
-                                 "not implemented")
-                    raise ValueError(error_msg)
+                    raise ValueError(
+                        f"Beta schedule type {beta_schedule_type}"
+                        "not implemented")
 
         timestamp_sample = perf_counter_ns()
 
@@ -521,9 +520,9 @@ def _default_ising_beta_range(h, J,
     unlikely to excite away from a global (or local) minimum.
     """
     if not 0 < max_single_qubit_excitation_rate < 1:
-        error_msg = ('Targeted single qubit excitations rates must be in '
-                     'range (0,1)')
-        raise ValueError(error_msg)
+        raise ValueError(
+            'Targeted single qubit excitations rates must be in '
+            'range (0,1)')
 
     # Approximate worst and best cases of the [non-zero] energy signal
     # (effective field) experienced per spin as function of neighbors:
