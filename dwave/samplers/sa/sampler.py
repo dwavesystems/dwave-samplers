@@ -320,9 +320,8 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
         if seed is None:
             seed = randint(2**31)
         elif not isinstance(seed, Integral):
-            error_msg = ("'seed' should be None or an integer between 0 and "
-                         f"2^32 - 1: value = {seed}")
-            raise TypeError(error_msg)
+            raise TypeError("'seed' should be None or an integer between 0 "
+                            f"and 2^32 - 1: value = {seed}")
         elif not (0 <= seed < 2**31):
             error_msg = ("'seed' should be an integer between 0 and 2^32 - 1: "
                          f"value = {seed}")
@@ -370,8 +369,8 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
             else:
                 beta_schedule = np.array(beta_schedule, dtype=float)
 
-                if num_sweeps is not None \
-                   and num_sweeps != len(beta_schedule)*num_sweeps_per_beta:
+                if (num_sweeps is not None 
+                    and num_sweeps != len(beta_schedule)*num_sweeps_per_beta):
                     error_msg = (
                         "'num_sweeps' should be set to None, or a value "
                         " consistent with 'beta_schedule' and "
