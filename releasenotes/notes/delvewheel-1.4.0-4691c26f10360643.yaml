@@ -1,0 +1,3 @@
+---
+fixes:
+  - Fix ``ImportError`` on Windows. See `#57 <https://github.com/dwavesystems/dwave-samplers/issues/57>`_.
