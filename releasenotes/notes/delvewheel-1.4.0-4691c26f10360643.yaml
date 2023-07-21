@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Fix ``ImportError`` being raised on Windows when other ``dwave`` namespace packages
+    are installed after ``dwave-samplers``.
+    See `#57 <https://github.com/dwavesystems/dwave-samplers/issues/57>`_.
