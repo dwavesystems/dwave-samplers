@@ -23,7 +23,7 @@ from libcpp.vector cimport vector
 import numpy as np
 cimport numpy as np
 
-cimport decl
+cimport dwave.samplers.greedy.decl as decl
 
 
 def steepest_gradient_descent(num_samples,
