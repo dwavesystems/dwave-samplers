@@ -1,0 +1,5 @@
+---
+features:
+  - Build wheels for Python 3.12.
+upgrade:
+  - No longer build wheels for Python 3.7.

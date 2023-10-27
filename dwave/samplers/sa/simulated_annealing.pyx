@@ -194,7 +194,7 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
     return states_numpy[:num], energies_numpy[:num]
 
 
-cdef bool interrupt_callback(void * const interrupt_function) with gil:
+cdef bool interrupt_callback(void * const interrupt_function) noexcept with gil:
     try:
         return (<object>interrupt_function)()
     except Exception:

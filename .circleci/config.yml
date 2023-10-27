@@ -1,14 +1,14 @@
 version: 2.1
 
 orbs:
-  win: circleci/windows@2.2.0
+  win: circleci/windows@5.0.0
 
 commands:
   run-cibuildwheel:
     parameters:
       cibw-version:
         type: string
-        default: 2.11.2
+        default: 2.16.2
     steps:
       - run:
           name: run cibuildwheel
@@ -174,7 +174,7 @@ jobs:
 
   test-doctest:
     docker:
-      - image: circleci/python:3.7 # as of march 2019 RTD uses 3.7
+      - image: circleci/python:3.9
 
     steps:
       - checkout
@@ -292,22 +292,17 @@ workflows:
       - build-and-test-linux: &build
           matrix:
             parameters:
-              python-version: &python-versions [3.7.9, 3.8.9, 3.9.4, 3.10.0, 3.11.0]
+              python-version: &python-versions [3.8.9, 3.9.4, 3.10.0, 3.11.0, 3.12.0]
       - build-and-test-linux-aarch64:
           matrix:
             parameters:
               python-version: *python-versions
-            exclude:
-              - python-version: 3.7.9
       - build-sdist
       - build-and-test-osx: &build-and-test-osx
           matrix:
             parameters:
               python-version: *python-versions
               cibw-arch: [x86_64, arm64]
-            exclude:
-              - python-version: 3.7.9
-                cibw-arch: arm64
       - build-and-test-windows: *build
       - test-codecov
       - test-doctest
@@ -320,6 +315,9 @@ workflows:
               # test the lowest and highest of each minor for the dependencies
               dimod-version: [==0.12.0, ~=0.12.0]
               python-version: *python-versions
+            exclude:
+              - dimod-version: ==0.12.0  # Does not support Python 3.12
+                python-version: 3.12.0
       - test-linux-cpp11  
       - test-sdist:
           requires:

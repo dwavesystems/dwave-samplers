@@ -25,6 +25,7 @@ import numpy as np
 import dimod
 from dimod.binary.binary_quadratic_model import BinaryQuadraticModel
 
+cimport cython
 cimport numpy as np
 from cython.operator cimport dereference as deref
 from dimod cimport cyBQM_float64
@@ -47,6 +48,7 @@ cdef extern from "src/include/sample.hpp":
                          double** pair_mrg_data, int* pair_mrg_rows, int* pair_mrg_cols,
                          int** pair_data, int* pair_rows, int* pair_cols) except +
 
+@cython.annotation_typing(False)  # maintain Cython2 behavior
 def sample_bqm_wrapper(bqm: BinaryQuadraticModel,
                        beta: float,
                        max_complexity: float,

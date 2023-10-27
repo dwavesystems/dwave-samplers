@@ -1,5 +1,5 @@
-cython==0.29.28
-dimod==0.12.1
+cython==3.0.4
+dimod==0.12.13
 numpy==1.19.0;python_version<"3.9"  # C API for numpy.random
 oldest-supported-numpy;python_version>="3.9"
 reno==3.3.0  # for changelog

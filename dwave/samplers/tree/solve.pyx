@@ -19,6 +19,7 @@
 import dimod
 import numpy as np
 
+cimport cython
 cimport numpy as np
 from cython.operator cimport dereference as deref
 from dimod cimport cyBQM_float64
@@ -40,6 +41,7 @@ cdef extern from "src/include/solve.hpp":
 samples_dtype = np.intc  # needs to be consistent with samples_type
 energies_dtype = np.double  # needs to be consistent with energies_type 
 
+@cython.annotation_typing(False)  # maintain Cython2 behavior
 def solve_bqm_wrapper(bqm: BinaryQuadraticModel,
                       order: list,
                       max_complexity: int,
