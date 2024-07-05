@@ -188,14 +188,16 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
             This example samples a simple two-variable Ising model.
 
             >>> import dimod
-            >>> bqm = dimod.BQM.from_ising({}, {'ab': 1})
+            >>> bqm = dimod.BQM.from_ising({'a': -1}, {'ab': 1})
             ...
             >>> from dwave.samplers import SteepestDescentSampler
             >>> sampler = SteepestDescentSampler()
             ...
-            >>> samples = sampler.sample(bqm)
-            >>> samples.first.energy
-            -1.0
+            >>> sampleset = sampler.sample(bqm)
+            >>> print(sampleset)      # doctest: +SKIP
+               a  b energy num_oc. num_st.
+            0 +1 -1   -2.0       1       0
+            ['SPIN', 1 rows, 1 samples, 2 variables]
 
             Run steepest descent one million times (takes ~150ms on an average
             laptop), converging to local minima, each time starting from a

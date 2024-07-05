@@ -53,9 +53,11 @@ class PlanarGraphSolver(dimod.Sampler, dimod.Initialized):
             >>> bqm.add_interaction('b', 'c', +1.0)
             >>> bqm.add_interaction('c', 'a', +1.0)
             >>> pos = {'a': (0, 0), 'b': (1, 0), 'c': (0, 1)}
-            >>> sample = PlanarGraphSolver().sample(bqm, pos)
-            >>> sample.first
-            Sample(sample={'a': 1, 'b': -1, 'c': -1}, energy=-1.0, num_occurrences=1)
+            >>> sampleset = PlanarGraphSolver().sample(bqm, pos)
+            >>> print(sampleset)
+               a  b  c energy num_oc.
+            0 +1 -1 -1   -1.0       1
+            ['SPIN', 1 rows, 1 samples, 3 variables]
 
         """
 
