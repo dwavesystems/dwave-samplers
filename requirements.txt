@@ -1,4 +1,4 @@
-cython==3.0.4
+cython==3.0.10
 dimod==0.12.13
 numpy==1.19.0;python_version<"3.9"  # C API for numpy.random
 oldest-supported-numpy;python_version>="3.9"
