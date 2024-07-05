@@ -25,7 +25,6 @@ cimport numpy as np
 
 cimport dwave.samplers.greedy.decl as decl
 
-
 def steepest_gradient_descent(num_samples,
                               linear_biases,
                               coupler_starts, coupler_ends, coupler_weights,

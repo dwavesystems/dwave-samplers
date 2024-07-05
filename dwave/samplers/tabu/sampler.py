@@ -39,11 +39,11 @@ class TabuSampler(dimod.Sampler, dimod.Initialized):
         This example solves a two-variable Ising model.
 
         >>> from dwave.samplers import TabuSampler
-        >>> samples = TabuSampler().sample_ising({'a': -0.5, 'b': 1.0}, {'ab': -1})
-        >>> list(samples.data()) # doctest: +SKIP
-        [Sample(sample={'a': -1, 'b': -1}, energy=-1.5, num_occurrences=1)]
-        >>> samples.first.energy
-        -1.5
+        >>> sampleset = TabuSampler().sample_ising({'a': -0.5, 'b': 1.0}, {'ab': -1}, num_restarts=0)
+        >>> print(sampleset)
+           a  b energy num_oc. num_re.
+        0 -1 -1   -1.5       1       0
+        ['SPIN', 1 rows, 1 samples, 2 variables]
 
     """
 
@@ -156,14 +156,16 @@ class TabuSampler(dimod.Sampler, dimod.Initialized):
             This example samples a simple two-variable Ising model.
 
             >>> import dimod
-            >>> bqm = dimod.BQM.from_ising({}, {'ab': 1})
+            >>> bqm = dimod.BQM.from_ising({'a': -1}, {'ab': 1})
 
             >>> from dwave.samplers import TabuSampler
             >>> sampler = TabuSampler()
 
-            >>> samples = sampler.sample(bqm)
-            >>> samples.first.energy
-            -1.0
+            >>> sampleset = sampler.sample(bqm, num_restarts=0)
+            >>> print(sampleset)
+               a  b energy num_oc. num_re.
+            0 +1 -1   -2.0       1       0
+            ['SPIN', 1 rows, 1 samples, 2 variables]
         """
 
         if not bqm:

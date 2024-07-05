@@ -215,7 +215,9 @@ jobs:
     parameters:
       python-version:
         type: string
-      dimod-version:
+      dependency-versions:
+        type: string
+      only-binary:
         type: string
 
     docker:
@@ -230,9 +232,9 @@ jobs:
           command: |
             python -m venv env
             . env/bin/activate
-            pip install -r requirements.txt
+            pip install << parameters.dependency-versions >> --upgrade --only-binary << parameters.only-binary >>
             pip install dwave-samplers --no-index -f dist/ --no-deps --force-reinstall
-            pip install 'dimod<< parameters.dimod-version >>' --only-binary=dimod -U
+
       - run: &unix-run-tests
           name: run tests
           command: |
@@ -310,17 +312,16 @@ workflows:
       - test-codecov
       - test-doctest
       - test-dependencies:
-          name: test-dependencies-dimod<< matrix.dimod-version >>-py<< matrix.python-version >>
+          name: test-dependencies-python<< matrix.python-version >>-dependencies=<< matrix.dependency-versions >>
           requires:
             - build-and-test-linux
           matrix:
             parameters:
-              # test the lowest and highest of each minor for the dependencies
-              dimod-version: [==0.12.0, ~=0.12.0]
-              python-version: *python-versions
-            exclude:
-              - dimod-version: ==0.12.0  # Does not support Python 3.12
-                python-version: 3.12.0
+              dependency-versions: [dimod==0.12.13 oldest-supported-numpy networkx==3.0, dimod numpy networkx]
+              # Skip some of the intermediate Python versions for speed. 3.8 gets a special callout because
+              # Numpy 2 does not support it, so we build it differently
+              python-version: ["3.8", "3.9", "3.12"]
+              only-binary: ["numpy,dimod,networkx"]
       - test-linux-cpp11  
       - test-sdist:
           requires:

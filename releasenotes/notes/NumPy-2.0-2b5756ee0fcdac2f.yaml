@@ -1,0 +1,6 @@
+---
+features:
+  - Support, and build with, NumPy 2.0
+upgrade:
+  - Require ``dimod>=0.12.13``.
+  - Require ``NetworkX>=3.0``.

@@ -49,8 +49,10 @@ class TreeDecompositionSolver(dimod.Sampler):
         Find the ground state.
 
         >>> sampleset = solver.sample_ising(h, J)
-        >>> sampleset.first.sample
-        {'a': -1, 'b': -1}
+        >>> print(sampleset)
+           a  b energy num_oc.
+        0 -1 -1   -1.1       1
+        ['SPIN', 1 rows, 1 samples, 2 variables]
 
         Take multiple reads to find states of increasing energy.
 

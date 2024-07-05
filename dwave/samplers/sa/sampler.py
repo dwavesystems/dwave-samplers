@@ -287,8 +287,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
             >>> # Reuse a seed
             >>> a1 = next((sampler.sample(bqm, seed=88)).samples())['a']
             >>> a2 = next((sampler.sample(bqm, seed=88)).samples())['a']
-            >>> a1 == a2
-            True
+            >>> assert a1 == a2
 
             .. [#] :math:`\\beta` represents the inverse temperature, :math:`1/(k_B T)`, of a
                `Boltzmann distribution <https://en.wikipedia.org/wiki/Boltzmann_distribution>`_
