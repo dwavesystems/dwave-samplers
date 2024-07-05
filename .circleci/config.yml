@@ -321,7 +321,7 @@ workflows:
               # Skip some of the intermediate Python versions for speed. 3.8 gets a special callout because
               # Numpy 2 does not support it, so we build it differently
               python-version: ["3.8", "3.9", "3.12"]
-              only-binary: [numpy dimod networkx]
+              only-binary: ["numpy,dimod,networkx"]
       - test-linux-cpp11  
       - test-sdist:
           requires:
