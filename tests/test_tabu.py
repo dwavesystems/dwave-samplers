@@ -15,6 +15,7 @@
 """Test the (private) TabuSearch python interface."""
 
 import unittest
+import os
 from concurrent.futures import ThreadPoolExecutor, wait
 
 import dimod
@@ -22,6 +23,13 @@ import numpy as np
 
 import dwave.samplers.tabu as tabu
 from dwave.samplers.tabu.utils import tictoc
+
+
+try:
+    NUM_CPUS = len(os.sched_getaffinity(0))
+except AttributeError:
+    # windows
+    NUM_CPUS = os.cpu_count()
 
 
 class TestTabuSearch(unittest.TestCase):
@@ -56,6 +64,7 @@ class TestTabuSearch(unittest.TestCase):
         self.assertEqual(solution, [0, 1])
         self.assertEqual(energy, -1.2)
 
+    @unittest.skipIf(NUM_CPUS < 4, "insufficient CPUs available")
     def test_concurrency(self):
 
         def search(timeout, restarts=int(1e6)):
