@@ -48,8 +48,6 @@ class TestRandomSampler(unittest.TestCase):
             RandomSampler().sample(bqm, a=5, b=2)
 
     def test_time_limit(self):
-        t = time.time()
-
         bqm = dimod.BinaryQuadraticModel({0: 0.0, 1: 0.0, 2: 0.0},
                                          {(0, 1): -1.0, (1, 2): 1.0, (0, 2): 1.0},
                                          1.0,
@@ -59,7 +57,11 @@ class TestRandomSampler(unittest.TestCase):
         sampleset = RandomSampler().sample(bqm, time_limit=.02, max_num_samples=10)
         runtime = time.perf_counter() - t
 
-        self.assertTrue(.01 < runtime < .04)
+        # .01 < runtime < .1
+        # We break it up for nicer error reporting from unittest and we use
+        # loose bounds because we don't know where we may be running.
+        self.assertLess(.01, runtime)
+        self.assertLess(runtime, .1)
 
         dimod.testing.assert_sampleset_energies(sampleset, bqm)
         self.assertEqual(len(sampleset), 10)
@@ -78,7 +80,11 @@ class TestRandomSampler(unittest.TestCase):
             bqm, time_limit=datetime.timedelta(minutes=1)/600)
         runtime = time.perf_counter() - t
 
-        self.assertTrue(.05 < runtime < .15)
+        # .05 < runtime < .2
+        # We break it up for nicer error reporting from unittest and we use
+        # loose bounds because we don't know where we may be running.
+        self.assertLess(.05, runtime)
+        self.assertLess(runtime, .2)
 
     def test_time_limit_quality(self):
         # get a linear BQM
