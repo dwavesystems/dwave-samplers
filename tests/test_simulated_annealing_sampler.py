@@ -15,6 +15,7 @@
 import unittest
 import numpy as np
 import copy
+import inspect
 import itertools
 import warnings
 
@@ -93,6 +94,24 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
     def test_instantiation(self):
         sampler = SimulatedAnnealingSampler()
         dimod.testing.assert_sampler_api(sampler)
+
+    def test_good_kwargs(self):
+        sampler = SimulatedAnnealingSampler()
+        kwargs = dict(inspect.signature(sampler.sample).parameters)
+        kwargs.pop('bqm')
+        kwargs.pop('kwargs')
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore')
+            kwargs_out = sampler.remove_unknown_kwargs(**kwargs)
+        self.assertEqual(kwargs.keys(), kwargs_out.keys(), "Keyword arguments removed")
+
+    def test_bad_kwargs(self):
+        sampler = SimulatedAnnealingSampler()
+        kwargs = {'foobar': None}
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore')
+            kwargs_out = sampler.remove_unknown_kwargs(**kwargs)
+        self.assertFalse(kwargs_out, "Keyword arguments not removed")
 
     def test_one_node_beta_range(self):
         h = {'a': -1}

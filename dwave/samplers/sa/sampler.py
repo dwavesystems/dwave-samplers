@@ -88,14 +88,17 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
         >>> for kwarg in sorted(sampler.parameters):
         ...     print(kwarg)
         beta_range
-        beta_schedule_type
-        initial_states
-        initial_states_generator
-        interrupt_function
         num_reads
         num_sweeps
         num_sweeps_per_beta
+        beta_schedule_type
+        beta_schedule
         seed
+        interrupt_function
+        initial_states
+        initial_states_generator
+        randomize_order
+        proposal_acceptance_criteria
         >>> sampler.parameters['beta_range']
         []
         >>> sampler.parameters['beta_schedule_type']
@@ -123,10 +126,13 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                            'num_sweeps': [],
                            'num_sweeps_per_beta': [],
                            'beta_schedule_type': ['beta_schedule_options'],
+                           'beta_schedule': [],
                            'seed': [],
                            'interrupt_function': [],
                            'initial_states': [],
                            'initial_states_generator': [],
+                           'randomize_order': [],
+                           'proposal_acceptance_criteria': [],
                            }
         self.properties = {'beta_schedule_options': ('linear', 'geometric',
                                                      'custom')}
