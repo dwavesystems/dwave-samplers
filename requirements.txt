@@ -1,7 +1,6 @@
 cython==3.0.10
-dimod==0.12.16
-numpy==1.19.0;python_version<"3.9"  # C API for numpy.random
-numpy==2.0.0;python_version>="3.9"
+dimod==0.12.17
+numpy==2.0.0
 reno==3.3.0  # for changelog
 setuptools>=46.4.0  # to support setup.cfg getting __version__
 networkx==3.2.1
