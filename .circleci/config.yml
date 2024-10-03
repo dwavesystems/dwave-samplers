@@ -9,7 +9,7 @@ commands:
     parameters:
       cibw-version:
         type: string
-        default: 2.16.2
+        default: 2.21.2
     steps:
       - run:
           name: run cibuildwheel
@@ -39,7 +39,7 @@ jobs:
         type: string
 
     docker:
-      - image: circleci/python:3.9
+      - image: cimg/python:3.12
 
     environment:
       <<: *global-environment
@@ -57,7 +57,7 @@ jobs:
         type: string
 
     machine:
-      image: ubuntu-2004:202101-01
+      image: default
 
     resource_class: arm.medium
 
@@ -93,7 +93,7 @@ jobs:
 
   build-sdist:
     docker:
-      - image: circleci/python:3.9
+      - image: cimg/python:3.12
 
     steps:
       - checkout
@@ -126,7 +126,7 @@ jobs:
 
   deploy-all:
     docker:
-      - image: circleci/python:3.9
+      - image: cimg/python:3.12
 
     steps:
       - attach_workspace:
@@ -148,7 +148,7 @@ jobs:
   # suffices to just do it once
   test-codecov:
     docker:
-      - image: circleci/python:3.9
+      - image: cimg/python:3.12
 
     steps:
       - checkout
@@ -177,7 +177,7 @@ jobs:
 
   test-doctest:
     docker:
-      - image: circleci/python:3.9
+      - image: cimg/python:3.10  # As of October 2024, RTD uses 3.10
 
     steps:
       - checkout
@@ -245,13 +245,13 @@ jobs:
 
   test-linux-cpp11:
     docker:
-      - image: circleci/python:3.9
+      - image: cimg/python:3.12
 
     steps:
       - checkout
 
       - restore_cache:
-          key: v2-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ checksum "docs/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
+          key: v2-dependencies-312-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ checksum "docs/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
 
       - run:
           name: Create virtual environment
@@ -265,7 +265,7 @@ jobs:
             pip install -r requirements.txt -r tests/requirements.txt -r docs/requirements.txt
 
       - save_cache:
-          key: v2-dependencies-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ checksum "docs/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
+          key: v2-dependencies-312-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ checksum "docs/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
           paths:
             - env
 
@@ -277,7 +277,7 @@ jobs:
 
   test-sdist:
     docker:
-      - image: circleci/python:3.9
+      - image: cimg/python:3.12
 
     steps:
       - checkout
@@ -288,7 +288,7 @@ jobs:
           command: |
             python -m venv env
             . env/bin/activate
-            pip install dist/dwave-samplers*.tar.gz
+            pip install dist/dwave*samplers*.tar.gz
       - run: *unix-run-tests
 
 workflows:
@@ -297,7 +297,8 @@ workflows:
       - build-and-test-linux: &build
           matrix:
             parameters:
-              python-version: &python-versions [3.8.9, 3.9.4, 3.10.0, 3.11.0, 3.12.0]
+              # versions are built with ~= so the patch version doesn't matter
+              python-version: &python-versions [3.9.0, 3.10.0, 3.11.0, 3.12.0, 3.13.0]
       - build-and-test-linux-aarch64:
           matrix:
             parameters:
@@ -318,9 +319,9 @@ workflows:
           matrix:
             parameters:
               dependency-versions: [dimod==0.12.13 oldest-supported-numpy networkx==3.0, dimod numpy networkx]
-              # Skip some of the intermediate Python versions for speed. 3.8 gets a special callout because
-              # Numpy 2 does not support it, so we build it differently
-              python-version: ["3.8", "3.9", "3.12"]
+              # Skip some of the intermediate Python versions for speed
+              # todo: 3.12->3.13 once 3.13 is out of rc
+              python-version: ["3.9", "3.12"]
               only-binary: ["numpy,dimod,networkx"]
       - test-linux-cpp11  
       - test-sdist:
