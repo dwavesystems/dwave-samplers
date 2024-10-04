@@ -61,6 +61,22 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
 
     Also aliased as :class:`.Neal`.
 
+    .. note::
+        Ocean SDK versions earlier than 8.0 supported also a 
+        ``SimulatedAnnealingSampler`` under the ``neal`` namespace in a 
+        ``dwave-neal`` package. If your code uses that obsoleted class, 
+        upgrade lines such as
+
+        >>> from neal import SimulatedAnnealingSampler   # doctest: +SKIP
+
+        to
+
+        >>> from dwave.samplers import SimulatedAnnealingSampler   # doctest: +SKIP
+
+        or
+
+        >>> from dwave.samplers.sa import SimulatedAnnealingSampler   # doctest: +SKIP
+
     Examples:
         This example solves a simple Ising problem.
 
