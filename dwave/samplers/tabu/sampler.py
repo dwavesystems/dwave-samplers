@@ -45,11 +45,11 @@ class TabuSampler(dimod.Sampler, dimod.Initialized):
 
         to
 
-        >>> from dwave.samplers import TabuSampler   # doctest: +SKIP
+        >>> from dwave.samplers import TabuSampler
 
         or
 
-        >>> from dwave.samplers.tabu import TabuSampler   # doctest: +SKIP
+        >>> from dwave.samplers.tabu import TabuSampler
 
     Examples:
         This example solves a two-variable Ising model.

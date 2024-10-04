@@ -71,11 +71,11 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
 
         to
 
-        >>> from dwave.samplers import SimulatedAnnealingSampler   # doctest: +SKIP
+        >>> from dwave.samplers import SimulatedAnnealingSampler
 
         or
 
-        >>> from dwave.samplers.sa import SimulatedAnnealingSampler   # doctest: +SKIP
+        >>> from dwave.samplers.sa import SimulatedAnnealingSampler
 
     Examples:
         This example solves a simple Ising problem.

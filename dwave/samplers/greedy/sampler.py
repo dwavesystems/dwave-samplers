@@ -64,11 +64,11 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
 
         to
 
-        >>> from dwave.samplers import SteepestDescentSampler   # doctest: +SKIP
+        >>> from dwave.samplers import SteepestDescentSampler
 
         or
 
-        >>> from dwave.samplers.greedy import SteepestDescentSampler   # doctest: +SKIP
+        >>> from dwave.samplers.greedy import SteepestDescentSampler
 
     Examples:
         Solve a simple Ising problem.
