@@ -1,0 +1,4 @@
+---
+fixes:
+  - |
+    Add all keyword args of ``SimulatedAnnealingSampler.sample`` to ``SimulatedAnnealingSampler.parameters``. This allows effective use of ``dimod.Sampler.remove_unknown_kwargs``
