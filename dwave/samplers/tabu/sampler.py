@@ -35,6 +35,22 @@ class TabuSampler(dimod.Sampler, dimod.Initialized):
     <https://link.springer.com/article/10.1023/B:ANOR.0000039522.58036.68>`_
     for quadratic unconstrained binary optimization (QUBO) problems.
 
+    .. note::
+        Ocean SDK versions earlier than 8.0 supported also a 
+        ``TabuSampler`` under the ``tabu`` namespace in a 
+        ``dwave-tabu`` package. If your code uses that obsoleted class, 
+        upgrade lines such as
+
+        >>> from tabu import TabuSampler   # doctest: +SKIP
+
+        to
+
+        >>> from dwave.samplers import TabuSampler
+
+        or
+
+        >>> from dwave.samplers.tabu import TabuSampler
+
     Examples:
         This example solves a two-variable Ising model.
 

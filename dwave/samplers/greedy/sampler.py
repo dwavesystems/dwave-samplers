@@ -54,6 +54,22 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
 
     Aliased as :class:`~greedy.sampler.SteepestDescentSampler`.
 
+    .. note::
+        Ocean SDK versions earlier than 8.0 supported also a 
+        ``SteepestDescentSampler`` under the ``greedy`` namespace in a 
+        ``dwave-greedy`` package. If your code uses that obsoleted class, 
+        upgrade lines such as
+
+        >>> from greedy import SteepestDescentSampler   # doctest: +SKIP
+
+        to
+
+        >>> from dwave.samplers import SteepestDescentSampler
+
+        or
+
+        >>> from dwave.samplers.greedy import SteepestDescentSampler
+
     Examples:
         Solve a simple Ising problem.
 
