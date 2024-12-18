@@ -1,4 +1,4 @@
-# Copyright 2018 D-Wave Systems Inc.
+# Copyright 2024 D-Wave Systems Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -11,8 +11,6 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
-#
-# ================================================================================================
 
 import unittest
 import numpy as np
@@ -25,7 +23,8 @@ import dimod
 from dwave.samplers.sqa.sampler import PathIntegralAnnealingSampler
 
 
-class TestSchedulesNealLegacyNoTF(unittest.TestCase):
+class TestSchedules(unittest.TestCase):
+
     def test_schedules(self):
         sampler = PathIntegralAnnealingSampler()
         num_vars = 40
@@ -61,6 +60,7 @@ class TestSchedulesNealLegacyNoTF(unittest.TestCase):
         J = {(u, v): -1 for u in range(num_vars) for v in range(u, num_vars) if u != v}
         num_reads = 1
         with self.assertRaises(ValueError):
+            # Missing schedule
             resp = sampler.sample_ising(
                 h, J, num_reads=num_reads, beta_schedule_type="custom"
             )
@@ -70,7 +70,7 @@ class TestSchedulesNealLegacyNoTF(unittest.TestCase):
                 h, J, num_reads=num_reads, beta_schedule_type="custom", Hp_field=[-1, 1]
             )
         with self.assertRaises(ValueError):
-            # numeric
+            # Numeric
             resp = sampler.sample_ising(
                 h,
                 J,
@@ -84,7 +84,7 @@ class TestSchedulesNealLegacyNoTF(unittest.TestCase):
         )
 
 
-class TestSimulatedAnnealingSamplerNealLegacyNoTF(unittest.TestCase):
+class TestSimulatedAnnealingSampler(unittest.TestCase):
     def test_instantiation(self):
         sampler = PathIntegralAnnealingSampler()
         dimod.testing.assert_sampler_api(sampler)
@@ -95,8 +95,7 @@ class TestSimulatedAnnealingSamplerNealLegacyNoTF(unittest.TestCase):
         response = PathIntegralAnnealingSampler().sample(bqm)
         hot_beta, cold_beta = response.info["beta_range"]
 
-        # Check beta values
-        # Note: beta is proportional to 1/temperature, therefore hot_beta < cold_beta
+        # beta is proportional to 1/temperature, therefore hot_beta < cold_beta
         self.assertLess(hot_beta, cold_beta)
         self.assertNotEqual(
             hot_beta, float("inf"), "Starting value of 'beta_range' is infinite"
@@ -111,8 +110,7 @@ class TestSimulatedAnnealingSamplerNealLegacyNoTF(unittest.TestCase):
         response = PathIntegralAnnealingSampler().sample(bqm)
         hot_beta, cold_beta = response.info["beta_range"]
 
-        # Check beta values
-        # Note: beta is proportional to 1/temperature, therefore hot_beta < cold_beta
+        # beta is proportional to 1/temperature, therefore hot_beta < cold_beta
         self.assertLess(hot_beta, cold_beta)
         self.assertNotEqual(
             hot_beta, float("inf"), "Starting value of 'beta_range' is infinite"
@@ -176,13 +174,17 @@ class TestSimulatedAnnealingSamplerNealLegacyNoTF(unittest.TestCase):
         sampler = PathIntegralAnnealingSampler()
         h = {"a": 0, "b": -1}
         J = {("a", "b"): -1}
-        eh, eJ = {}, {}
-
+        eh, eJ = {}, {}  # To suppress warning.
+        beta_range = [0.1, 1]  # To suppress warning.
         for h in (h, eh):
             for J in (J, eJ):
                 _h = copy.deepcopy(h)
                 _J = copy.deepcopy(J)
-                r = sampler.sample_ising(_h, _J)
+                r = sampler.sample_ising(_h, _J, beta_range=beta_range)
+        # An empty problem does not allow for beta_range automation
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            sampler.sample_ising(eh, eJ)
 
     def test_seed(self):
         sampler = PathIntegralAnnealingSampler()
@@ -334,16 +336,16 @@ class TestSimulatedAnnealingSamplerNealLegacyNoTF(unittest.TestCase):
 
         # can't tile empty states
         with self.assertRaises(ValueError):
-            resp = sampler.sample(bqm, initial_states_generator="tile", num_reads=10)
+            sampler.sample(bqm, initial_states_generator="tile", num_reads=10)
 
         # not enough initial states
         with self.assertRaises(ValueError):
-            resp = sampler.sample(bqm, initial_states_generator="none", num_reads=3)
+            sampler.sample(bqm, initial_states_generator="none", num_reads=3)
 
         # initial_states incompatible with the bqm
         init = dimod.SampleSet.from_samples({"a": 1, "b": 1}, vartype="SPIN", energy=0)
         with self.assertRaises(ValueError):
-            resp = sampler.sample(bqm, initial_states=init)
+            sampler.sample(bqm, initial_states=init)
 
     def test_soft_num_reads(self):
         """Number of reads adapts to initial_states size, if provided."""
@@ -371,11 +373,12 @@ class TestSimulatedAnnealingSamplerNealLegacyNoTF(unittest.TestCase):
         self.assertEqual(len(sampler.sample(bqm, num_reads=4)), 4)
 
 
-class TestHeuristicResponseNealLegacyNoTF(unittest.TestCase):
+class TestHeuristicResponse(unittest.TestCase):
     def test_job_shop_scheduling_with_linear(self):
-        # This is a poorly chosen unit test, and should be deprecated in favour of something
-        # comprehensible.
-        # Interaction between threshold and algorithm defaults/details is not at all clear.
+        # This test is inherited from SimulatedAnnealingSampler() tests.
+        # It is difficult to understand and might be refactored.
+        #
+        # Set up a job shop scheduling BQM
         #
         # Provide hardcode version of the bqm of "jobs"
         #   jobs = {'b': [(1,1), (3,1)],
@@ -383,10 +386,11 @@ class TestHeuristicResponseNealLegacyNoTF(unittest.TestCase):
         #           'g': [(1,2)]}
         #
         #   There are three jobs: 'b', 'o', 'g'
-        #   Each tuple represents a task that runs on a particular machine for a given amount of
-        #   time. I.e. (machine_id, duration_on_machine)
+        #   Each tuple represents a task that runs on a particular machine for
+        #   a given amount of time. I.e. (machine_id, duration_on_machine)
         #
-        #   Variables below are labelled as '<job_name>_<task_index>,<task_start_time>'.
+        #   Variables below are labelled as '<job_name>_<task_index>,
+        #   <task_start_time>'.
         linear = {
             "b_0,0": -2.0,
             "b_0,1": -2.0,
@@ -472,14 +476,15 @@ class TestHeuristicResponseNealLegacyNoTF(unittest.TestCase):
         response = sampler.sample(jss_bqm, beta_schedule_type="linear", num_reads=10)
         _, response_energy, _ = next(response.data())
         # Compare energies
-        threshold = 2  # 0.1	 # Arbitrary threshold - what is the meaning of this (there is none).
+        threshold = 2  # Arbitrary threshold - revisit when refactored?
         self.assertLess(response_energy, optimal_energy + threshold)
 
     def test_cubic_lattice_with_geometric(self):
-        # This is a poorly chosen unit test and should be deprecated in favour of something
-        # comprehensible.
-        # Interaction between threshold and algorithm defaults/details is not at all clear.
-        # Set up all lattice edges in a cube. Each edge is labelled by a 3-D coordinate system
+        # This test is inherited from SimulatedAnnealingSampler() tests.
+        # It is difficult to understand and might be refactored.
+        #
+        # Set up all lattice edges in a cube. Each edge is labelled by a 3-D
+        # coordinate system
         def get_cubic_lattice_edges(N):
             for x, y, z in itertools.product(range(N), repeat=3):
                 u = x, y, z
@@ -498,10 +503,10 @@ class TestHeuristicResponseNealLegacyNoTF(unittest.TestCase):
         )
         _, response_energy, _ = next(response.data())
 
-        # Note: lowest energy found was -3088 with a different benchmarking tool
-        threshold = -2900  # -3000 #This is a poor choice in general.
+        # lowest energy found = -3088 with a different benchmarking tool
+        threshold = -2900  # Choice is not well-motivated (robust), revisit/refactor
         self.assertLess(
             response_energy,
             threshold,
-            ("response_energy, {}, exceeds " "threshold").format(response_energy),
+            f"response_energy, {response_energy}, exceeds threshold, {threshold}",
         )

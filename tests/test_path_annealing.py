@@ -152,7 +152,7 @@ class TestSA(unittest.TestCase):
 
         result = simulated_annealing(*problem)
 
-        self.assertTrue(len(result) == 5, "Sampler should return five values")
+        self.assertTrue(len(result) == 5, "Sampler should return 5 values")
 
         samples, energies, _, _, _ = result
 
@@ -315,7 +315,7 @@ class TestSA(unittest.TestCase):
             count[0] += 1
             return False
 
-        # should only get one sample back
+        # should only get five samples back
         samples, energies, _, _, _ = simulated_annealing(
             *problem, interrupt_function=stop
         )
