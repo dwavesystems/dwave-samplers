@@ -15,10 +15,7 @@
 A dimod :term:`sampler` that uses the simulated annealing algorithm over path integral states
 
 """
-import math
-
 from numbers import Integral
-from collections import defaultdict
 from typing import List, Sequence, Tuple, Optional, Union, Callable
 from time import perf_counter_ns
 

@@ -79,7 +79,7 @@ class TestSchedules(unittest.TestCase):
                 beta_schedule=["asd", 1],
             )
 
-        resp = sampler.sample_ising(
+        sampler.sample_ising(
             h, J, num_reads=num_reads, beta_schedule_type="custom", Hp_field=[0.1, 1]
         )
 
@@ -180,7 +180,7 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
             for J in (J, eJ):
                 _h = copy.deepcopy(h)
                 _J = copy.deepcopy(J)
-                r = sampler.sample_ising(_h, _J, beta_range=beta_range)
+                sampler.sample_ising(_h, _J, beta_range=beta_range)
         # An empty problem does not allow for beta_range automation
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")

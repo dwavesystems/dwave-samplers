@@ -13,7 +13,6 @@
 #    limitations under the License.
 
 import os
-import time
 import unittest
 import contextlib
 from concurrent.futures import ThreadPoolExecutor, wait
