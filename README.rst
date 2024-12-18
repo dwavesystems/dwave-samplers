@@ -80,11 +80,13 @@ Simulated Annealing
 used for heuristic optimization or approximate Boltzmann sampling. The
 *dwave-samplers* implementation approaches the equilibrium distribution by
 performing updates at a sequence of decreasing temperatures, terminating at the
-target `β`.\ [#]_ Each spin is updated once in a fixed order per point
-per temperature according to a Metropolis-Hastings update. When the temperature
+target `β`.\ [#]_ Each spin is updated once in a fixed (by default) or
+randomized order per point per temperature according to a customizable (by default
+Metropolis-Hastings) update. When the temperature
 is low the target distribution concentrates, at equilibrium, over ground states
 of the model. Samples are guaranteed to match the equilibrium for long, smooth
-temperature schedules.
+temperature schedules. Schedules are customizable so that the sampler can be used
+for standard Metropolis, Gibbs, Block-Gibbs or reverse annealing dynamics.
 
 .. [#] `β` represents the inverse temperature, `1/(k T)`, of a
    `Boltzmann distribution <https://en.wikipedia.org/wiki/Boltzmann_distribution>`_
@@ -104,6 +106,34 @@ and a custom one.
 
 >>> sampleset = sampler.sample(bqm)
 >>> sampleset = sampler.sample(bqm, beta_range=[.1, 4.2], beta_schedule_type='linear')
+
+Simulated Quantum Annealing
+===========================
+
+`Simulated quantum annealing can be used for heuristic optimization or approximate
+sampling. The *dwave-samplers* implementation performs dynamics defined by a schedule
+for the driver(transverse) and problem(diagonal, binary quadratic model) Hamiltonian terms.
+Each spin is updated according to a model-appropriate update as the schedule is
+stepped through in discretized time (by sweep).
+Using these methods equilibrated (thermalized) quantum Boltzmann distributions can be
+approached, or the QPU schedule can be provided to simulate by classical dynamics
+the annealing process. Although out-of-equilibrium dynamics and dynamical timescales
+cannot be simulated by these classical methods, some phenomena can be emulated beyond
+what is possible with simulated annealing.
+For algorithm details see: https://doi.org/10.1038/s41467-021-20901-5
+
+>>> from dwave.samplers import PathIntegralAnnealingSampler
+>>> sampler = SimulatedQuantumAnnealingSampler()  # or RotorModelAnnealingSampler()
+
+Create a random binary quadratic model.
+
+>>> import dimod
+>>> bqm = dimod.generators.gnp_random_bqm(100, .5, 'BINARY')
+
+Sample projected states from a quantum process with a linear schedule
+
+>>> sampleset = sampler.sample(bqm, beta_schedule_type="custom", Hp_field=[0, 10],  Hd_field=[10, 0])
+
 
 Steepest Descent
 ================
