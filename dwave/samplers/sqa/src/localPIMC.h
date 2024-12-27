@@ -1,5 +1,5 @@
 /*
-Copyright 2022 D-Wave Systems Inc.
+Copyright 2024 D-Wave
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -21,23 +21,14 @@ Copyright 2022 D-Wave Systems Inc.
 
    Methods exploit either single qubit Swendsen-Wang updates, or multi-qubit Swendsen-Wang updates,
    in the latter case specifically for regular and independent 1d ferromagnetic subsequences. These
-   match the methods explored in A King et al. https://arxiv.org/abs/1911.03446
+   match the methods explored in A King et al. https://doi.org/10.1038/s41467-021-20901-5
 
    Authors: Jack Raymond, Stephen Face
-   Copyright: D-Wave Systems
+   Copyright: D-Wave
    License: Apache 2
    Last modification: March 20 2020
 
-   See also pimc/src/README.md pimc/src/localPIMC.cpp and pimc/src/main.cpp
-
-   A dimod-compatible python wrapper for this method, alongside an annealing generalization have been added
-
-   Authors: Jack Raymond
-   Copyright: D-Wave Systems
-   License: Apache 2
-   Last modification: April 1 2022
-   
-   See also docs/
+   See also documentation associated to the dwave-pimc repository
 */
 
 #include <algorithm>

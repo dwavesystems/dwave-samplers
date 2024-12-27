@@ -1,18 +1,35 @@
-// Copyright 2022 D-Wave Systems Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-// ===========================================================================
+/*
+Copyright 2024 D-Wave
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
+/*
+   Path Integral Monte Carlo code for analysis of a finite temperature transverse field Ising model,
+   Defined by partition function Z = Trace[exp(-invTemp H)], and scaled Hamiltonian
+   H = 1/2 sum_{i,j} J_{ij} \sigma^z_i \sigma^z_j + \sum_i [h_i \sigma^z_i - \Gamma\sigma^x_i]
+
+   Methods exploit either single qubit Swendsen-Wang updates, or multi-qubit Swendsen-Wang updates,
+   in the latter case specifically for regular and independent 1d ferromagnetic subsequences. These
+   match the methods explored in A King et al. https://arxiv.org/abs/1911.03446
+
+   Authors: Jack Raymond, Stephen Face
+   Copyright: D-Wave Systems
+   License: Apache 2
+   Last modification: April 1 2022
+
+   See also README.md localPIMC.h and main.cpp
+*/
 
 #include <math.h>
 #include <vector>
@@ -53,38 +70,6 @@ double get_state_energy(
     return energy;
 }
 
-/*
-Copyright 2020 D-Wave Systems Inc.
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
-/*
-   Path Integral Monte Carlo code for analysis of a finite temperature transverse field Ising model,
-   Defined by partition function Z = Trace[exp(-invTemp H)], and scaled Hamiltonian
-   H = 1/2 sum_{i,j} J_{ij} \sigma^z_i \sigma^z_j + \sum_i [h_i \sigma^z_i - \Gamma\sigma^x_i]
-
-   Methods exploit either single qubit Swendsen-Wang updates, or multi-qubit Swendsen-Wang updates,
-   in the latter case specifically for regular and independent 1d ferromagnetic subsequences. These
-   match the methods explored in A King et al. https://arxiv.org/abs/1911.03446
-
-   Authors: Jack Raymond, Stephen Face
-   Copyright: D-Wave Systems
-   License: Apache 2
-   Last modification: March 20 2020
-
-   See also README.md localPIMC.h and main.cpp
-*/
 
 /* Public functions */
 

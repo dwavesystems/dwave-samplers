@@ -1,4 +1,4 @@
-# Copyright 2024 D-Wave Systems Inc.
+# Copyright 2024 D-Wave
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -429,7 +429,9 @@ class TestRotorModelAnnealingSampler(unittest.TestCase):
             [{"a": 1, "b": -1}, {"a": -1, "b": 1}], bqm
         )
 
-        result = RotorModelAnnealingSampler().sample(bqm, num_sweeps=0, initial_states=sampleset)
+        result = RotorModelAnnealingSampler().sample(
+            bqm, num_sweeps=0, initial_states=sampleset
+        )
 
         self.assertTrue(np.array_equal(result.record.sample, sampleset.record.sample))
         self.assertEqual(len(result.record.sample), 2)
@@ -946,7 +948,9 @@ class TestCoreSpinUpdate(unittest.TestCase):
             else:
                 osi = int(Hd_field[-1] * 256 + 1) // 2
             # In range:
-            self.assertTrue(set(us).issubset({(root + i)%256 for i in range(-osi, osi + 1)}))
+            self.assertTrue(
+                set(us).issubset({(root + i) % 256 for i in range(-osi, osi + 1)})
+            )
             # Expected absolute deviation should match (concentrate in the mean) at
             # (Hd/Hp)*(pi/2), pi/2 represented by 64
             mean_val = Hd_field[-1] * 64

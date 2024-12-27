@@ -1,4 +1,4 @@
-# Copyright 2024 D-Wave Systems Inc.
+# Copyright 2024 D-Wave
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 """
 A dimod :term:`sampler` that uses the simulated annealing algorithm over path integral states
 
+To understand the core C++ code, see the original dwave-pimc repository, which was published alongside https://doi.org/10.1038/s41467-021-20901-5
 """
 from numbers import Integral
 from typing import List, Sequence, Tuple, Optional, Union, Callable
@@ -29,7 +30,7 @@ from dwave.samplers.sqa.rotormc_annealing import simulated_annealing as rotor_an
 from dwave.samplers.sa.sampler import _default_ising_beta_range
 
 
-__all__ = ["PathIntegralAnnealingSampler", "SimulatedQuantumAnnealingSampler", "RotorModelAnnealingSampler"]
+__all__ = ["PathIntegralAnnealingSampler", "RotorModelAnnealingSampler"]
 
 
 class PathIntegralAnnealingSampler(dimod.Sampler, dimod.Initialized):
@@ -39,11 +40,9 @@ class PathIntegralAnnealingSampler(dimod.Sampler, dimod.Initialized):
     by a distribution on paths (also called worldlines). These worldlines
     can be evolved via classical dynamics. The statistics of a quasi-static
     process can be established by this sampler with a fixed target model
-    on a timescale dictated by the mixing time. Some types of quantum 
-    dynamics, such as incoherent single path tunneling scaling in time, 
+    on a timescale dictated by the mixing time. Some types of quantum
+    dynamics, such as incoherent single path tunneling scaling in time,
     can also be emulated.
-
-    Also aliased as :class:`.SimulatedQuantumAnnealingSampler`.
 
     Examples:
         This example solves a simple Ising problem.
@@ -115,8 +114,7 @@ class PathIntegralAnnealingSampler(dimod.Sampler, dimod.Initialized):
             "initial_states": [],
             "initial_states_generator": [],
         }
-        self.properties = {"beta_schedule_options": ("linear", "geometric",
-                                                     "custom")}
+        self.properties = {"beta_schedule_options": ("linear", "geometric", "custom")}
 
     def sample(
         self,
@@ -143,7 +141,7 @@ class PathIntegralAnnealingSampler(dimod.Sampler, dimod.Initialized):
         breaks_buffer_out: Optional[np.ndarray] = None,
         schedule_sample_interval: Optional[int] = None,
         interrupt_function=None,
-        **kwargs
+        **kwargs,
     ) -> dimod.SampleSet:
         """Sample from a binary quadratic model.
 
@@ -290,7 +288,7 @@ class PathIntegralAnnealingSampler(dimod.Sampler, dimod.Initialized):
             :obj:``dimod.Response``: A ``dimod`` :obj:``~dimod.Response`` object.
 
         Examples:
-            This example runs path integral annealing on a binary quadratic 
+            This example runs path integral annealing on a binary quadratic
             model with various input parameters.
 
             >>> import dimod
@@ -503,30 +501,28 @@ class PathIntegralAnnealingSampler(dimod.Sampler, dimod.Initialized):
 
         timestamp_sample = perf_counter_ns()
         # run the simulated annealing algorithm
-        samples, energies, statistics, num_breaks, breaks_buffer_out = (
-            path_annealing(
-                num_reads,
-                ldata,
-                irow,
-                icol,
-                qdata,
-                num_sweeps_per_beta,
-                Hp_field,
-                Hd_field,
-                Gamma,
-                chain_coupler_strength,
-                qubits_per_chain,
-                qubits_per_update,
-                seed,
-                initial_states_array,
-                project_states[0],
-                project_states[1],
-                num_breaks,
-                breaks_in,
-                breaks_buffer_out,
-                schedule_sample_interval,
-                interrupt_function,
-            )
+        samples, energies, statistics, num_breaks, breaks_buffer_out = path_annealing(
+            num_reads,
+            ldata,
+            irow,
+            icol,
+            qdata,
+            num_sweeps_per_beta,
+            Hp_field,
+            Hd_field,
+            Gamma,
+            chain_coupler_strength,
+            qubits_per_chain,
+            qubits_per_update,
+            seed,
+            initial_states_array,
+            project_states[0],
+            project_states[1],
+            num_breaks,
+            breaks_in,
+            breaks_buffer_out,
+            schedule_sample_interval,
+            interrupt_function,
         )
         timestamp_postprocess = perf_counter_ns()
 
@@ -563,27 +559,23 @@ class PathIntegralAnnealingSampler(dimod.Sampler, dimod.Initialized):
         response.change_vartype(original_vartype, inplace=True)
 
         response.info.update(
-            dict(
-                timing=dict(
-                    preprocessing_ns=timestamp_sample - timestamp_preprocess,
-                    sampling_ns=timestamp_postprocess - timestamp_sample,
-                    # Update timing info last to capture the full postprocessing time
-                    postprocessing_ns=perf_counter_ns() - timestamp_postprocess,
-                )
+            timing=dict(
+                preprocessing_ns=timestamp_sample - timestamp_preprocess,
+                sampling_ns=timestamp_postprocess - timestamp_sample,
+                # Update timing info last to capture the full postprocessing time
+                postprocessing_ns=perf_counter_ns() - timestamp_postprocess,
             )
         )
         return response
 
 
-SimulatedQuantumAnnealingSampler = PathIntegralAnnealingSampler
-
 class RotorModelAnnealingSampler(dimod.Sampler, dimod.Initialized):
     """Simulated annealing sampler for rotor model representations of BQMs
 
     A factorized state on coherent spins can be represented by a product
-    state on 'rotors'. To reproduce the distribution projected in the 
+    state on 'rotors'. To reproduce the distribution projected in the
     computational basis one angle is a sufficient description per spin.
-    The single state model can be heuristically relaxed to a thermal 
+    The single state model can be heuristically relaxed to a thermal
     mixture of states in the space of angles. This model can capture
     some equilibrium and some dynamical properties of simple quantum
     annealing processes.
@@ -648,39 +640,42 @@ class RotorModelAnnealingSampler(dimod.Sampler, dimod.Initialized):
 
     def __init__(self):
         # create a local copy in case folks for some reason want to modify them
-        self.parameters = {'beta_range': [],
-                           'num_reads': [],
-                           'num_sweeps': [],
-                           'num_sweeps_per_beta': [],
-                           'beta_schedule_type': ['beta_schedule_options'],
-                           'seed': [],
-                           'interrupt_function': [],
-                           'initial_states': [],
-                           'initial_states_generator': [],
-                           }
-        self.properties = {'beta_schedule_options': ('linear', 'geometric',
-                                                     'custom')}
+        self.parameters = {
+            "beta_range": [],
+            "num_reads": [],
+            "num_sweeps": [],
+            "num_sweeps_per_beta": [],
+            "beta_schedule_type": ["beta_schedule_options"],
+            "seed": [],
+            "interrupt_function": [],
+            "initial_states": [],
+            "initial_states_generator": [],
+        }
+        self.properties = {"beta_schedule_options": ("linear", "geometric", "custom")}
 
-    def sample(self, bqm: dimod.BinaryQuadraticModel,
-               *,
-               beta_range: Optional[Union[List[float], Tuple[float, float]]]=None,
-               num_reads: Optional[int]=None,
-               num_sweeps: Optional[int]=None,
-               num_sweeps_per_beta: int=1,
-               beta_schedule_type: str="geometric",
-               seed: Optional[int]=None,
-               Hp_field: Optional[Union[Sequence[float], np.ndarray]]=None,
-               Hd_field: Optional[Union[Sequence[float], np.ndarray]]=None,
-               initial_states: Optional[Union[dimod.typing.SamplesLike, np.ndarray]]=None,
-               initial_states_generator: InitialStateGenerator = "random",
-               make_info_json_serializable: bool=False,
-               project_states: Tuple[bool, bool]=(False, True),
-               schedule_sample_interval: Optional[int]=None,
-               randomize_order: bool=False,
-               proposal_acceptance_criteria: str='MetropolisUniform',
-               trans_fields: Optional[Union[Sequence[float], np.ndarray]]=None,
-               interrupt_function: Optional[Callable[[], bool]] = None,
-               **kwargs) -> dimod.SampleSet:
+    def sample(
+        self,
+        bqm: dimod.BinaryQuadraticModel,
+        *,
+        beta_range: Optional[Union[List[float], Tuple[float, float]]] = None,
+        num_reads: Optional[int] = None,
+        num_sweeps: Optional[int] = None,
+        num_sweeps_per_beta: int = 1,
+        beta_schedule_type: str = "geometric",
+        seed: Optional[int] = None,
+        Hp_field: Optional[Union[Sequence[float], np.ndarray]] = None,
+        Hd_field: Optional[Union[Sequence[float], np.ndarray]] = None,
+        initial_states: Optional[Union[dimod.typing.SamplesLike, np.ndarray]] = None,
+        initial_states_generator: InitialStateGenerator = "random",
+        make_info_json_serializable: bool = False,
+        project_states: Tuple[bool, bool] = (False, True),
+        schedule_sample_interval: Optional[int] = None,
+        randomize_order: bool = False,
+        proposal_acceptance_criteria: str = "MetropolisUniform",
+        trans_fields: Optional[Union[Sequence[float], np.ndarray]] = None,
+        interrupt_function: Optional[Callable[[], bool]] = None,
+        **kwargs,
+    ) -> dimod.SampleSet:
         """Sample from a binary quadratic model using an implemented sample
         method.
 
@@ -884,23 +879,28 @@ class RotorModelAnnealingSampler(dimod.Sampler, dimod.Initialized):
         elif isinstance(trans_fields, (list, tuple, np.ndarray)):
             if len(trans_fields) != bqm.num_variables:
                 raise ValueError(
-                    'bqm.num_variables and trans_fields lengths incompatible')
+                    "bqm.num_variables and trans_fields lengths incompatible"
+                )
             trans_fields = np.array(trans_fields)
         else:
             # Uniform field:
-            trans_fields = trans_fields*np.ones(bqm.num_variables)
+            trans_fields = trans_fields * np.ones(bqm.num_variables)
 
         # parse_initial_states could handle seed generation, but because we're
         # sharing it with the SA algo, we handle it out here
         if seed is None:
             seed = randint(2**31)
         elif not isinstance(seed, Integral):
-            error_msg = ("'seed' should be None or an integer between 0 and 2^32 "
-                         "- 1: value = {}".format(seed))
+            error_msg = (
+                "'seed' should be None or an integer between 0 and 2^32 "
+                "- 1: value = {}".format(seed)
+            )
             raise TypeError(error_msg)
         elif not (0 <= seed < 2**31):
-            error_msg = ("'seed' should be an integer between 0 and 2^32 - 1: "
-                         "value = {}".format(seed))
+            error_msg = (
+                "'seed' should be an integer between 0 and 2^32 - 1: "
+                "value = {}".format(seed)
+            )
             raise ValueError(error_msg)
         # Required for reproducible projection of samples:
         prng = np.random.default_rng(seed)
@@ -913,12 +913,15 @@ class RotorModelAnnealingSampler(dimod.Sampler, dimod.Initialized):
                 num_reads=num_reads,
                 initial_states=None,
                 initial_states_generator=initial_states_generator,
-                seed=seed)
+                seed=seed,
+            )
             if num_reads is None:
                 num_reads = initial_states.shape[0]
             if (num_reads, bqm.num_variables) != initial_states.shape:
-                raise ValueError('Shape of initial_states specified as'
-                                 'ndarray should match (num_reads, num_vars)')
+                raise ValueError(
+                    "Shape of initial_states specified as"
+                    "ndarray should match (num_reads, num_vars)"
+                )
 
         else:
             parsed = self.parse_initial_states(
@@ -926,7 +929,8 @@ class RotorModelAnnealingSampler(dimod.Sampler, dimod.Initialized):
                 num_reads=num_reads,
                 initial_states=initial_states,
                 initial_states_generator=initial_states_generator,
-                seed=seed)
+                seed=seed,
+            )
             num_reads = parsed.num_reads
             initial_states = parsed.initial_states.record.sample
         # read out the initial states and the variable order
@@ -935,30 +939,45 @@ class RotorModelAnnealingSampler(dimod.Sampler, dimod.Initialized):
         if initial_states.dtype == np.uint8:
             if project_states[0]:
                 initial_states_array = np.ascontiguousarray(
-                    128*(np.cos(np.pi*(initial_states/128)) <
-                         1-2*prng.random(size=initial_states.shape)),
-                    dtype=np.uint8)
+                    128
+                    * (
+                        np.cos(np.pi * (initial_states / 128))
+                        < 1 - 2 * prng.random(size=initial_states.shape)
+                    ),
+                    dtype=np.uint8,
+                )
             else:
                 initial_states_array = np.ascontiguousarray(initial_states)
         else:
             # Assume spins, and cast to uint8_t
             if not set(np.unique(initial_states)).issubset({-1, 1}):
-                raise ValueError('initial_states dtype is neither np.uint8 nor consistent with spins {-1, 1}')
+                raise ValueError(
+                    "initial_states dtype is neither np.uint8 nor consistent with spins {-1, 1}"
+                )
             initial_states_array = np.ascontiguousarray(
-                64-64*initial_states,
-                dtype=np.uint8)
+                64 - 64 * initial_states, dtype=np.uint8
+            )
         # read out the BQM
         ldata, (irow, icol, qdata), off = bqm.to_numpy_vectors(
-            variable_order=variable_order)
+            variable_order=variable_order
+        )
 
         if interrupt_function and not callable(interrupt_function):
             raise TypeError("'interrupt_function' should be a callable")
 
         if not isinstance(num_sweeps_per_beta, Integral):
-            error_msg = "'num_sweeps_per_beta' should be a positive integer: value = {}".format(num_sweeps_per_beta)
+            error_msg = (
+                "'num_sweeps_per_beta' should be a positive integer: value = {}".format(
+                    num_sweeps_per_beta
+                )
+            )
             raise TypeError(error_msg)
         elif num_sweeps_per_beta < 1:
-            error_msg = "'num_sweeps_per_beta' should be a positive integer: value = {}".format(num_sweeps_per_beta)
+            error_msg = (
+                "'num_sweeps_per_beta' should be a positive integer: value = {}".format(
+                    num_sweeps_per_beta
+                )
+            )
             raise ValueError(error_msg)
         # handle beta_schedule et al
         if beta_schedule_type == "custom":
@@ -969,16 +988,25 @@ class RotorModelAnnealingSampler(dimod.Sampler, dimod.Initialized):
                 try:
                     Hp_field = np.array(Hp_field, dtype=float)
                 except:
-                    raise ValueError('Hp_field cannot be case as a numpy array of dtype=float')
-                if num_sweeps is not None and num_sweeps != len(Hp_field)*num_sweeps_per_beta:
+                    raise ValueError(
+                        "Hp_field cannot be case as a numpy array of dtype=float"
+                    )
+                if (
+                    num_sweeps is not None
+                    and num_sweeps != len(Hp_field) * num_sweeps_per_beta
+                ):
                     raise ValueError(
                         "'num_sweeps' should be set to None, or a value consistent with 'Hp_field' "
                         "and 'num_sweeps_per_beta' for 'beta_schedule_type' = 'custom': value = "
-                        f"{num_sweeps} != {Hp_field.size}x{num_sweeps_per_beta}")
-                elif beta_range is not None and (beta_range[0] != Hp_field[0] or beta_range[-1] != Hp_field[-1]):
+                        f"{num_sweeps} != {Hp_field.size}x{num_sweeps_per_beta}"
+                    )
+                elif beta_range is not None and (
+                    beta_range[0] != Hp_field[0] or beta_range[-1] != Hp_field[-1]
+                ):
                     raise ValueError(
                         "'beta_range' should be set to None, or a value consistent "
-                        "with 'Hp_field', for 'beta_schedule_type'='custom'.")
+                        "with 'Hp_field', for 'beta_schedule_type'='custom'."
+                    )
                 elif np.min(Hp_field) < 0:
                     raise ValueError("'Hp_field' cannot include negative values.")
         elif num_sweeps == 0:
@@ -1015,7 +1043,11 @@ class RotorModelAnnealingSampler(dimod.Sampler, dimod.Initialized):
                     # interpolate a geometric beta schedule
                     Hp_field = np.geomspace(*beta_range, num=num_betas)
                 else:
-                    raise ValueError("Beta schedule type {} not implemented".format(beta_schedule_type))
+                    raise ValueError(
+                        "Beta schedule type {} not implemented".format(
+                            beta_schedule_type
+                        )
+                    )
 
         num_betas = len(Hp_field)
 
@@ -1024,22 +1056,32 @@ class RotorModelAnnealingSampler(dimod.Sampler, dimod.Initialized):
         else:
             Hd_field = np.array(Hd_field, dtype=float)
             if len(Hd_field) < num_betas:
-                raise ValueError('Hd_field incompatible with Hp_field')
+                raise ValueError("Hd_field incompatible with Hp_field")
 
         if schedule_sample_interval is None:
             schedule_sample_interval = 0  # Flag to indicate no sampling
         elif schedule_sample_interval > len(Hp_field) or schedule_sample_interval < 1:
-            raise ValueError('schedule_sample_interval is incompatible with Hp_field')
+            raise ValueError("schedule_sample_interval is incompatible with Hp_field")
 
         timestamp_sample = perf_counter_ns()
         # run the simulated annealing algorithm
         samples, energies, statistics = rotor_annealing(
-            num_reads, ldata, irow, icol, qdata, trans_fields,
-            num_sweeps_per_beta, Hp_field, Hd_field,
-            seed, initial_states_array,
-            randomize_order, proposal_acceptance_criteria,
+            num_reads,
+            ldata,
+            irow,
+            icol,
+            qdata,
+            trans_fields,
+            num_sweeps_per_beta,
+            Hp_field,
+            Hd_field,
+            seed,
+            initial_states_array,
+            randomize_order,
+            proposal_acceptance_criteria,
             schedule_sample_interval,
-            interrupt_function)
+            interrupt_function,
+        )
         timestamp_postprocess = perf_counter_ns()
 
         info = {
@@ -1050,7 +1092,7 @@ class RotorModelAnnealingSampler(dimod.Sampler, dimod.Initialized):
             info["statistics"] = statistics
 
         if not project_states[1]:
-            info['rotor_states'] = samples.copy()
+            info["rotor_states"] = samples.copy()
         if make_info_json_serializable:
             info["beta_range"] = np.array(info["beta_range"]).tolist()
             for numpy_array_key in ["statistics", "rotor_states"]:
@@ -1058,25 +1100,33 @@ class RotorModelAnnealingSampler(dimod.Sampler, dimod.Initialized):
                     info[numpy_array_key] = info[numpy_array_key].tolist()
         # states are always projected to SPINS to play nice(st)
         # with SampleSet and ocean.
-        samples = np.array(1 - 2*(np.cos(np.pi*samples/128) < 1-2*prng.random(size=samples.shape)),
-                           dtype=np.int8)
+        samples = np.array(
+            1
+            - 2
+            * (np.cos(np.pi * samples / 128) < 1 - 2 * prng.random(size=samples.shape)),
+            dtype=np.int8,
+        )
 
         response = dimod.SampleSet.from_samples(
             (samples, variable_order),
-            energy=energies+bqm.offset,  # add back in the offset
+            energy=energies + bqm.offset,  # add back in the offset
             info=info,
-            vartype='SPIN'
+            vartype="SPIN",
         )
 
         response.change_vartype(original_vartype, inplace=True)
 
         # Developer note: the specific keys of the timing dict are chosen to be consistent with
         #                 other samplers' timing dict.
-        response.info.update(dict(timing=dict(
-            preprocessing_ns=timestamp_sample - timestamp_preprocess,
-            sampling_ns=timestamp_postprocess - timestamp_sample,
-            # Update timing info last to capture the full postprocessing time
-            postprocessing_ns=perf_counter_ns() - timestamp_postprocess,
-        )))
+        response.info.update(
+            dict(
+                timing=dict(
+                    preprocessing_ns=timestamp_sample - timestamp_preprocess,
+                    sampling_ns=timestamp_postprocess - timestamp_sample,
+                    # Update timing info last to capture the full postprocessing time
+                    postprocessing_ns=perf_counter_ns() - timestamp_postprocess,
+                )
+            )
+        )
 
         return response

@@ -110,7 +110,7 @@ and a custom one.
 Simulated Quantum Annealing
 ===========================
 
-`Simulated quantum annealing can be used for heuristic optimization or approximate
+Simulated quantum annealing can be used for heuristic optimization or approximate
 sampling. The *dwave-samplers* implementation performs dynamics defined by a schedule
 for the driver(transverse) and problem(diagonal, binary quadratic model) Hamiltonian terms.
 Each spin is updated according to a model-appropriate update as the schedule is
@@ -119,8 +119,9 @@ Using these methods equilibrated (thermalized) quantum Boltzmann distributions c
 approached, or the QPU schedule can be provided to simulate by classical dynamics
 the annealing process. Although out-of-equilibrium dynamics and dynamical timescales
 cannot be simulated by these classical methods, some phenomena can be emulated beyond
-what is possible with simulated annealing.
-For algorithm details see: https://doi.org/10.1038/s41467-021-20901-5
+what is possible with simulated annealing. For algorithm details see [1]
+
+[1] https://doi.org/10.1038/s41467-021-20901-5
 
 >>> from dwave.samplers import PathIntegralAnnealingSampler
 >>> sampler = SimulatedQuantumAnnealingSampler()  # or RotorModelAnnealingSampler()

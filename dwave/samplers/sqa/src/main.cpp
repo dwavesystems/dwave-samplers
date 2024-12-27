@@ -1,5 +1,5 @@
 /*
-Copyright 2020 D-Wave Systems Inc.
+Copyright 2024 D-Wave
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -24,11 +24,11 @@ Copyright 2020 D-Wave Systems Inc.
    match the methods explored in A King et al. https://arxiv.org/abs/1911.03446
 
    Authors: Jack Raymond, Stephen Face
-   Copyright: D-Wave Systems
+   Copyright: D-Wave
    License: Apache 2
    Last modification: March 20 2020
 
-   See also README.md localPIMC.cpp and localPIMC.h
+   See also the dwave-pimc repository
 */
 
 #include <ctime>

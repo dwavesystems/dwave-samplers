@@ -61,17 +61,17 @@ class TestSchedules(unittest.TestCase):
         num_reads = 1
         with self.assertRaises(ValueError):
             # Missing schedule
-            resp = sampler.sample_ising(
+            sampler.sample_ising(
                 h, J, num_reads=num_reads, beta_schedule_type="custom"
             )
         with self.assertRaises(ValueError):
             # Positivity
-            resp = sampler.sample_ising(
+            sampler.sample_ising(
                 h, J, num_reads=num_reads, beta_schedule_type="custom", Hp_field=[-1, 1]
             )
         with self.assertRaises(ValueError):
             # Numeric
-            resp = sampler.sample_ising(
+            sampler.sample_ising(
                 h,
                 J,
                 num_reads=num_reads,
