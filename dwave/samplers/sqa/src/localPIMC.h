@@ -31,6 +31,7 @@ Copyright 2024 D-Wave
    See also documentation associated to the dwave-pimc repository
 */
 
+#include <cstdint>
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -55,7 +56,7 @@ Copyright 2024 D-Wave
 typedef bool (*const callback)(void * const function);
 
 int general_simulated_annealing(
-    int8_t *states,
+    std::int8_t *states,
     double *energies,
     const bool project_inputs,
     const bool project_outputs,
@@ -76,7 +77,7 @@ int general_simulated_annealing(
     const int qubits_per_chain,
     const int qubits_per_update,
     const unsigned int seed,
-    int8_t* statistics,
+    std::int8_t* statistics,
     const int schedule_sample_interval,
     callback interrupt_callback,
     void * const interrupt_function
@@ -133,13 +134,13 @@ class localPIMC {
     void run(const std::vector<double> & HdField,
              const std::vector<double> & HpField,
              const int nSweepsPerField,
-	     int8_t *statistics_buffer,
+	     std::int8_t *statistics_buffer,
 	     int evaluate_every);
     double invTemp;
     double invTempGamma;           // Scaled transverse field
-    void reinitClassical(int8_t *vals);
-    int reinitQuantum(int8_t *vals, int *num_breaks, int *breaks_buffer);
-    void readSlice(int8_t *vals);
+    void reinitClassical(std::int8_t *vals);
+    int reinitQuantum(std::int8_t *vals, int *num_breaks, int *breaks_buffer);
+    void readSlice(std::int8_t *vals);
     int readBreaks(int *vals, int *breaks_buffer, int capacity);
 };
 

@@ -31,6 +31,7 @@ Copyright 2024 D-Wave
    See also README.md localPIMC.h and main.cpp
 */
 
+#include <cstdint>
 #include <math.h>
 #include <vector>
 #include <stdexcept>
@@ -52,7 +53,7 @@ using namespace std;
 // @return A double corresponding to the energy for `state` on the problem
 //        defined by h and the couplers passed in
 double get_state_energy(
-    int8_t* state,
+    std::int8_t* state,
     const vector<double>& h,
     const vector<int>& coupler_starts,
     const vector<int>& coupler_ends,
@@ -126,7 +127,7 @@ void localPIMC::run(int nSweeps) {
 void localPIMC::run(const std::vector<double> & HdField,
                     const std::vector<double> & HpField,
                     const int nSweepsPerField,
-		    int8_t *statistics,
+		    std::int8_t *statistics,
 		    const int evaluateEvery) {
     if (qubitsPerUpdate == 1) {
         std::uniform_int_distribution<> randomQubitIndex(0, numVar - 1);
@@ -158,13 +159,13 @@ void localPIMC::run(const std::vector<double> & HdField,
 }
 
 
-void localPIMC::reinitClassical(int8_t *state) {
+void localPIMC::reinitClassical(std::int8_t *state) {
   for(unsigned int i=0; i<firstSlice.size(); i++) {
     firstSlice[i] = state[i];
     breaks[i].resize(0);
   }
 }
-int localPIMC::reinitQuantum(int8_t *state, int *num_breaks, int *breaks_buffer) {
+int localPIMC::reinitQuantum(std::int8_t *state, int *num_breaks, int *breaks_buffer) {
   int num_breaks_total = 0;
   for(unsigned int i=0; i<firstSlice.size(); i++) {
     firstSlice[i] = state[i];
@@ -176,7 +177,7 @@ int localPIMC::reinitQuantum(int8_t *state, int *num_breaks, int *breaks_buffer)
   }
   return(num_breaks_total);
 }
-void localPIMC::readSlice(int8_t *state) {
+void localPIMC::readSlice(std::int8_t *state) {
   for(unsigned int i=0; i<firstSlice.size(); i++) {
     state[i] = firstSlice[i];
   }
@@ -568,7 +569,7 @@ void localPIMC::initPRNG(unsigned int seed) const {
 
 
 // Perform simulated annealing on a general problem
-// @param states a int8_t array of size num_samples * number of variables in the
+// @param states a std::int8_t array of size num_samples * number of variables in the
 //        problem. Will be overwritten by this function as samples are filled
 //        in. The initial state of the samples are used to seed the simulated
 //        annealing runs.
@@ -600,7 +601,7 @@ void localPIMC::initPRNG(unsigned int seed) const {
 // @return the number of samples taken. If no interrupt occured, will equal num_samples.
 
 int general_simulated_annealing(
-    int8_t* states,
+    std::int8_t* states,
     double* energies,
     const bool project_inputs,
     const bool project_outputs,
@@ -621,13 +622,13 @@ int general_simulated_annealing(
     const int qubits_per_chain,
     const int qubits_per_update,
     const unsigned int seed,
-    int8_t* statistics,
+    std::int8_t* statistics,
     const int schedule_sample_interval,
     callback interrupt_callback,
     void * const interrupt_function
 ) {
     // TO DO 
-    // assert len(states) == num_samples*num_vars*sizeof(int8_t)
+    // assert len(states) == num_samples*num_vars*sizeof(std::int8_t)
     // assert len(coupler_starts) == len(coupler_ends) == len(coupler_weights)
     // assert max(coupler_starts + coupler_ends) < num_vars
     
@@ -683,7 +684,7 @@ int general_simulated_annealing(
         // states is a giant spin array that will hold the resulting states for
         // all the samples, so we need to get the location inside that vector
         // where we will store the sample for this sample_index
-        int8_t *p_states = states + sample_index*num_vars;
+        std::int8_t *p_states = states + sample_index*num_vars;
         int *p_num_breaks = num_breaks + sample_index*num_vars;
         if(project_inputs) {
           pimc.reinitClassical(p_states);

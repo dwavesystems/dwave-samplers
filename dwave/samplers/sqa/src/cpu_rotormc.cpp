@@ -21,6 +21,9 @@ Copyright 2024 D-Wave
 #include <limits>
 #include "cpu_rotormc.h"
 
+#ifndef M_PI
+#define M_PI (3.14159265358979323846)
+#endif
 
 // xorshift128+ as defined https://en.wikipedia.org/wiki/Xorshift#xorshift.2B
 #define FASTRAND(rand) do {                       \
