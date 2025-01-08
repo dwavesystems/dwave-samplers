@@ -55,7 +55,7 @@ Copyright 2024 D-Wave
 typedef bool (*const callback)(void * const function);
 
 int general_simulated_annealing(
-    char *states,
+    int8_t *states,
     double *energies,
     const bool project_inputs,
     const bool project_outputs,
@@ -76,7 +76,7 @@ int general_simulated_annealing(
     const int qubits_per_chain,
     const int qubits_per_update,
     const unsigned int seed,
-    char* statistics,
+    int8_t* statistics,
     const int schedule_sample_interval,
     callback interrupt_callback,
     void * const interrupt_function
@@ -133,13 +133,13 @@ class localPIMC {
     void run(const std::vector<double> & HdField,
              const std::vector<double> & HpField,
              const int nSweepsPerField,
-	     char *statistics_buffer,
+	     int8_t *statistics_buffer,
 	     int evaluate_every);
     double invTemp;
     double invTempGamma;           // Scaled transverse field
-    void reinitClassical(char *vals);
-    int reinitQuantum(char *vals, int *num_breaks, int *breaks_buffer);
-    void readSlice(char *vals);
+    void reinitClassical(int8_t *vals);
+    int reinitQuantum(int8_t *vals, int *num_breaks, int *breaks_buffer);
+    void readSlice(int8_t *vals);
     int readBreaks(int *vals, int *breaks_buffer, int capacity);
 };
 

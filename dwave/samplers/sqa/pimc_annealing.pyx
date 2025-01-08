@@ -28,7 +28,7 @@ cdef extern from "localPIMC.h":
     ctypedef bool (*callback)(void *function)
 
     int general_simulated_annealing(
-            char* samples,
+            np.int8_t* samples,
             double* energies,
             const bool project_inputs,
             const bool project_outputs,
@@ -49,7 +49,7 @@ cdef extern from "localPIMC.h":
             const int qubits_per_chain,
             const int qubits_per_update,
             const unsigned int seed,
-            char *statistics,
+            np.int8_t *statistics,
             const int schedule_sample_interval,
             callback interrupt_callback,
             void *interrupt_function) nogil
@@ -63,7 +63,7 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                         qubits_per_chain,
                         qubits_per_update,
                         seed,
-                        np.ndarray[char, ndim=2, mode="c"] states_numpy,
+                        np.ndarray[np.int8_t, ndim=2, mode="c"] states_numpy,
                         project_inputs,
                         project_outputs,
                         np.ndarray[int, ndim=2, mode="c"] num_breaks_numpy,
@@ -133,7 +133,7 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
         parameters are the same, the returned samples will be
         identical.
 
-    states_numpy : np.ndarray[char, ndim=2, mode="c"], values in (-1, 1)
+    states_numpy : np.ndarray[np.int8_t, ndim=2, mode="c"], values in (-1, 1)
         The initial seeded states of the simulated annealing runs. Should be of
         a contiguous numpy.ndarray of shape (num_samples, num_variables).
 
@@ -179,7 +179,7 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
         [independent processes x MCMC steps tracked]
         by [vector of statistics].
         For now, statistics are mid-anneal samples only, and so the
-        type is char for compression purposes.
+        type is np.int8_t for compression purposes.
         
     num_breaks: np.ndarray
        A 2D numpy array where each row specifies a Trotterized sample in 
@@ -216,18 +216,18 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
         stat_size = (num_samples, num_collection_points, num_statistics)
     else:
         stat_size = (num_samples, 1, 1) # Non-empty owing to addressing issue..
-    cdef np.ndarray[char, ndim=3, mode='c'] statistics_numpy;
+    cdef np.ndarray[np.int8_t, ndim=3, mode='c'] statistics_numpy;
     statistics_numpy  = np.empty(stat_size, dtype=np.int8)
 
     # explicitly convert all Python types to C while we have the GIL
     
-    cdef char* _states = &states_numpy[0, 0]
+    cdef np.int8_t* _states = &states_numpy[0, 0]
     cdef int* _num_breaks = &num_breaks_numpy[0, 0]
     cdef int* _breaks_in = &breaks_in_numpy[0]
     cdef int* _breaks_buffer_out = &breaks_buffer_out_numpy[0]
     cdef int _breaks_buffer_size = len(breaks_buffer_out_numpy)
     cdef double* _energies = &energies[0]
-    cdef char* _statistics = &statistics_numpy[0, 0, 0]
+    cdef np.int8_t* _statistics = &statistics_numpy[0, 0, 0]
     cdef int _num_samples = num_samples
     cdef vector[double] _h = h
     cdef vector[int] _coupler_starts = coupler_starts
