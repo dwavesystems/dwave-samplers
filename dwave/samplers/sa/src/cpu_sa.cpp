@@ -13,7 +13,8 @@
 // limitations under the License.
 //
 // ===========================================================================
-
+#include <numeric>
+#include <iostream>
 #include <cstdint>
 #include <math.h>
 #include <vector>
@@ -96,13 +97,34 @@ void simulated_annealing_run(
     const vector<vector<int>>& neighbors,
     const vector<vector<double>>& neighbour_couplings,
     const int sweeps_per_beta,
-    const vector<double>& beta_schedule
+    const vector<double>& beta_schedule,
+    const vector<int>& coupler_starts,
+    const vector<int>& coupler_ends,
+    const vector<double>& coupler_weights,
+    double& log_z
 ) {
     const int num_vars = h.size();
+
+
+    // Define get_state_energy inside simulated_annealing_run
+    auto get_state_energy = [&](std::int8_t* state) -> double {
+        double energy = 0.0;
+        // sum the energy due to local fields on variables
+        for (unsigned int var = 0; var < h.size(); var++) {
+            energy += state[var] * h[var];
+        }
+        // sum the energy due to coupling weights
+        for (unsigned int c = 0; c < coupler_starts.size(); c++) {
+            energy += state[coupler_starts[c]] * coupler_weights[c] * state[coupler_ends[c]];
+        }
+        return energy;
+    };
+
 
     // this double array will hold the delta energy for every variable
     // delta_energy[v] is the delta energy for variable `v`
     double *delta_energy = (double*)malloc(num_vars * sizeof(double));
+    vector<double> energy_diff_ising;
 
     uint64_t rand; // this will hold the value of the rng
 
@@ -113,11 +135,18 @@ void simulated_annealing_run(
                                             neighbors, neighbour_couplings);
     }
 
+
     bool flip_spin;
     // perform the sweeps
     for (int beta_idx = 0; beta_idx < (int)beta_schedule.size(); beta_idx++) {
         // get the beta value for this sweep
         const double beta = beta_schedule[beta_idx];
+        double energy_local = get_state_energy(state);
+        if (beta_idx + 1 < beta_schedule.size()) {
+            double delta_ising_energy = energy_local * (beta_schedule[beta_idx + 1] - beta);
+            energy_diff_ising.push_back(delta_ising_energy);
+        }
+
         for (int sweep = 0; sweep < sweeps_per_beta; sweep++) {
 
             // this threshold will allow us to skip the metropolis update for
@@ -190,7 +219,7 @@ void simulated_annealing_run(
             }
         }
     }
-
+    log_z = -std::accumulate(energy_diff_ising.begin(), energy_diff_ising.end(), 0.0);
     free(delta_energy);
 }
 
@@ -251,6 +280,7 @@ double get_state_energy(
 int general_simulated_annealing(
     std::int8_t* states,
     double* energies,
+    double* log_zs,
     const int num_samples,
     const vector<double> h,
     const vector<int> coupler_starts,
@@ -291,6 +321,7 @@ int general_simulated_annealing(
     // and its jth neighbor
     vector<vector<double>> neighbour_couplings(num_vars);
 
+    double log_z = 0.0;
     // build the degrees, neighbors, and neighbour_couplings vectors by
     // iterating over the inputted coupler vectors
     for (unsigned int cplr = 0; cplr < coupler_starts.size(); cplr++) {
@@ -317,6 +348,7 @@ int general_simulated_annealing(
     // get the simulated annealing samples
     int sample = 0;
     while (sample < num_samples) {
+
         // states is a giant spin array that will hold the resulting states for
         // all the samples, so we need to get the location inside that vector
         // where we will store the sample for this sample
@@ -328,27 +360,40 @@ int general_simulated_annealing(
             if (proposal_acceptance_criteria == Metropolis) {
                 simulated_annealing_run<Random, Metropolis>(state, h, degrees,
                                                     neighbors, neighbour_couplings,
-                                                    sweeps_per_beta, beta_schedule);
+                                                    sweeps_per_beta, beta_schedule,
+                                                     coupler_starts, coupler_ends,
+                                                     coupler_weights,
+                                                     log_z);
             } else {
                 simulated_annealing_run<Random, Gibbs>(state, h, degrees,
                                                      neighbors, neighbour_couplings,
-                                                     sweeps_per_beta, beta_schedule);
+                                                     sweeps_per_beta, beta_schedule,
+                                                     coupler_starts, coupler_ends,
+                                                     coupler_weights,
+                                                     log_z);
           }
         } else {
             if (proposal_acceptance_criteria == Metropolis) {
                 simulated_annealing_run<Sequential, Metropolis>(state, h, degrees,
                                                      neighbors, neighbour_couplings,
-                                                     sweeps_per_beta, beta_schedule);
+                                                     sweeps_per_beta, beta_schedule,
+                                                     coupler_starts, coupler_ends,
+                                                     coupler_weights,
+                                                     log_z);
             } else {
                 simulated_annealing_run<Sequential, Gibbs>(state, h, degrees,
                                                       neighbors, neighbour_couplings,
-                                                      sweeps_per_beta, beta_schedule);
+                                                      sweeps_per_beta, beta_schedule,
+                                                      coupler_starts, coupler_ends,
+                                                      coupler_weights,
+                                                      log_z);
             }
         }
         // compute the energy of the sample and store it in `energies`
-        energies[sample] = get_state_energy(state, h, coupler_starts, 
+        double sample_energy = get_state_energy(state, h, coupler_starts,
                                             coupler_ends, coupler_weights);
-
+        energies[sample] = sample_energy;
+        log_zs[sample] = log_z;
         sample++;
 
         // if interrupt_function returns true, stop sampling

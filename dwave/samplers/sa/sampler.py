@@ -427,7 +427,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
         timestamp_sample = perf_counter_ns()
 
         # run the simulated annealing algorithm
-        samples, energies = simulated_annealing(
+        samples, energies, log_zs = simulated_annealing(
             num_reads, ldata, irow, icol, qdata,
             num_sweeps_per_beta, beta_schedule,
             seed, initial_states_array,
@@ -442,6 +442,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
         response = dimod.SampleSet.from_samples(
             (samples, variable_order),
             energy=energies+bqm.offset,  # add back in the offset
+            log_z=log_zs,
             info=info,
             vartype=dimod.SPIN
         )

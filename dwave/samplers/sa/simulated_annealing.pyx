@@ -33,6 +33,7 @@ cdef extern from "cpu_sa.h":
     int general_simulated_annealing(
             np.int8_t* samples,
             double* energies,
+            double* log_zs,
             const int num_samples,
             const vector[double] & h,
             const vector[int] & coupler_starts,
@@ -130,8 +131,10 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
 
     energies: np.ndarray
         The energies.
-
+    log_zs: np.ndarray
+        The log of partition function.
     """
+
     num_vars = len(h)
 
     # in the case that we either need no samples or there are no variables,
@@ -142,11 +145,14 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
 
     # allocate ndarray for energies
     energies_numpy = np.empty(num_samples, dtype=np.float64)
+    log_zs_numpy = np.empty(num_samples, dtype=np.float64)
     cdef double[:] energies = energies_numpy
+    cdef double[:] log_zs = log_zs_numpy
 
     # explicitly convert all Python types to C while we have the GIL
     cdef np.int8_t* _states = &states_numpy[0, 0]
     cdef double* _energies = &energies[0]
+    cdef double* _log_zs = &log_zs[0]
     cdef int _num_samples = num_samples
     cdef vector[double] _h = h
     cdef vector[int] _coupler_starts = coupler_starts
@@ -177,6 +183,7 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
     with nogil:
         num = general_simulated_annealing(_states,
                                           _energies,
+                                          _log_zs,
                                           _num_samples,
                                           _h,
                                           _coupler_starts,
@@ -191,7 +198,7 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                                           _interrupt_function)
 
     # discard the noise if we were interrupted
-    return states_numpy[:num], energies_numpy[:num]
+    return states_numpy[:num], energies_numpy[:num], log_zs_numpy[:num]
 
 
 cdef bool interrupt_callback(void * const interrupt_function) noexcept with gil:

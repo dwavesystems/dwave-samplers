@@ -53,7 +53,11 @@ void simulated_annealing_run(
     const std::vector<std::vector<int>>& neighbors,
     const std::vector<std::vector<double>>& neighbour_couplings,
     const int sweeps_per_beta,
-    const std::vector<double>& beta_schedule
+    const std::vector<double>& beta_schedule,
+    const std::vector<int>& coupler_starts,
+    const std::vector<int>& coupler_ends,
+    const std::vector<double>& coupler_weights,
+    double& log_z
 );
 
 typedef bool (*const callback)(void * const function);
@@ -61,6 +65,7 @@ typedef bool (*const callback)(void * const function);
 int general_simulated_annealing(
     std::int8_t *states,
     double *energies,
+    double *log_zs,
     const int num_samples,
     const std::vector<double> h,
     const std::vector<int> coupler_starts,
