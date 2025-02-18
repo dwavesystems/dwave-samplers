@@ -165,6 +165,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                initial_states: Optional[dimod.typing.SamplesLike] = None,
                initial_states_generator: InitialStateGenerator = "random",
                randomize_order: bool = False,
+               return_log_z: bool = False,
                proposal_acceptance_criteria: str = 'Metropolis',
                **kwargs) -> dimod.SampleSet:
         """Sample from a binary quadratic model.
@@ -270,6 +271,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                 simulated annealing. If the function returns True, simulated
                 annealing terminates and returns with all of the samples and
                 energies found so far.
+            return_log_z(bool): calculates and retun log_z when True.
 
         Returns:
             A `dimod.SampleSet` for the binary quadratic model.
@@ -430,7 +432,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
         samples, energies, log_zs = simulated_annealing(
             num_reads, ldata, irow, icol, qdata,
             num_sweeps_per_beta, beta_schedule,
-            seed, initial_states_array,
+            seed, initial_states_array, return_log_z,
             randomize_order, proposal_acceptance_criteria,
             interrupt_function)
         timestamp_postprocess = perf_counter_ns()

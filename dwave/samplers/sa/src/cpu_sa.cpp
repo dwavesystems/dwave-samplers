@@ -101,7 +101,8 @@ void simulated_annealing_run(
     const vector<int>& coupler_starts,
     const vector<int>& coupler_ends,
     const vector<double>& coupler_weights,
-    double& log_z
+    double& log_z,
+    const bool return_log_z
 ) {
     const int num_vars = h.size();
 
@@ -141,10 +142,12 @@ void simulated_annealing_run(
     for (int beta_idx = 0; beta_idx < (int)beta_schedule.size(); beta_idx++) {
         // get the beta value for this sweep
         const double beta = beta_schedule[beta_idx];
-        double energy_local = get_state_energy(state);
-        if (beta_idx + 1 < beta_schedule.size()) {
-            double delta_ising_energy = energy_local * (beta_schedule[beta_idx + 1] - beta);
-            energy_diff_ising.push_back(delta_ising_energy);
+        if (return_log_z){
+            double energy_local = get_state_energy(state);
+            if (beta_idx + 1 < beta_schedule.size()) {
+                double delta_ising_energy = energy_local * (beta_schedule[beta_idx + 1] - beta);
+                energy_diff_ising.push_back(delta_ising_energy);
+            }
         }
 
         for (int sweep = 0; sweep < sweeps_per_beta; sweep++) {
@@ -219,7 +222,9 @@ void simulated_annealing_run(
             }
         }
     }
-    log_z = -std::accumulate(energy_diff_ising.begin(), energy_diff_ising.end(), 0.0);
+    if (return_log_z){
+        log_z = -std::accumulate(energy_diff_ising.begin(), energy_diff_ising.end(), 0.0);
+    }
     free(delta_energy);
 }
 
@@ -281,6 +286,7 @@ int general_simulated_annealing(
     std::int8_t* states,
     double* energies,
     double* log_zs,
+    const bool return_log_z,
     const int num_samples,
     const vector<double> h,
     const vector<int> coupler_starts,
@@ -363,14 +369,14 @@ int general_simulated_annealing(
                                                     sweeps_per_beta, beta_schedule,
                                                      coupler_starts, coupler_ends,
                                                      coupler_weights,
-                                                     log_z);
+                                                     log_z, return_log_z);
             } else {
                 simulated_annealing_run<Random, Gibbs>(state, h, degrees,
                                                      neighbors, neighbour_couplings,
                                                      sweeps_per_beta, beta_schedule,
                                                      coupler_starts, coupler_ends,
                                                      coupler_weights,
-                                                     log_z);
+                                                     log_z, return_log_z);
           }
         } else {
             if (proposal_acceptance_criteria == Metropolis) {
@@ -379,14 +385,14 @@ int general_simulated_annealing(
                                                      sweeps_per_beta, beta_schedule,
                                                      coupler_starts, coupler_ends,
                                                      coupler_weights,
-                                                     log_z);
+                                                     log_z, return_log_z);
             } else {
                 simulated_annealing_run<Sequential, Gibbs>(state, h, degrees,
                                                       neighbors, neighbour_couplings,
                                                       sweeps_per_beta, beta_schedule,
                                                       coupler_starts, coupler_ends,
                                                       coupler_weights,
-                                                      log_z);
+                                                      log_z, return_log_z);
             }
         }
         // compute the energy of the sample and store it in `energies`

@@ -34,6 +34,7 @@ cdef extern from "cpu_sa.h":
             np.int8_t* samples,
             double* energies,
             double* log_zs,
+            const bool return_log_z,
             const int num_samples,
             const vector[double] & h,
             const vector[int] & coupler_starts,
@@ -51,6 +52,7 @@ cdef extern from "cpu_sa.h":
 def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                         coupler_weights, sweeps_per_beta, beta_schedule, seed,
                         np.ndarray[np.int8_t, ndim=2, mode="c"] states_numpy,
+                        return_log_z,
                         randomize_order=False,
                         proposal_acceptance_criteria='Metropolis',
                         interrupt_function=None):
@@ -123,6 +125,7 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
         Gibbs criteria.
         When `Metropolis`, each spin flip proposal is accepted according to the
         Metropolis-Hastings criteria.
+    return_log_z: calculates log_z and returns array of log_zs same size as num_reads.
 
     Returns
     -------
@@ -153,6 +156,7 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
     cdef np.int8_t* _states = &states_numpy[0, 0]
     cdef double* _energies = &energies[0]
     cdef double* _log_zs = &log_zs[0]
+    cdef bool _return_log_z = return_log_z
     cdef int _num_samples = num_samples
     cdef vector[double] _h = h
     cdef vector[int] _coupler_starts = coupler_starts
@@ -184,6 +188,7 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
         num = general_simulated_annealing(_states,
                                           _energies,
                                           _log_zs,
+                                          _return_log_z,
                                           _num_samples,
                                           _h,
                                           _coupler_starts,

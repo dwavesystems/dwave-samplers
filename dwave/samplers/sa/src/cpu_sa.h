@@ -57,7 +57,8 @@ void simulated_annealing_run(
     const std::vector<int>& coupler_starts,
     const std::vector<int>& coupler_ends,
     const std::vector<double>& coupler_weights,
-    double& log_z
+    double& log_z,
+    const bool return_log_z
 );
 
 typedef bool (*const callback)(void * const function);
@@ -66,6 +67,7 @@ int general_simulated_annealing(
     std::int8_t *states,
     double *energies,
     double *log_zs,
+    const bool return_log_z,
     const int num_samples,
     const std::vector<double> h,
     const std::vector<int> coupler_starts,
