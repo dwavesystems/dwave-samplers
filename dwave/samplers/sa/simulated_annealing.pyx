@@ -44,7 +44,8 @@ cdef extern from "cpu_sa.h":
             const VariableOrder varorder,
             const Proposal proposal_acceptance_criteria,
             callback interrupt_callback,
-            void *interrupt_function) nogil
+            void *interrupt_function,
+            double* logzs_ptr) nogil
 
 
 def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
@@ -52,7 +53,8 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                         np.ndarray[np.int8_t, ndim=2, mode="c"] states_numpy,
                         randomize_order=False,
                         proposal_acceptance_criteria='Metropolis',
-                        interrupt_function=None):
+                        interrupt_function=None,
+                        estimate_norm_const=False):
     """Wraps `general_simulated_annealing` from `cpu_sa.cpp`. Accepts
     an Ising problem defined on a general graph and returns samples
     using simulated annealing.
@@ -104,7 +106,7 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
 
     randomize_order: bool
         When True, each spin update selects a variable uniformly at random.
-        When False, updates proceed sequentially through the labeled variables 
+        When False, updates proceed sequentially through the labeled variables
         on each sweep so that all variables are updated once per sweep.
         The random method is ergodic and obeys detailed balance at all temperatures.
         Symmetries of the Boltzmann distribution(s) are not broken by the
@@ -156,6 +158,9 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
     cdef vector[double] _beta_schedule = beta_schedule
     cdef unsigned long long _seed = seed
     cdef VariableOrder _varorder
+    logzs = np.empty(num_samples, dtype=np.double)
+    cdef double[:] _logzs = logzs
+    cdef double* logz_ptr
     if randomize_order:
         _varorder = Random
     else:
@@ -172,6 +177,10 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
         _interrupt_function = NULL
     else:
         _interrupt_function = <void *>interrupt_function
+    if estimate_norm_const:
+        logzs_ptr = &_logzs[0]
+    else:
+        logzs_ptr = NULL
 
 
     with nogil:
@@ -188,7 +197,8 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                                           _varorder,
                                           _proposal_acceptance_criteria,
                                           interrupt_callback,
-                                          _interrupt_function)
+                                          _interrupt_function,
+                                          logzs_ptr)
 
     # discard the noise if we were interrupted
     return states_numpy[:num], energies_numpy[:num]
