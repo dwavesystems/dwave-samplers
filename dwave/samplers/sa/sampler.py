@@ -31,7 +31,7 @@ from dimod.core.initialized import InitialStateGenerator
 import dimod
 import numpy as np
 
-from dwave.samplers.sa.simulated_annealing import simulated_annealing
+from dwave.samplers.sa.simulated_annealing import simulated_annealing, annealed_importance_sampling
 
 import warnings
 
@@ -428,20 +428,30 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
         timestamp_sample = perf_counter_ns()
 
         # run the simulated annealing algorithm
-        samples, energies, logzs = simulated_annealing(
-            num_reads, ldata, irow, icol, qdata,
-            num_sweeps_per_beta, beta_schedule,
-            seed, initial_states_array,
-            randomize_order, proposal_acceptance_criteria,
-            interrupt_function, estimate_norm_const)
+        if estimate_norm_const:
+            samples, energies, log_weights = annealed_importance_sampling(
+                num_reads, ldata, irow, icol, qdata,
+                num_sweeps_per_beta, beta_schedule,
+                seed, initial_states_array,
+                randomize_order, proposal_acceptance_criteria,
+                interrupt_function, estimate_norm_const)
+        else:
+            samples, energies = simulated_annealing(
+                num_reads, ldata, irow, icol, qdata,
+                num_sweeps_per_beta, beta_schedule,
+                seed, initial_states_array,
+                randomize_order, proposal_acceptance_criteria,
+                interrupt_function)
         timestamp_postprocess = perf_counter_ns()
 
         info = {
             "beta_range": beta_range,
             "beta_schedule_type": beta_schedule_type,
-            "logz_estimates": logzs,
-            "logz_estimate": log_sum_exp(logzs)-np.log(num_reads),
         }
+        if estimate_norm_const:
+            info.update(dict(
+                log_weights=log_weights, logz_estimate=log_sum_exp(log_weights)-np.log(num_reads)
+            ))
         response = dimod.SampleSet.from_samples(
             (samples, variable_order),
             energy=energies+bqm.offset,  # add back in the offset
@@ -480,26 +490,36 @@ class AnnealedImportanceSampling(SimulatedAnnealingSampler):
         self.properties = {'beta_schedule_options': ('linear', 'geometric',
                                                      'custom')}
     def sample(self, bqm: dimod.BinaryQuadraticModel,
-               target_beta: float = 1,
+               target_beta: Optional[float] = None,
+               beta_range: Optional[Union[List[float], Tuple[float, float]]] = None,
                num_reads: Optional[int] = None,
                num_sweeps: Optional[int] = None,
                num_sweeps_per_beta: int = 1,
-               beta_schedule_type: BetaScheduleType = "linear",
+               beta_schedule_type: BetaScheduleType = "geometric",
                seed: Optional[int] = None,
+               interrupt_function = None,
                beta_schedule: Optional[Union[Sequence[float], np.ndarray]] = None,
+               randomize_order: bool = False,
+               proposal_acceptance_criteria: str = 'Metropolis',
                **kwargs) -> dimod.SampleSet:
         super().__init__()
-        if beta_schedule is not None:
-            assert beta_schedule[0] == 0
-        assert beta_schedule_type != "geometric"
-        ss = super().sample(bqm, beta_range=[0, target_beta],
+        if target_beta is not None and (beta_range is not None or beta_schedule is not None):
+            error_msg = "If 'target_beta' is supplied, 'beta_range' and 'beta_schedule' should not be specified."
+            raise ValueError(error_msg)
+        if beta_range is None and beta_schedule is None:
+            target_beta = 1
+        if target_beta is not None:
+            beta_range = (default_beta_range(bqm)[0], target_beta)
+        ss = super().sample(bqm, beta_range=beta_range,
                                 num_reads=num_reads, num_sweeps=num_sweeps,
                                 num_sweeps_per_beta=num_sweeps_per_beta,
                                 beta_schedule_type=beta_schedule_type,
-                                seed=seed, interrupt_function=None, beta_schedule=beta_schedule,
+                                seed=seed,
+                                interrupt_function=interrupt_function,
+                                beta_schedule=beta_schedule,
                                 initial_states=None, initial_states_generator="random",
-                                randomize_order=True,
-                                proposal_acceptance_criteria="Gibbs",
+                                randomize_order=randomize_order,
+                                proposal_acceptance_criteria=proposal_acceptance_criteria,
                                 estimate_norm_const=True)
         return ss
 
@@ -654,17 +674,22 @@ if __name__ == "__main__":
     from scipy.special import logsumexp
     import dwave_networkx as dnx
     from time import perf_counter
-    N = 20
-    bqm = dimod.generators.ran_r(123, N)
-    bqm.normalize(0.01)
-    states = list(product([-1,1], repeat=N))
-    energies = bqm.energies(states)
-    print("logz", logsumexp(-energies))
-    # bqm = dimod.generators.ran_r(123, dnx.zephyr_graph(6))
-    # bqm.normalize(0.01)
-    t0 = perf_counter()
-    ss = AnnealedImportanceSampling().sample(bqm, num_reads=20, num_sweeps=5000)
-    t1 = perf_counter()
-    print(ss.info['logz_estimate'])
+
+    small = True
+    if small:
+        N = 15
+        bqm = dimod.generators.ran_r(1234, N)
+        bqm.normalize(0.01)
+        states = list(product([-1,1], repeat=N))
+        energies = bqm.energies(states)
+        print(round(logsumexp(-energies), 4), "exact")
+    else:
+        bqm = dimod.generators.ran_r(123, dnx.zephyr_graph(6))
+        bqm.normalize(0.01)
+    for ac, rand in product(["Metropolis", "Gibbs"], [True, False]):
+        t0 = perf_counter()
+        ss = AnnealedImportanceSampling().sample(bqm, num_reads=10000, num_sweeps=100,
+                                                 randomize_order=rand, proposal_acceptance_criteria=ac)
+        t1 = perf_counter()
+        print(round(ss.info['logz_estimate'], 4), ac, rand, round(t1-t0, 2))
     print("sa ran", len(SimulatedAnnealingSampler().sample(bqm, num_reads=2, num_sweeps=5).info))
-    print(f"\nExited. {t1-t0:.2f}s")
