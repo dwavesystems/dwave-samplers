@@ -658,4 +658,5 @@ if __name__ == "__main__":
     t0 = perf_counter()
     ss = AnnealedImportanceSampling().sample(bqm, num_reads=20, num_sweeps=5000)
     t1 = perf_counter()
+    # print(SimulatedAnnealingSampler().sample(bqm, num_reads=2, num_sweeps=5).info)
     print(f"\nExited. {t1-t0:.2f}s")
