@@ -428,7 +428,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
         timestamp_sample = perf_counter_ns()
 
         # run the simulated annealing algorithm
-        samples, energies = simulated_annealing(
+        samples, energies, logzs = simulated_annealing(
             num_reads, ldata, irow, icol, qdata,
             num_sweeps_per_beta, beta_schedule,
             seed, initial_states_array,
@@ -438,7 +438,9 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
 
         info = {
             "beta_range": beta_range,
-            "beta_schedule_type": beta_schedule_type
+            "beta_schedule_type": beta_schedule_type,
+            "logz_estimates": logzs,
+            "logz_estimate": log_sum_exp(logzs)-np.log(num_reads),
         }
         response = dimod.SampleSet.from_samples(
             (samples, variable_order),
@@ -642,12 +644,17 @@ def default_beta_range(bqm):
     ising = bqm.spin
     return _default_ising_beta_range(ising.linear, ising.quadratic)
 
+def log_sum_exp(x):
+    c = np.max(x)
+    x -= c
+    return np.log(np.exp(x).sum()) + c
+
 if __name__ == "__main__":
     from itertools import product
     from scipy.special import logsumexp
     import dwave_networkx as dnx
     from time import perf_counter
-    N = 18
+    N = 20
     bqm = dimod.generators.ran_r(123, N)
     bqm.normalize(0.01)
     states = list(product([-1,1], repeat=N))
@@ -658,5 +665,6 @@ if __name__ == "__main__":
     t0 = perf_counter()
     ss = AnnealedImportanceSampling().sample(bqm, num_reads=20, num_sweeps=5000)
     t1 = perf_counter()
-    # print(SimulatedAnnealingSampler().sample(bqm, num_reads=2, num_sweeps=5).info)
+    print(ss.info['logz_estimate'])
+    print("sa ran", len(SimulatedAnnealingSampler().sample(bqm, num_reads=2, num_sweeps=5).info))
     print(f"\nExited. {t1-t0:.2f}s")
