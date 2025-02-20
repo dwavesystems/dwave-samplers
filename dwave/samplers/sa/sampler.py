@@ -166,6 +166,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                initial_states_generator: InitialStateGenerator = "random",
                randomize_order: bool = False,
                proposal_acceptance_criteria: str = 'Metropolis',
+               estimate_norm_const: bool = False,
                **kwargs) -> dimod.SampleSet:
         """Sample from a binary quadratic model.
 
@@ -432,7 +433,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
             num_sweeps_per_beta, beta_schedule,
             seed, initial_states_array,
             randomize_order, proposal_acceptance_criteria,
-            interrupt_function)
+            interrupt_function, estimate_norm_const)
         timestamp_postprocess = perf_counter_ns()
 
         info = {
@@ -461,6 +462,45 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
 
 
 Neal = SimulatedAnnealingSampler
+
+class AnnealedImportanceSampling(SimulatedAnnealingSampler):
+    parameters = None
+    properties = None
+    def __init__(self):
+        # create a local copy in case folks for some reason want to modify them
+        self.parameters = {'beta_max': [],
+                           'num_reads': [],
+                           'num_sweeps': [],
+                           'num_sweeps_per_beta': [],
+                           'beta_schedule_type': ['beta_schedule_options'],
+                           'seed': [],
+                           }
+        self.properties = {'beta_schedule_options': ('linear', 'geometric',
+                                                     'custom')}
+    def sample(self, bqm: dimod.BinaryQuadraticModel,
+               target_beta: float = 1,
+               num_reads: Optional[int] = None,
+               num_sweeps: Optional[int] = None,
+               num_sweeps_per_beta: int = 1,
+               beta_schedule_type: BetaScheduleType = "linear",
+               seed: Optional[int] = None,
+               beta_schedule: Optional[Union[Sequence[float], np.ndarray]] = None,
+               **kwargs) -> dimod.SampleSet:
+        super().__init__()
+        if beta_schedule is not None:
+            assert beta_schedule[0] == 0
+        assert beta_schedule_type != "geometric"
+        ss = super().sample(bqm, beta_range=[0, target_beta],
+                                num_reads=num_reads, num_sweeps=num_sweeps,
+                                num_sweeps_per_beta=num_sweeps_per_beta,
+                                beta_schedule_type=beta_schedule_type,
+                                seed=seed, interrupt_function=None, beta_schedule=beta_schedule,
+                                initial_states=None, initial_states_generator="random",
+                                randomize_order=True,
+                                proposal_acceptance_criteria="Gibbs",
+                                estimate_norm_const=True)
+        return ss
+
 
 
 def _default_ising_beta_range(h, J,
@@ -601,3 +641,21 @@ def _default_ising_beta_range(h, J,
 def default_beta_range(bqm):
     ising = bqm.spin
     return _default_ising_beta_range(ising.linear, ising.quadratic)
+
+if __name__ == "__main__":
+    from itertools import product
+    from scipy.special import logsumexp
+    import dwave_networkx as dnx
+    from time import perf_counter
+    N = 18
+    bqm = dimod.generators.ran_r(123, N)
+    bqm.normalize(0.01)
+    states = list(product([-1,1], repeat=N))
+    energies = bqm.energies(states)
+    print("logz", logsumexp(-energies))
+    # bqm = dimod.generators.ran_r(123, dnx.zephyr_graph(6))
+    # bqm.normalize(0.01)
+    t0 = perf_counter()
+    ss = AnnealedImportanceSampling().sample(bqm, num_reads=20, num_sweeps=5000)
+    t1 = perf_counter()
+    print(f"\nExited. {t1-t0:.2f}s")
