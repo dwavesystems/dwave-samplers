@@ -140,13 +140,18 @@ void simulated_annealing_run(
 
     bool flip_spin;
     // perform the sweeps
-    logz_ptr[0] = num_vars*log(2);
-    double energy = init_energy;
+    double energy = 0;
+    if (logz_ptr) {
+        logz_ptr[0] = num_vars*log(2);
+        energy = init_energy;
+    }
     for (int beta_idx = 0; beta_idx < (int) beta_schedule.size(); beta_idx++) {
         // get the beta value for this sweep
         const double beta = beta_schedule[beta_idx];
         if (beta_idx > 0){
-            logz_ptr[0] += (beta_schedule[beta_idx - 1]-beta)*energy;
+            if (logz_ptr){
+                logz_ptr[0] += (beta_schedule[beta_idx - 1]-beta)*energy;
+            }
         }
         for (int sweep = 0; sweep < sweeps_per_beta; sweep++) {
 
@@ -214,7 +219,9 @@ void simulated_annealing_run(
 
                     // now we just need to flip its state and negate its delta
                     // energy
-                    energy += delta_energy[var];
+                    if (logz_ptr){
+                        energy += delta_energy[var];
+                    }
                     state[var] *= -1;
                     delta_energy[var] *= -1;
                 }
@@ -354,32 +361,36 @@ int general_simulated_annealing(
         std::int8_t *state = states + sample*num_vars;
         // then do the actual sample. this function will modify state, storing
         // the sample there
-	// Branching here is designed to make expicit compile time optimizations
-        energies[sample] = get_state_energy(state, h, coupler_starts,
-                                            coupler_ends, coupler_weights);
+        // Branching here is designed to make expicit compile time optimizations
+        double * logz_ptr = logzs_ptr;
+        if (logzs_ptr){
+            energies[sample] = get_state_energy(state, h, coupler_starts,
+                                                coupler_ends, coupler_weights);
+            logz_ptr += sample;
+        }
         if (varorder == Random) {
             if (proposal_acceptance_criteria == Metropolis) {
                 simulated_annealing_run<Random, Metropolis>(state, h, degrees,
                                                     neighbors, neighbour_couplings,
                                                     sweeps_per_beta, beta_schedule,
-                                                    logzs_ptr+sample, energies[sample]);
+                                                    logz_ptr, energies[sample]);
             } else {
                 simulated_annealing_run<Random, Gibbs>(state, h, degrees,
                                                      neighbors, neighbour_couplings,
                                                      sweeps_per_beta, beta_schedule,
-                                                     logzs_ptr+sample, energies[sample]);
+                                                     logz_ptr, energies[sample]);
           }
         } else {
             if (proposal_acceptance_criteria == Metropolis) {
                 simulated_annealing_run<Sequential, Metropolis>(state, h, degrees,
                                                      neighbors, neighbour_couplings,
                                                      sweeps_per_beta, beta_schedule,
-                                                     logzs_ptr+sample, energies[sample]);
+                                                     logz_ptr, energies[sample]);
             } else {
                 simulated_annealing_run<Sequential, Gibbs>(state, h, degrees,
                                                       neighbors, neighbour_couplings,
                                                       sweeps_per_beta, beta_schedule,
-                                                      logzs_ptr+sample, energies[sample]);
+                                                      logz_ptr, energies[sample]);
             }
         }
         // compute the energy of the sample and store it in `energies`
@@ -392,8 +403,10 @@ int general_simulated_annealing(
         if (interrupt_function && interrupt_callback(interrupt_function)) break;
     }
 
-    double logz = log_sum_exp(logzs_ptr, num_samples)-log(num_samples);
-    printf("logz %f", logz);
+    if (logzs_ptr){
+        double logz = log_sum_exp(logzs_ptr, num_samples)-log(num_samples);
+        printf("logz %f", logz);
+    }
     // return the number of samples we actually took
     return sample;
 }
