@@ -405,7 +405,6 @@ int general_simulated_annealing(
 
     if (logzs_ptr){
         double logz = log_sum_exp(logzs_ptr, num_samples)-log(num_samples);
-        printf("logz %f", logz);
     }
     // return the number of samples we actually took
     return sample;

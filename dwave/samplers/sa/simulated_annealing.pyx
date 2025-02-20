@@ -201,7 +201,7 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                                           logzs_ptr)
 
     # discard the noise if we were interrupted
-    return states_numpy[:num], energies_numpy[:num]
+    return states_numpy[:num], energies_numpy[:num], logzs[:num]
 
 
 cdef bool interrupt_callback(void * const interrupt_function) noexcept with gil:
