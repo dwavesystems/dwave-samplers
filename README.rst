@@ -15,6 +15,9 @@
 dwave-samplers
 ==============
 
+Supported Samplers
+==================
+
 .. _start_samplers_about
 
 Ocean software provides a variety of quantum, classical, and quantum-classical
@@ -39,7 +42,7 @@ that run either remotely (for example, in D-Wave's
 *   `Tree Decomposition`_: an exact solver for problems with low treewidth.
 
 Planar
-======
+------
 
 There are polynomial-time algorithms for finding the ground state of a planar
 Ising model [#]_.
@@ -59,7 +62,7 @@ Get the ground state of a planar Ising model
 >>> sampleset = solver.sample_ising(h, J)
 
 Random
-======
+------
 
 Random samplers provide a useful baseline performance comparison. The variable
 assignments in each sample are chosen by a coin flip.
@@ -78,7 +81,7 @@ Get the best 5 sample found in .1 seconds.
 >>> num_reads = sampleset.info['num_reads']  # the total number of samples generated
 
 Simulated Annealing
-===================
+-------------------
 
 `Simulated annealing <https://en.wikipedia.org/wiki/Simulated_annealing>`__ can
 be used for heuristic optimization or approximate Boltzmann sampling. The
@@ -110,7 +113,7 @@ and a custom one.
 >>> sampleset = sampler.sample(bqm, beta_range=[.1, 4.2], beta_schedule_type='linear')
 
 Steepest Descent
-================
+----------------
 
 `Steepest descent <https://en.wikipedia.org/wiki/Gradient_descent>`__ is the
 discrete analogue of gradient descent, but the best move is computed using a
@@ -152,7 +155,7 @@ If the solver starts in a local minimum, it gets stuck.
 ['BINARY', 1 rows, 1 samples, 2 variables]
 
 Tabu
-====
+----
 
 `Tabu search <https://en.wikipedia.org/wiki/Tabu_search>`__ is a heuristic that
 employs local search and can escape local minima by maintaining a "tabu list" of
@@ -179,7 +182,7 @@ Sample using both default and custom values of tenure and number of restarts.
 >>> sampleset1 = sampler.sample(qubo, tenure=1, num_restarts=1)
 
 Tree Decomposition
-==================
+------------------
 
 `Tree decomposition <https://en.wikipedia.org/wiki/Tree_decomposition>`__-based
 solvers have a runtime that is exponential in the
