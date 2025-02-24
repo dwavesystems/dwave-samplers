@@ -10,11 +10,12 @@
 .. image:: https://circleci.com/gh/dwavesystems/dwave-samplers.svg?style=svg
     :target: https://circleci.com/gh/dwavesystems/dwave-samplers
 
-.. index-start-marker
 
 ==============
 dwave-samplers
 ==============
+
+.. _start_samplers_about
 
 Ocean software provides a variety of quantum, classical, and quantum-classical
 `dimod <https://docs.ocean.dwavesys.com/en/stable/docs_dimod/sdk_index.html>`_
@@ -26,14 +27,16 @@ that run either remotely (for example, in D-Wave's
 `binary quadratic models <https://docs.ocean.dwavesys.com/en/stable/concepts/bqm.html>`_
 (BQM):
 
-* `Planar`_: an exact solver for planar Ising problems with no linear biases.
-* `Random`_: a sampler that draws uniform random samples.
-* `Simulated Annealing`_: a probabilistic heuristic for optimization and approximate
-  Boltzmann sampling well suited to finding good solutions of large problems.
-* `Steepest Descent`_: a discrete analogue of gradient descent, often used in
-  machine learning, that quickly finds a local minimum.
-* `Tabu`_: a heuristic that employs local search with methods to escape local minima.
-* `Tree Decomposition`_: an exact solver for problems with low treewidth.
+*   `Planar`_: an exact solver for planar Ising problems with no linear biases.
+*   `Random`_: a sampler that draws uniform random samples.
+*   `Simulated Annealing`_: a probabilistic heuristic for optimization and
+    approximate Boltzmann sampling well suited to finding good solutions of
+    large problems.
+*   `Steepest Descent`_: a discrete analogue of gradient descent, often used in
+    machine learning, that quickly finds a local minimum.
+*   `Tabu`_: a heuristic that employs local search with methods to escape local
+    minima.
+*   `Tree Decomposition`_: an exact solver for problems with low treewidth.
 
 Planar
 ======
@@ -41,8 +44,9 @@ Planar
 There are polynomial-time algorithms for finding the ground state of a planar
 Ising model [#]_.
 
-.. [#] Nicol Schraudolph, Dmitry Kamenetsky. *Efficient Exact Inference in Planar Ising Models*.
-   Advances in Neural Information Processing Systems 21 (NIPS 2008).
+.. [#] Nicol Schraudolph, Dmitry Kamenetsky. *Efficient Exact Inference in
+    Planar Ising Models*.
+    Advances in Neural Information Processing Systems 21 (NIPS 2008).
 
 >>> from dwave.samplers import PlanarGraphSolver
 >>> solver = PlanarGraphSolver()
@@ -76,8 +80,8 @@ Get the best 5 sample found in .1 seconds.
 Simulated Annealing
 ===================
 
-`Simulated annealing <https://en.wikipedia.org/wiki/Simulated_annealing>`__ can be
-used for heuristic optimization or approximate Boltzmann sampling. The
+`Simulated annealing <https://en.wikipedia.org/wiki/Simulated_annealing>`__ can
+be used for heuristic optimization or approximate Boltzmann sampling. The
 *dwave-samplers* implementation approaches the equilibrium distribution by
 performing updates at a sequence of decreasing temperatures, terminating at the
 target `β`.\ [#]_ Each spin is updated once in a fixed order per point
@@ -87,9 +91,9 @@ of the model. Samples are guaranteed to match the equilibrium for long, smooth
 temperature schedules.
 
 .. [#] `β` represents the inverse temperature, `1/(k T)`, of a
-   `Boltzmann distribution <https://en.wikipedia.org/wiki/Boltzmann_distribution>`_
-   where `T` is the thermodynamic temperature in kelvin and `k` is
-   Boltzmann's constant.
+    `Boltzmann distribution <https://en.wikipedia.org/wiki/Boltzmann_distribution>`_
+    where `T` is the thermodynamic temperature in kelvin and `k` is Boltzmann's
+    constant.
 
 >>> from dwave.samplers import SimulatedAnnealingSampler
 >>> sampler = SimulatedAnnealingSampler()
@@ -109,10 +113,10 @@ Steepest Descent
 ================
 
 `Steepest descent <https://en.wikipedia.org/wiki/Gradient_descent>`__ is the
-discrete analogue of gradient descent, but the best move is computed using a local
-minimization rather rather than computing a gradient. The dimension along which
-to descend is determined, at each step, by the variable flip that causes the
-greatest reduction in energy.
+discrete analogue of gradient descent, but the best move is computed using a
+local minimization rather rather than computing a gradient. The dimension along
+which to descend is determined, at each step, by the variable flip that causes
+the greatest reduction in energy.
 
 Steepest descent is fast and effective for unfrustrated problems, but it can get
 stuck in local minima.
@@ -157,8 +161,8 @@ is called the "tenure". *dwave-samplers* implementats the
 `MST2 multistart tabu search algorithm <https://link.springer.com/article/10.1023/B:ANOR.0000039522.58036.68>`_
 for quadratic unconstrained binary optimization (QUBO) problems.
 
-Each read of the tabu algorithm consists of many starts. The solver takes the best
-non-tabu step repeatedly until it does not improve its energy any more.
+Each read of the tabu algorithm consists of many starts. The solver takes the
+best non-tabu step repeatedly until it does not improve its energy any more.
 
 >>> from dwave.samplers import TabuSampler
 >>> sampler = TabuSampler()
@@ -196,7 +200,8 @@ Construct a large, tree-shaped problem.
 >>> for u, v in tree.edges:
 ...     bqm.set_quadratic(u, v, 1)
 
-Because the BQM is a binary tree, it has a treewidth of 1 and can be solved exactly.
+Because the BQM is a binary tree, it has a treewidth of 1 and can be solved
+exactly.
 
 >>> sampleset = solver.sample(bqm)
 >>> print(sampleset)
@@ -204,7 +209,7 @@ Because the BQM is a binary tree, it has a treewidth of 1 and can be solved exac
 0 -1 +1 +1 -1 -1 -1 -1 +1 +1 +1 +1 +1 +1 +1 +1 -1 -1 -1 ... +1  -62.5       1
 ['SPIN', 1 rows, 1 samples, 63 variables]
 
-.. index-end-marker
+.. _end_samplers_about
 
 Installation
 ============
@@ -229,11 +234,11 @@ has guidelines for contributing to Ocean packages.
 Release Notes
 -------------
 
-**dwave-samplers** makes use of `reno <https://docs.openstack.org/reno/>`_ to manage its
-release notes.
+**dwave-samplers** makes use of `reno <https://docs.openstack.org/reno/>`_ to
+manage its release notes.
 
-When making a contribution to **dwave-samplers** that will affect users, create a new
-release note file by running
+When making a contribution to **dwave-samplers** that will affect users, create
+a new release note file by running
 
 .. code-block:: bash
 

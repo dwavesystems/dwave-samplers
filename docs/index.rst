@@ -1,24 +1,19 @@
-.. _index_dwave_samplers:
+.. _index_samplers:
 
-.. include:: README.rst
-  :start-after: index-start-marker
-  :end-before: index-end-marker
+==============
+dwave-samplers
+==============
 
-Documentation
-=============
+.. dropdown:: About dwave-samplers
 
-.. sdk-start-marker
+    .. include:: README.rst
+        :start-after: start_samplers_about
+        :end-before: end_samplers_about
 
-.. toctree::
-  :maxdepth: 1
-
-  reference
-  release_notes
-
-.. sdk-end-marker
+Reference Documentation
+=======================
 
 .. toctree::
-  :caption: Code
-  :maxdepth: 1
+    :maxdepth: 1
 
-  Source <https://github.com/dwavesystems/dwave-samplers>
+    api_ref
