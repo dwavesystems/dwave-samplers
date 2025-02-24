@@ -24,7 +24,6 @@ extensions = [
     "sphinx.ext.todo",
     "sphinx.ext.githubpages",
     "sphinx.ext.ifconfig",
-    "sphinx_design",
     "reno.sphinxext",
 ]
 

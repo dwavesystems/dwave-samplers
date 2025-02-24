@@ -4,11 +4,9 @@
 dwave-samplers
 ==============
 
-.. dropdown:: About dwave-samplers
-
-    .. include:: README.rst
-        :start-after: start_samplers_about
-        :end-before: end_samplers_about
+.. include:: README.rst
+    :start-after: start_samplers_about
+    :end-before: end_samplers_about
 
 Reference Documentation
 =======================
