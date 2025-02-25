@@ -149,6 +149,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                            'initial_states_generator': [],
                            'randomize_order': [],
                            'proposal_acceptance_criteria': [],
+                           'estimate_norm_const': [],
                            }
         self.properties = {'beta_schedule_options': ('linear', 'geometric',
                                                      'custom')}
