@@ -106,6 +106,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
         beta_range
         beta_schedule
         beta_schedule_type
+        estimate_norm_const
         initial_states
         initial_states_generator
         interrupt_function
@@ -272,6 +273,11 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                 simulated annealing. If the function returns True, simulated
                 annealing terminates and returns with all of the samples and
                 energies found so far.
+
+            estimate_norm_const (bool, optional):
+                A flag indicating whether to estimate the normalizing constant or
+                partition function of the given binary quadratic model. The underlying
+                estimator is `annealed importance sampling <https://arxiv.org/abs/physics/9803008>`_.
 
         Returns:
             A `dimod.SampleSet` for the binary quadratic model.
@@ -479,17 +485,7 @@ Neal = SimulatedAnnealingSampler
 class AnnealedImportanceSampling(SimulatedAnnealingSampler):
     parameters = None
     properties = None
-    def __init__(self):
-        # create a local copy in case folks for some reason want to modify them
-        self.parameters = {'beta_max': [],
-                           'num_reads': [],
-                           'num_sweeps': [],
-                           'num_sweeps_per_beta': [],
-                           'beta_schedule_type': ['beta_schedule_options'],
-                           'seed': [],
-                           }
-        self.properties = {'beta_schedule_options': ('linear', 'geometric',
-                                                     'custom')}
+
     def sample(self, bqm: dimod.BinaryQuadraticModel,
                target_beta: Optional[float] = None,
                beta_range: Optional[Union[List[float], Tuple[float, float]]] = None,
@@ -503,7 +499,6 @@ class AnnealedImportanceSampling(SimulatedAnnealingSampler):
                randomize_order: bool = False,
                proposal_acceptance_criteria: str = 'Metropolis',
                **kwargs) -> dimod.SampleSet:
-        super().__init__()
         if target_beta is not None and (beta_range is not None or beta_schedule is not None):
             error_msg = "If 'target_beta' is supplied, 'beta_range' and 'beta_schedule' should not be specified."
             raise ValueError(error_msg)
