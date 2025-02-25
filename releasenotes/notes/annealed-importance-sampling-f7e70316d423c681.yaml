@@ -1,0 +1,4 @@
+---
+features:
+  - |
+    Generalize simulated annealing to enable annealed importance sampling for estimating log partition functions
