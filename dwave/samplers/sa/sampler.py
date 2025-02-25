@@ -35,7 +35,7 @@ from dwave.samplers.sa.simulated_annealing import simulated_annealing, annealed_
 
 import warnings
 
-__all__ = ["Neal", "SimulatedAnnealingSampler"]
+__all__ = ["Neal", "SimulatedAnnealingSampler", "AIS", "AnnealedImportanceSampling", "log_sum_exp"]
 
 
 class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
@@ -506,10 +506,13 @@ class AnnealedImportanceSampling(SimulatedAnnealingSampler):
         if target_beta is not None and (beta_range is not None or beta_schedule is not None):
             error_msg = "If 'target_beta' is supplied, 'beta_range' and 'beta_schedule' should not be specified."
             raise ValueError(error_msg)
-        if beta_range is None and beta_schedule is None:
+        if target_beta is None and beta_range is None and beta_schedule is None:
             target_beta = 1
-        if target_beta is not None:
-            beta_range = (default_beta_range(bqm)[0], target_beta)
+        beta_range = (default_beta_range(bqm)[0], target_beta)
+        # NOTE: technically, when num_sweeps is zero, the method should recover vanilla importance sampling.
+        if num_sweeps is not None and num_sweeps < 1:
+            error_msg = "`num_sweeps` must be strictly positive."
+            raise ValueError(error_msg)
         ss = super().sample(bqm, beta_range=beta_range,
                                 num_reads=num_reads, num_sweeps=num_sweeps,
                                 num_sweeps_per_beta=num_sweeps_per_beta,
@@ -517,7 +520,9 @@ class AnnealedImportanceSampling(SimulatedAnnealingSampler):
                                 seed=seed,
                                 interrupt_function=interrupt_function,
                                 beta_schedule=beta_schedule,
-                                initial_states=None, initial_states_generator="random",
+        # NOTE: for the sampler to be valid, initial states must be generated uniformly random
+                                initial_states=None,
+                                initial_states_generator="random",
                                 randomize_order=randomize_order,
                                 proposal_acceptance_criteria=proposal_acceptance_criteria,
                                 estimate_norm_const=True)
@@ -660,36 +665,15 @@ def _default_ising_beta_range(h, J,
 
     return [hot_beta, cold_beta]
 
+AIS = AnnealedImportanceSampling
+
 def default_beta_range(bqm):
     ising = bqm.spin
     return _default_ising_beta_range(ising.linear, ising.quadratic)
 
 def log_sum_exp(x):
+    if len(x) == 0:
+        return None
     c = np.max(x)
-    x -= c
-    return np.log(np.exp(x).sum()) + c
-
-if __name__ == "__main__":
-    from itertools import product
-    from scipy.special import logsumexp
-    import dwave_networkx as dnx
-    from time import perf_counter
-
-    small = True
-    if small:
-        N = 15
-        bqm = dimod.generators.ran_r(1234, N)
-        bqm.normalize(0.01)
-        states = list(product([-1,1], repeat=N))
-        energies = bqm.energies(states)
-        print(round(logsumexp(-energies), 4), "exact")
-    else:
-        bqm = dimod.generators.ran_r(123, dnx.zephyr_graph(6))
-        bqm.normalize(0.01)
-    for ac, rand in product(["Metropolis", "Gibbs"], [True, False]):
-        t0 = perf_counter()
-        ss = AnnealedImportanceSampling().sample(bqm, num_reads=10000, num_sweeps=100,
-                                                 randomize_order=rand, proposal_acceptance_criteria=ac)
-        t1 = perf_counter()
-        print(round(ss.info['logz_estimate'], 4), ac, rand, round(t1-t0, 2))
-    print("sa ran", len(SimulatedAnnealingSampler().sample(bqm, num_reads=2, num_sweeps=5).info))
+    x_shifted = x - c
+    return np.log(np.exp(x_shifted).sum()) + c
