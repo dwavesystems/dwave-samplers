@@ -119,17 +119,21 @@ void simulated_annealing_run(
     bool flip_spin;
     // perform the sweeps
     double energy = 0;
-    if (log_weight) {
+    if (log_weight != nullptr) {
         log_weight[0] = num_vars*log(2);
         energy = init_energy;
     }
     double prev_beta = 0;
-    for (int beta_idx = 0; beta_idx < (int) beta_schedule.size(); beta_idx++) {
+    int schedule_length = (int) beta_schedule.size();
+    for (int beta_idx = 0; beta_idx < schedule_length; beta_idx++) {
         // get the beta value for this sweep
         const double beta = beta_schedule[beta_idx];
-        if (log_weight){
+        if (log_weight != nullptr){
             log_weight[0] += (prev_beta-beta)*energy;
             prev_beta = beta;
+            // Why break before final beta? Because samples need to be from the penultimate beta.
+            // This is necessary for correctness.
+            if (beta_idx == schedule_length-1) break;
         }
         for (int sweep = 0; sweep < sweeps_per_beta; sweep++) {
 
@@ -197,7 +201,7 @@ void simulated_annealing_run(
 
                     // now we just need to flip its state and negate its delta
                     // energy
-                    if (log_weight){
+                    if (log_weight != nullptr){
                         energy += delta_energy[var];
                     }
                     state[var] *= -1;
@@ -341,7 +345,7 @@ int general_simulated_annealing(
         // the sample there
         // Branching here is designed to make expicit compile time optimizations
         double * log_weight = log_weights;
-        if (log_weights){
+        if (log_weights != nullptr){
             energies[sample] = get_state_energy(state, h, coupler_starts,
                                                 coupler_ends, coupler_weights);
             log_weight += sample;

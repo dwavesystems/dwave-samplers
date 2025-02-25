@@ -46,7 +46,7 @@ cdef extern from "cpu_sa.h":
             const Proposal proposal_acceptance_criteria,
             callback interrupt_callback,
             void *interrupt_function,
-            double* logweights_ptr) nogil
+            double* _logweights) nogil
 
 def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                         coupler_weights, sweeps_per_beta, beta_schedule, seed,
@@ -228,6 +228,7 @@ def annealed_importance_sampling(num_samples, h, coupler_starts, coupler_ends,
         The energies.
 
     """
+    # NOTE: this is imlpemented under the assumption that initial states are drawn from a uniform random distribution
     num_vars = len(h)
 
     # in the case that we either need no samples or there are no variables,
@@ -235,7 +236,7 @@ def annealed_importance_sampling(num_samples, h, coupler_starts, coupler_ends,
     Context = namedtuple("context", "states energies logweights")
     if num_samples*num_vars == 0:
         annealed_states = np.empty((num_samples, num_vars), dtype=np.int8)
-        return Context(annealed_states, np.zeros(num_samples, dtype=np.double), None)
+        return Context(annealed_states, np.zeros(num_samples, dtype=np.float64), None)
 
     # allocate ndarray for energies
     energies_numpy = np.empty(num_samples, dtype=np.float64)
@@ -253,8 +254,9 @@ def annealed_importance_sampling(num_samples, h, coupler_starts, coupler_ends,
     cdef vector[double] _beta_schedule = beta_schedule
     cdef unsigned long long _seed = seed
     cdef VariableOrder _varorder
-    logweights = np.empty(num_samples, dtype=np.double)
-    cdef double[:] _logweights = logweights
+    logweights_numpy = np.empty(num_samples, dtype=np.float64)
+    cdef double[:] logweights = logweights_numpy
+    cdef double* _logweights;
     if randomize_order:
         _varorder = Random
     else:
@@ -272,9 +274,9 @@ def annealed_importance_sampling(num_samples, h, coupler_starts, coupler_ends,
     else:
         _interrupt_function = <void *>interrupt_function
     if estimate_norm_const:
-        logweights_ptr = &_logweights[0]
+        _logweights = &logweights[0]
     else:
-        logweights_ptr = NULL
+        _logweights = NULL
 
 
     with nogil:
@@ -292,10 +294,10 @@ def annealed_importance_sampling(num_samples, h, coupler_starts, coupler_ends,
                                           _proposal_acceptance_criteria,
                                           interrupt_callback,
                                           _interrupt_function,
-                                          logweights_ptr)
+                                          _logweights)
 
     # discard the noise if we were interrupted
-    context = Context(states_numpy[:num], energies_numpy[:num], logweights[:num])
+    context = Context(states_numpy[:num], energies_numpy[:num], logweights_numpy[:num])
     return context
 
 
