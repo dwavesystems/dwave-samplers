@@ -434,6 +434,11 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
 
         timestamp_sample = perf_counter_ns()
 
+
+        info = {
+            "beta_range": beta_range,
+            "beta_schedule_type": beta_schedule_type,
+        }
         # run the simulated annealing algorithm
         if estimate_norm_const:
             samples, energies, log_weights = annealed_importance_sampling(
@@ -442,6 +447,9 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                 seed, initial_states_array,
                 randomize_order, proposal_acceptance_criteria,
                 interrupt_function, estimate_norm_const)
+            info.update(dict(
+                log_weights=log_weights, logz_estimate=log_sum_exp(log_weights)-np.log(num_reads)
+            ))
         else:
             samples, energies = simulated_annealing(
                 num_reads, ldata, irow, icol, qdata,
@@ -450,15 +458,6 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                 randomize_order, proposal_acceptance_criteria,
                 interrupt_function)
         timestamp_postprocess = perf_counter_ns()
-
-        info = {
-            "beta_range": beta_range,
-            "beta_schedule_type": beta_schedule_type,
-        }
-        if estimate_norm_const:
-            info.update(dict(
-                log_weights=log_weights, logz_estimate=log_sum_exp(log_weights)-np.log(num_reads)
-            ))
         response = dimod.SampleSet.from_samples(
             (samples, variable_order),
             energy=energies+bqm.offset,  # add back in the offset
