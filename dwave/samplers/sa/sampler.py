@@ -35,7 +35,7 @@ from dwave.samplers.sa.simulated_annealing import simulated_annealing, annealed_
 
 import warnings
 
-__all__ = ["Neal", "SimulatedAnnealingSampler", "AIS", "AnnealedImportanceSampling", "log_sum_exp"]
+__all__ = ["Neal", "SimulatedAnnealingSampler", "AnnealedImportanceSampling"]
 
 
 class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
@@ -661,7 +661,6 @@ def _default_ising_beta_range(h, J,
 
     return [hot_beta, cold_beta]
 
-AIS = AnnealedImportanceSampling
 
 def default_beta_range(bqm):
     ising = bqm.spin
