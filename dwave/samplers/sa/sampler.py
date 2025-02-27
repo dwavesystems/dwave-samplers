@@ -666,6 +666,16 @@ def default_beta_range(bqm):
     return _default_ising_beta_range(ising.linear, ising.quadratic)
 
 def log_sum_exp(x):
+    """Exponentiate, sum, then take the (natural) logarithm of ``x`` in a numerically-stable way.
+
+    Wikipedia reference for `LogSumExp <https://en.wikipedia.org/wiki/LogSumExp>_`.
+
+    Args:
+        x (list[float]): A list of real numbers.
+
+    Returns:
+        float: log(sum(exp(x)))
+    """
     if len(x) == 0:
         return None
     c = np.max(x)
