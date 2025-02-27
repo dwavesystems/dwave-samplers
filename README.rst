@@ -17,6 +17,8 @@ dwave-samplers
 
 .. start_samplers_about
 
+.. todo:: need to switch all :term: and :ref: to hard links due to GitHub
+
 Ocean software provides a variety of quantum, classical, and quantum-classical
 :term:`hybrid` :ref:`dimod <index_dimod>` :term:`samplers <sampler>` that run
 either remotely (for example, in the `Leap <https://cloud.dwavesys.com/leap/>`_
