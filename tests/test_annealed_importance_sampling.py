@@ -19,7 +19,7 @@ from itertools import product
 
 import dimod
 
-from dwave.samplers import AIS, log_sum_exp
+from dwave.samplers.sa.sampler import AnnealedImportanceSampling as AIS, log_sum_exp
 
 
 class TestAnnealedImportanceSampling(unittest.TestCase):
