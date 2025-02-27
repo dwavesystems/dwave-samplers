@@ -15,22 +15,22 @@
 dwave-samplers
 ==============
 
+.. start_samplers_about
+
+Ocean software provides a variety of quantum, classical, and quantum-classical
+:term:`hybrid` :ref:`dimod <index_dimod>` :term:`samplers <sampler>` that run
+either remotely (for example, in the `Leap <https://cloud.dwavesys.com/leap/>`_
+service) or locally on your CPU.
+
 Supported Samplers
 ==================
 
-.. _start_samplers_about
+*dwave-samplers* implements the following
+:ref:`classical <quantum_research/qpu_intro_classical>` algorithms for solving
+binary quadratic models (:term:`BQM`):
 
-Ocean software provides a variety of quantum, classical, and quantum-classical
-`dimod <https://docs.ocean.dwavesys.com/en/stable/docs_dimod/sdk_index.html>`_
-`samplers <https://docs.ocean.dwavesys.com/en/stable/concepts/samplers.html>`_
-that run either remotely (for example, in D-Wave's
-`Leap <https://cloud.dwavesys.com/leap/>`_ environment) or locally on your CPU.
-
-*dwave-samplers* implements the following classical algorithms for solving
-`binary quadratic models <https://docs.ocean.dwavesys.com/en/stable/concepts/bqm.html>`_
-(BQM):
-
-*   `Planar`_: an exact solver for planar Ising problems with no linear biases.
+*   `Planar`_: an exact solver for planar :term:`Ising` problems with no linear
+    biases.
 *   `Random`_: a sampler that draws uniform random samples.
 *   `Simulated Annealing`_: a probabilistic heuristic for optimization and
     approximate Boltzmann sampling well suited to finding good solutions of
@@ -83,7 +83,7 @@ Get the best 5 sample found in .1 seconds.
 Simulated Annealing
 -------------------
 
-`Simulated annealing <https://en.wikipedia.org/wiki/Simulated_annealing>`__ can
+`Simulated annealing <https://en.wikipedia.org/wiki/Simulated_annealing>`_ can
 be used for heuristic optimization or approximate Boltzmann sampling. The
 *dwave-samplers* implementation approaches the equilibrium distribution by
 performing updates at a sequence of decreasing temperatures, terminating at the
@@ -115,7 +115,7 @@ and a custom one.
 Steepest Descent
 ----------------
 
-`Steepest descent <https://en.wikipedia.org/wiki/Gradient_descent>`__ is the
+`Steepest descent <https://en.wikipedia.org/wiki/Gradient_descent>`_ is the
 discrete analogue of gradient descent, but the best move is computed using a
 local minimization rather rather than computing a gradient. The dimension along
 which to descend is determined, at each step, by the variable flip that causes
@@ -157,12 +157,12 @@ If the solver starts in a local minimum, it gets stuck.
 Tabu
 ----
 
-`Tabu search <https://en.wikipedia.org/wiki/Tabu_search>`__ is a heuristic that
+`Tabu search <https://en.wikipedia.org/wiki/Tabu_search>`_ is a heuristic that
 employs local search and can escape local minima by maintaining a "tabu list" of
 recently explored states that it does not revisit. The length of this tabu list
-is called the "tenure". *dwave-samplers* implementats the
+is called the "tenure". *dwave-samplers* implements the
 `MST2 multistart tabu search algorithm <https://link.springer.com/article/10.1023/B:ANOR.0000039522.58036.68>`_
-for quadratic unconstrained binary optimization (QUBO) problems.
+for quadratic unconstrained binary optimization (:term:`QUBO`) problems.
 
 Each read of the tabu algorithm consists of many starts. The solver takes the
 best non-tabu step repeatedly until it does not improve its energy any more.
@@ -184,7 +184,7 @@ Sample using both default and custom values of tenure and number of restarts.
 Tree Decomposition
 ------------------
 
-`Tree decomposition <https://en.wikipedia.org/wiki/Tree_decomposition>`__-based
+`Tree decomposition <https://en.wikipedia.org/wiki/Tree_decomposition>`_-based
 solvers have a runtime that is exponential in the
 `treewidth <https://en.wikipedia.org/wiki/Treewidth>`_ of the problem graph. For
 problems with low treewidth, the solver can find ground states very quickly.
@@ -212,7 +212,7 @@ exactly.
 0 -1 +1 +1 -1 -1 -1 -1 +1 +1 +1 +1 +1 +1 +1 +1 -1 -1 -1 ... +1  -62.5       1
 ['SPIN', 1 rows, 1 samples, 63 variables]
 
-.. _end_samplers_about
+.. end_samplers_about
 
 Installation
 ============
@@ -230,6 +230,8 @@ Released under the Apache License 2.0
 
 Contributing
 ============
+
+.. todo:: update this link (we will want this link working in GitHub)
 
 Ocean's `contributing guide <https://docs.ocean.dwavesys.com/en/stable/contributing.html>`_
 has guidelines for contributing to Ocean packages.
