@@ -150,8 +150,8 @@ def annealed_importance_sampling(num_samples, h, coupler_starts, coupler_ends,
                         interrupt_function=None,
                         estimate_norm_const=False):
     """Wraps `general_simulated_annealing` from `cpu_sa.cpp`. Accepts
-    an Ising problem defined on a general graph and returns samples
-    using simulated annealing.
+    an Ising problem defined on a general graph and returns samples and log weights
+    using annealed importance sampling.
 
     Parameters
     ----------
@@ -198,6 +198,11 @@ def annealed_importance_sampling(num_samples, h, coupler_starts, coupler_ends,
         called between samples and if it returns True, simulated annealing
         will return early with the samples it already has.
 
+    estimate_norm_const: bool
+        When True, log weights---as in annealed importance sampling---will be tracked
+        and returned. Note the normalization constant estimator is unbiased, however,
+        its log is biased. The log estimator is returned for numerical stability.
+
     randomize_order: bool
         When True, each spin update selects a variable uniformly at random.
         When False, updates proceed sequentially through the labeled variables
@@ -224,11 +229,12 @@ def annealed_importance_sampling(num_samples, h, coupler_starts, coupler_ends,
     samples : numpy.ndarray
         A 2D numpy array where each row is a sample.
 
-    energies: np.ndarray
+    energies: numpy.ndarray
         The energies.
 
+    logweights : numpy.ndarray
+        The log weights of annealed importance sampling.
     """
-    # NOTE: this is imlpemented under the assumption that initial states are drawn from a uniform random distribution
     num_vars = len(h)
 
     # in the case that we either need no samples or there are no variables,

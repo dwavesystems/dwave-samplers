@@ -120,6 +120,7 @@ void simulated_annealing_run(
     // perform the sweeps
     double energy = 0;
     if (log_weight != nullptr) {
+        // TODO: allow for custom initialization
         log_weight[0] = num_vars*log(2);
         energy = init_energy;
     }
