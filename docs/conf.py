@@ -61,7 +61,7 @@ panels_add_bootstrap_css = False
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
     "numpy": ("http://docs.scipy.org/doc/numpy/", None),
-    "oceandocs": ("https://docs.ocean.dwavesys.com/en/stable/", None),
+    'dwave': ('https://docs.dwavequantum.com/en/latest/', None),
 }
 
 # breathe, for pulling in doxygen generated C++
