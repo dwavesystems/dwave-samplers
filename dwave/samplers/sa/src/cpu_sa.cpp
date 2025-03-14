@@ -18,6 +18,7 @@
 #include <math.h>
 #include <vector>
 #include <stdexcept>
+#include <cassert>
 #include "cpu_sa.h"
 
 
@@ -96,7 +97,9 @@ void simulated_annealing_run(
     const vector<vector<int>>& neighbors,
     const vector<vector<double>>& neighbour_couplings,
     const int sweeps_per_beta,
-    const vector<double>& beta_schedule
+    const vector<double>& beta_schedule,
+    double* log_weight,
+    const double init_energy
 ) {
     const int num_vars = h.size();
 
@@ -115,9 +118,24 @@ void simulated_annealing_run(
 
     bool flip_spin;
     // perform the sweeps
-    for (int beta_idx = 0; beta_idx < (int)beta_schedule.size(); beta_idx++) {
+    double energy = 0;
+    if (log_weight != nullptr) {
+        // TODO: allow for custom initialization
+        log_weight[0] = num_vars*log(2);
+        energy = init_energy;
+    }
+    double prev_beta = 0;
+    int schedule_length = (int) beta_schedule.size();
+    for (int beta_idx = 0; beta_idx < schedule_length; beta_idx++) {
         // get the beta value for this sweep
         const double beta = beta_schedule[beta_idx];
+        if (log_weight != nullptr){
+            log_weight[0] += (prev_beta-beta)*energy;
+            prev_beta = beta;
+            // Why break before final beta? Because samples need to be from the penultimate beta.
+            // This is necessary for correctness.
+            if (beta_idx == schedule_length-1) break;
+        }
         for (int sweep = 0; sweep < sweeps_per_beta; sweep++) {
 
             // this threshold will allow us to skip the metropolis update for
@@ -184,13 +202,15 @@ void simulated_annealing_run(
 
                     // now we just need to flip its state and negate its delta
                     // energy
+                    if (log_weight != nullptr){
+                        energy += delta_energy[var];
+                    }
                     state[var] *= -1;
                     delta_energy[var] *= -1;
                 }
             }
         }
     }
-
     free(delta_energy);
 }
 
@@ -262,7 +282,8 @@ int general_simulated_annealing(
     const VariableOrder varorder,
     const Proposal proposal_acceptance_criteria,
     callback interrupt_callback,
-    void * const interrupt_function
+    void * const interrupt_function,
+    double* log_weights
 ) {
     // TODO
     // assert len(states) == num_samples*num_vars*sizeof(int8_t)
@@ -323,26 +344,36 @@ int general_simulated_annealing(
         std::int8_t *state = states + sample*num_vars;
         // then do the actual sample. this function will modify state, storing
         // the sample there
-	// Branching here is designed to make expicit compile time optimizations
+        // Branching here is designed to make expicit compile time optimizations
+        double * log_weight = log_weights;
+        if (log_weights != nullptr){
+            energies[sample] = get_state_energy(state, h, coupler_starts,
+                                                coupler_ends, coupler_weights);
+            log_weight += sample;
+        }
         if (varorder == Random) {
             if (proposal_acceptance_criteria == Metropolis) {
                 simulated_annealing_run<Random, Metropolis>(state, h, degrees,
                                                     neighbors, neighbour_couplings,
-                                                    sweeps_per_beta, beta_schedule);
+                                                    sweeps_per_beta, beta_schedule,
+                                                    log_weight, energies[sample]);
             } else {
                 simulated_annealing_run<Random, Gibbs>(state, h, degrees,
                                                      neighbors, neighbour_couplings,
-                                                     sweeps_per_beta, beta_schedule);
+                                                     sweeps_per_beta, beta_schedule,
+                                                     log_weight, energies[sample]);
           }
         } else {
             if (proposal_acceptance_criteria == Metropolis) {
                 simulated_annealing_run<Sequential, Metropolis>(state, h, degrees,
                                                      neighbors, neighbour_couplings,
-                                                     sweeps_per_beta, beta_schedule);
+                                                     sweeps_per_beta, beta_schedule,
+                                                     log_weight, energies[sample]);
             } else {
                 simulated_annealing_run<Sequential, Gibbs>(state, h, degrees,
                                                       neighbors, neighbour_couplings,
-                                                      sweeps_per_beta, beta_schedule);
+                                                      sweeps_per_beta, beta_schedule,
+                                                      log_weight, energies[sample]);
             }
         }
         // compute the energy of the sample and store it in `energies`
@@ -354,7 +385,6 @@ int general_simulated_annealing(
         // if interrupt_function returns true, stop sampling
         if (interrupt_function && interrupt_callback(interrupt_function)) break;
     }
-
     // return the number of samples we actually took
     return sample;
 }
