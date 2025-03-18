@@ -20,8 +20,6 @@ About dwave-samplers
 Usage Information
 =================
 
-.. todo:: add the intersphinx prefix to enable these links for self builds
-
 *   :ref:`index_concepts` for terminology
 *   :ref:`qpu_classical_intro` for an introduction to classical
     :term:`solvers <solver>`

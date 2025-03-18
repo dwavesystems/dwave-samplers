@@ -17,22 +17,22 @@ dwave-samplers
 
 .. start_samplers_about
 
-.. todo:: need to switch all :term: and :ref: to hard links due to GitHub
-
 Ocean software provides a variety of quantum, classical, and quantum-classical
-:term:`hybrid` :ref:`dimod <index_dimod>` :term:`samplers <sampler>` that run
-either remotely (for example, in the `Leap <https://cloud.dwavesys.com/leap/>`_
-service) or locally on your CPU.
+hybrid `dimod <https://docs.dwavequantum.com/en/latest/ocean/api_ref_dimod>`_
+`samplers <https://docs.dwavequantum.com/en/latest/concepts/samplers.html>`_
+that run either remotely (for example, in the
+`Leap <https://cloud.dwavesys.com/leap/>`_ service) or locally on your CPU.
 
 Supported Samplers
 ==================
 
 *dwave-samplers* implements the following
-:ref:`classical <quantum_research/qpu_intro_classical>` algorithms for solving
-binary quadratic models (:term:`BQM`):
+`classical <https://docs.dwavequantum.com/en/latest/quantum_research/classical_intro.html>`_
+algorithms for solving
+`binary quadratic models <https://docs.dwavequantum.com/en/latest/concepts/models.html>`_
+(BQM):
 
-*   `Planar`_: an exact solver for planar :term:`Ising` problems with no linear
-    biases.
+*   `Planar`_: an exact solver for planar Ising problems with no linear biases.
 *   `Random`_: a sampler that draws uniform random samples.
 *   `Simulated Annealing`_: a probabilistic heuristic for optimization and
     approximate Boltzmann sampling well suited to finding good solutions of
@@ -164,7 +164,7 @@ employs local search and can escape local minima by maintaining a "tabu list" of
 recently explored states that it does not revisit. The length of this tabu list
 is called the "tenure". *dwave-samplers* implements the
 `MST2 multistart tabu search algorithm <https://link.springer.com/article/10.1023/B:ANOR.0000039522.58036.68>`_
-for quadratic unconstrained binary optimization (:term:`QUBO`) problems.
+for quadratic unconstrained binary optimization (QUBO) problems.
 
 Each read of the tabu algorithm consists of many starts. The solver takes the
 best non-tabu step repeatedly until it does not improve its energy any more.
@@ -233,9 +233,7 @@ Released under the Apache License 2.0
 Contributing
 ============
 
-.. todo:: update this link (we will want this link working in GitHub)
-
-Ocean's `contributing guide <https://docs.ocean.dwavesys.com/en/stable/contributing.html>`_
+Ocean's `contributing guide <https://docs.dwavequantum.com/en/latest/ocean/contribute.html>`_
 has guidelines for contributing to Ocean packages.
 
 Release Notes
