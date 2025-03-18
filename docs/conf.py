@@ -24,7 +24,6 @@ extensions = [
     "sphinx.ext.todo",
     "sphinx.ext.githubpages",
     "sphinx.ext.ifconfig",
-    "reno.sphinxext",
 ]
 
 autosummary_generate = True
@@ -33,7 +32,7 @@ source_suffix = [".rst", ".md"]
 
 add_module_names = False
 
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "README.rst"]
 
 pygments_style = "sphinx"
 
@@ -57,7 +56,6 @@ html_sidebars = {"**": ["search-field", "sidebar-nav-bs"]}  # remove ads
 # -- Panels ---------------------------------------------------------------
 panels_add_bootstrap_css = False
 
-# TODO: replace oceandocs & sysdocs_gettingstarted
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
     "numpy": ("http://docs.scipy.org/doc/numpy/", None),
