@@ -20,6 +20,8 @@ from dwave.samplers.random import *
 
 from dwave.samplers.sa import *
 
+from dwave.samplers.sqa import *
+
 from dwave.samplers.tabu import *
 
 from dwave.samplers.tree import *
