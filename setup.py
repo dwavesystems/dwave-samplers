@@ -54,6 +54,7 @@ setup(
         ['dwave/samplers/greedy/descent.pyx',
          'dwave/samplers/random/*.pyx',
          'dwave/samplers/sa/*.pyx',
+         'dwave/samplers/sqa/*.pyx',
          'dwave/samplers/tabu/tabu_search.pyx',
          'dwave/samplers/tree/*.pyx',
          ],

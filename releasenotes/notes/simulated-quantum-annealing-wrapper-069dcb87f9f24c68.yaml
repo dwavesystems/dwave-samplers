@@ -1,0 +1,13 @@
+---
+features:
+  - |
+    Add ``PathIntegralAnnealingSampler``, a ``SimulatedAnnealingSampler`` style
+    wrapper for the dwave-pimc repository.
+    This supports simulation of path-integral dynamics and equilibrium sampling
+    of quantum Boltzmann distributions
+    (`King et al., 2021 <https://www.nature.com/articles/s41467-021-20901-5>`_).
+  - |
+    Add ``RotorModelAnnealingSampler``, a ``SimulatedAnnealingSampler`` style
+    code for rotor model simulation.
+    This supports a standard classical algorithm for approximation of spin dynamics
+    (`Shin et al., 2014 <https://doi.org/10.48550/arXiv.1401.7087>`_).
