@@ -37,6 +37,8 @@ algorithms for solving
 *   `Simulated Annealing`_: a probabilistic heuristic for optimization and
     approximate Boltzmann sampling well suited to finding good solutions of
     large problems.
+*   `Simulated Quantum Annealing`_: a heuristic for optimization or approximate
+    sampling.
 *   `Steepest Descent`_: a discrete analogue of gradient descent, often used in
     machine learning, that quickly finds a local minimum.
 *   `Tabu`_: a heuristic that employs local search with methods to escape local
@@ -117,7 +119,7 @@ and a custom one.
 >>> sampleset = sampler.sample(bqm, beta_range=[.1, 4.2], beta_schedule_type='linear')
 
 Simulated Quantum Annealing
-===========================
+---------------------------
 
 Simulated quantum annealing can be used for heuristic optimization or approximate
 sampling. The *dwave-samplers* implementation performs dynamics defined by a schedule
@@ -133,7 +135,7 @@ what is possible with simulated annealing. For algorithm details see [1]
 [1] https://doi.org/10.1038/s41467-021-20901-5
 
 >>> from dwave.samplers import PathIntegralAnnealingSampler
->>> sampler = SimulatedQuantumAnnealingSampler()  # or RotorModelAnnealingSampler()
+>>> sampler = PathIntegralAnnealingSampler()  # or RotorModelAnnealingSampler()
 
 Create a random binary quadratic model.
 

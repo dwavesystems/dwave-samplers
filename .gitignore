@@ -115,6 +115,8 @@ dwave/samplers/random/*.cpp
 dwave/samplers/random/*.html
 dwave/samplers/sa/*.cpp
 dwave/samplers/sa/*.html
+dwave/samplers/sqa/*.cpp
+dwave/samplers/sqa/*.html
 dwave/samplers/tabu/*.cpp
 dwave/samplers/tabu/*.html
 dwave/samplers/tree/*.cpp
