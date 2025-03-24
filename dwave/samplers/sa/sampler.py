@@ -25,7 +25,7 @@ try:
 except ImportError:
     BetaScheduleType = str
 
-    
+
 from dimod.core.initialized import InitialStateGenerator
 
 import dimod
@@ -62,9 +62,9 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
     Also aliased as :class:`.Neal`.
 
     .. note::
-        Ocean SDK versions earlier than 8.0 supported also a 
-        ``SimulatedAnnealingSampler`` under the ``neal`` namespace in a 
-        ``dwave-neal`` package. If your code uses that obsoleted class, 
+        Ocean SDK versions earlier than 8.0 supported also a
+        ``SimulatedAnnealingSampler`` under the ``neal`` namespace in a
+        ``dwave-neal`` package. If your code uses that obsoleted class,
         upgrade lines such as
 
         >>> from neal import SimulatedAnnealingSampler   # doctest: +SKIP
@@ -247,10 +247,10 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
 
             randomize_order:
                 When `True`, each spin update selects a variable uniformly at random.
-                This method is ergodic, obeys detailed balance and preserves symmetries 
+                This method is ergodic, obeys detailed balance and preserves symmetries
                 of the model.
 
-                When `False`, updates proceed sequentially through the labeled variables 
+                When `False`, updates proceed sequentially through the labeled variables
                 on each sweep so that all variables are updated once per sweep. This method:
 
                 * can be non-ergodic in special cases when used with ``proposal_acceptance_critera=="Metropolis"``.
