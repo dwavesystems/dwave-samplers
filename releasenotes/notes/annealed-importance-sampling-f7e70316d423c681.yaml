@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    Add ``AnnealedImportanceSampling`` to estimate log partition functions.
+    This generalizes existing implementations of simulated annealing.

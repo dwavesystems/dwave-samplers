@@ -16,6 +16,7 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
+from collections import namedtuple
 
 from libcpp cimport bool
 from libcpp.vector cimport vector
@@ -44,8 +45,8 @@ cdef extern from "cpu_sa.h":
             const VariableOrder varorder,
             const Proposal proposal_acceptance_criteria,
             callback interrupt_callback,
-            void *interrupt_function) nogil
-
+            void *interrupt_function,
+            double* _logweights) nogil
 
 def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                         coupler_weights, sweeps_per_beta, beta_schedule, seed,
@@ -104,7 +105,7 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
 
     randomize_order: bool
         When True, each spin update selects a variable uniformly at random.
-        When False, updates proceed sequentially through the labeled variables 
+        When False, updates proceed sequentially through the labeled variables
         on each sweep so that all variables are updated once per sweep.
         The random method is ergodic and obeys detailed balance at all temperatures.
         Symmetries of the Boltzmann distribution(s) are not broken by the
@@ -132,13 +133,116 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
         The energies.
 
     """
+    context = annealed_importance_sampling(num_samples, h, coupler_starts, coupler_ends,
+                        coupler_weights, sweeps_per_beta, beta_schedule, seed,
+                        states_numpy,
+                        randomize_order=randomize_order,
+                        proposal_acceptance_criteria=proposal_acceptance_criteria,
+                        interrupt_function=interrupt_function,
+                        estimate_norm_const=False)
+    return context.states, context.energies
+
+def annealed_importance_sampling(num_samples, h, coupler_starts, coupler_ends,
+                        coupler_weights, sweeps_per_beta, beta_schedule, seed,
+                        np.ndarray[np.int8_t, ndim=2, mode="c"] states_numpy,
+                        randomize_order=False,
+                        proposal_acceptance_criteria='Metropolis',
+                        interrupt_function=None,
+                        estimate_norm_const=False):
+    """Wraps `general_simulated_annealing` from `cpu_sa.cpp`. Accepts
+    an Ising problem defined on a general graph and returns samples and log weights
+    using annealed importance sampling.
+
+    Parameters
+    ----------
+    num_samples : int
+        Number of samples to get from the sampler.
+
+    h : list(float)
+        The h or field values for the problem.
+
+    coupler_starts : list(int)
+        A list of the start variable of each coupler. For a problem
+        with the couplers (0, 1), (1, 2), and (3, 1), `coupler_starts`
+        should be [0, 1, 3].
+
+    coupler_ends : list(int)
+        A list of the end variable of each coupler. For a problem
+        with the couplers (0, 1), (1, 2), and (3, 1), `coupler_ends`
+        should be [1, 2, 1].
+
+    coupler_weights : list(float)
+        A list of the J values or weight on each coupler, in the same
+        order as `coupler_starts` and `coupler_ends`.
+
+    sweeps_per_beta : int
+        The number of sweeps to perform at each beta value provided in
+        `beta_schedule`. The total number of sweeps per sample is
+        sweeps_per_beta * len(beta_schedule).
+
+    beta_schedule : list(float)
+        A list of the different beta values to run sweeps at.
+
+    seed : 64 bit int > 0
+        The seed to use for the PRNG. Must be a positive integer
+        greater than 0. If the same seed is used and the rest of the
+        parameters are the same, the returned samples will be
+        identical.
+
+    states_numpy : np.ndarray[int8_t, ndim=2, mode="c"], values in (-1, 1)
+        The initial seeded states of the simulated annealing runs. Should be of
+        a contiguous numpy.ndarray of shape (num_samples, num_variables).
+
+    interrupt_function: function
+        Should accept no arguments and return a bool. The function is
+        called between samples and if it returns True, simulated annealing
+        will return early with the samples it already has.
+
+    estimate_norm_const: bool
+        When True, log weights---as in annealed importance sampling---will be tracked
+        and returned. Note the normalization constant estimator is unbiased, however,
+        its log is biased. The log estimator is returned for numerical stability.
+
+    randomize_order: bool
+        When True, each spin update selects a variable uniformly at random.
+        When False, updates proceed sequentially through the labeled variables
+        on each sweep so that all variables are updated once per sweep.
+        The random method is ergodic and obeys detailed balance at all temperatures.
+        Symmetries of the Boltzmann distribution(s) are not broken by the
+        update order.
+        The sequential method:
+            - when combined with ``proposal_acceptance_criteria=Metropolis`` can be
+            non-ergodic in the limits of zero or infinite temperature,
+            and converge slowly near these limits.
+            - can introduce a dynamical bias as a function of variable
+            labeling convention.
+            - has faster per spin update than the random method.
+
+    proposal_acceptance_criteria: str
+        When `Gibbs`, each spin flip proposal is accepted according to the
+        Gibbs criteria.
+        When `Metropolis`, each spin flip proposal is accepted according to the
+        Metropolis-Hastings criteria.
+
+    Returns
+    -------
+    samples : numpy.ndarray
+        A 2D numpy array where each row is a sample.
+
+    energies: numpy.ndarray
+        The energies.
+
+    logweights : numpy.ndarray
+        The log weights of annealed importance sampling.
+    """
     num_vars = len(h)
 
     # in the case that we either need no samples or there are no variables,
     # we can safely return an empty array (and set energies to 0)
+    Context = namedtuple("context", "states energies logweights")
     if num_samples*num_vars == 0:
         annealed_states = np.empty((num_samples, num_vars), dtype=np.int8)
-        return annealed_states, np.zeros(num_samples, dtype=np.double)
+        return Context(annealed_states, np.zeros(num_samples, dtype=np.float64), None)
 
     # allocate ndarray for energies
     energies_numpy = np.empty(num_samples, dtype=np.float64)
@@ -156,6 +260,9 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
     cdef vector[double] _beta_schedule = beta_schedule
     cdef unsigned long long _seed = seed
     cdef VariableOrder _varorder
+    logweights_numpy = np.empty(num_samples, dtype=np.float64)
+    cdef double[:] logweights = logweights_numpy
+    cdef double* _logweights;
     if randomize_order:
         _varorder = Random
     else:
@@ -172,6 +279,10 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
         _interrupt_function = NULL
     else:
         _interrupt_function = <void *>interrupt_function
+    if estimate_norm_const:
+        _logweights = &logweights[0]
+    else:
+        _logweights = NULL
 
 
     with nogil:
@@ -188,10 +299,12 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                                           _varorder,
                                           _proposal_acceptance_criteria,
                                           interrupt_callback,
-                                          _interrupt_function)
+                                          _interrupt_function,
+                                          _logweights)
 
     # discard the noise if we were interrupted
-    return states_numpy[:num], energies_numpy[:num]
+    context = Context(states_numpy[:num], energies_numpy[:num], logweights_numpy[:num])
+    return context
 
 
 cdef bool interrupt_callback(void * const interrupt_function) noexcept with gil:
