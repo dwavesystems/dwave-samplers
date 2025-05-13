@@ -904,6 +904,10 @@ class AnnealedImportanceSampling(SimulatedAnnealingSampler):
                 with a constant set of parameters produces identical results. If not provided, a
                 random seed is chosen. Defaults to ``None``.
 
+        Raises:
+            ValueError: If sample set is empty, if sample size of the resampling procedure is less
+                than one, or if no log weight information is found in the sample set's info field.
+
         Returns:
             dimod.SampleSet: A resampling of ``sample_set`` in proportion to
                 ``sample_set.info['log_weights']``. The selected indices are returned in the info
