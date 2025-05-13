@@ -13,13 +13,13 @@
 #    limitations under the License.
 
 import unittest
-import numpy as np
-
 from itertools import product
 
 import dimod
+import numpy as np
 
-from dwave.samplers.sa.sampler import AnnealedImportanceSampling as AIS, log_sum_exp
+from dwave.samplers.sa.sampler import AnnealedImportanceSampling as AIS
+from dwave.samplers.sa.sampler import log_sum_exp
 
 
 class TestAnnealedImportanceSampling(unittest.TestCase):
@@ -163,6 +163,38 @@ class TestAnnealedImportanceSampling(unittest.TestCase):
                 logw = sample_set.info["log_weights"]
                 logw_true = -target_beta * bqm.energies(sample_set) + n * np.log(2)
                 self.assertTrue(np.isclose(logw, logw_true).all())
+
+    def test_resample(self):
+        rng = np.random.default_rng(20250513)
+
+        n = 117
+        bqm: dimod.BQM = dimod.generators.ran_r(10, n)
+        for v, b in zip(bqm.variables, rng.choice([-1.2, 0.0, 3.14], n)):
+            if b:
+                bqm.set_linear(v, b)
+
+        sampler = AIS()
+        sample_set = sampler.sample(bqm, 1, num_reads=137, num_sweeps=1, seed=1)
+
+        # Check error is raised when `num_resample` is 0
+        self.assertRaises(ValueError, sampler.resample, sample_set, 0)
+
+        # Check sample size is correct
+        n_resample = 333
+        resample_set = sampler.resample(sample_set, n_resample)
+        self.assertEqual(len(resample_set), n_resample)
+
+        # Check the energies and states are as indices suggest
+        self.assertIn("indices", resample_set.info)
+        indices = resample_set.info['indices']
+        self.assertListEqual(resample_set.record.energy.tolist(),
+                             sample_set.record.energy[indices].tolist())
+        self.assertListEqual(resample_set.record.sample.tolist(),
+                             sample_set.record.sample[indices].tolist())
+
+        # Check resampling throws an error if weight info not found
+        self.assertRaises(ValueError, sampler.resample, resample_set, 1)
+
 
     def test_no_sweep(self):
         self.assertRaises(ValueError, AIS().sample_ising, {0: 3}, {}, num_sweeps=0)
