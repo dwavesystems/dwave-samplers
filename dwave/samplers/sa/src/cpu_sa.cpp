@@ -98,7 +98,7 @@ void simulated_annealing_run(
     const vector<vector<double>>& neighbour_couplings,
     const int sweeps_per_beta,
     const vector<double>& beta_schedule,
-    double* log_weight,
+    double* const log_weight,
     const double init_energy
 ) {
     const int num_vars = h.size();
@@ -121,12 +121,11 @@ void simulated_annealing_run(
     double energy = 0;
     if (log_weight != nullptr) {
         // TODO: allow for custom initialization
-        log_weight[0] = num_vars*log(2);
+        *log_weight = num_vars*log(2);
         energy = init_energy;
     }
     double prev_beta = 0;
-    int schedule_length = (int) beta_schedule.size();
-    for (int beta_idx = 0; beta_idx < schedule_length; beta_idx++) {
+    for (int beta_idx = 0, num_beta = beta_schedule.size(); beta_idx < num_beta; ++beta_idx) {
         // get the beta value for this sweep
         const double beta = beta_schedule[beta_idx];
         if (log_weight != nullptr){
@@ -134,7 +133,7 @@ void simulated_annealing_run(
             prev_beta = beta;
             // Why break before final beta? Because samples need to be from the penultimate beta.
             // This is necessary for correctness.
-            if (beta_idx == schedule_length-1) break;
+            if (beta_idx == num_beta-1) break;
         }
         for (int sweep = 0; sweep < sweeps_per_beta; sweep++) {
 
