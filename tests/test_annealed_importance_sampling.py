@@ -162,7 +162,7 @@ class TestAnnealedImportanceSampling(unittest.TestCase):
                 )
                 logw = sample_set.info["log_weights"]
                 logw_true = -target_beta * bqm.energies(sample_set) + n * np.log(2)
-                self.assertTrue(np.isclose(logw, logw_true).all())
+                np.testing.assert_array_almost_equal(logw, logw_true)
 
     def test_resample(self):
         rng = np.random.default_rng(20250513)

@@ -119,8 +119,8 @@ void simulated_annealing_run(
     bool flip_spin;
     // perform the sweeps
     double energy = 0;
-    bool is_ais_mode = log_weight != nullptr;
-    if (is_ais_mode) {
+    bool importance_sampling_mode = log_weight != nullptr;
+    if (importance_sampling_mode) {
         *log_weight = num_vars*log(2);
         energy = init_energy;
     }
@@ -128,8 +128,8 @@ void simulated_annealing_run(
     for (int beta_idx = 0, num_beta = beta_schedule.size(); beta_idx < num_beta; ++beta_idx) {
         // get the beta value for this sweep
         const double beta = beta_schedule[beta_idx];
-        if (is_ais_mode){
-            log_weight[0] += (prev_beta-beta)*energy;
+        if (importance_sampling_mode){
+            *log_weight += (prev_beta-beta)*energy;
             prev_beta = beta;
             // Break before sampling at the final beta because samples need to be from the
             // penultimate beta. This is necessary for correctness.
@@ -201,7 +201,7 @@ void simulated_annealing_run(
 
                     // now we just need to flip its state and negate its delta
                     // energy
-                    if (is_ais_mode){
+                    if (importance_sampling_mode){
                         energy += delta_energy[var];
                     }
                     state[var] *= -1;
