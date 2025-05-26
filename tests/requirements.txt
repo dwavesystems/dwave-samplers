@@ -1,4 +1,4 @@
-coverage[toml]
+coverage[toml]>=7.0.0       # native namespace package support added in 7.0.0
 codecov
 
 parameterized==0.7.4
