@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from setuptools import setup
+from setuptools import setup, Extension
 from Cython.Build import cythonize
 from setuptools.command.build_ext import build_ext
 
@@ -47,21 +47,21 @@ class build_ext_with_args(build_ext):
         super().build_extensions()
 
 
-
 setup(
     cmdclass={'build_ext': build_ext_with_args},
-    ext_modules=cythonize(
-        ['dwave/samplers/greedy/descent.pyx',
-         'dwave/samplers/random/*.pyx',
-         'dwave/samplers/sa/*.pyx',
-         'dwave/samplers/sqa/*.pyx',
-         'dwave/samplers/tabu/tabu_search.pyx',
-         'dwave/samplers/tree/*.pyx',
-         ],
-        ),
+    ext_modules=cythonize([
+        Extension('dwave.samplers.greedy.descent', ['dwave/samplers/greedy/descent.pyx']),
+        Extension('dwave.samplers.random.cyrandom', ['dwave/samplers/random/cyrandom.pyx']),
+        Extension('dwave.samplers.sa.simulated_annealing', ['dwave/samplers/sa/simulated_annealing.pyx']),
+        Extension('dwave.samplers.sqa.pimc_annealing', ['dwave/samplers/sqa/pimc_annealing.pyx']),
+        Extension('dwave.samplers.sqa.rotormc_annealing', ['dwave/samplers/sqa/rotormc_annealing.pyx']),
+        Extension('dwave.samplers.tabu.tabu_search', ['dwave/samplers/tabu/tabu_search.pyx']),
+        Extension('dwave.samplers.tree.sample', ['dwave/samplers/tree/sample.pyx']),
+        Extension('dwave.samplers.tree.solve', ['dwave/samplers/tree/solve.pyx']),
+        Extension('dwave.samplers.tree.utilities', ['dwave/samplers/tree/utilities.pyx']),
+    ]),
     include_dirs=[
         dimod.get_include(),
         numpy.get_include(),
-        ],
-
-    )
+    ],
+)
