@@ -250,9 +250,6 @@ jobs:
     steps:
       - checkout
 
-      - restore_cache:
-          key: v2-dependencies-312-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ checksum "docs/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
-
       - run:
           name: Create virtual environment
           command: |
@@ -263,11 +260,6 @@ jobs:
           command: |
             . env/bin/activate
             pip install -r requirements.txt -r tests/requirements.txt -r docs/requirements.txt
-
-      - save_cache:
-          key: v2-dependencies-312-{{ checksum "requirements.txt" }}-{{ checksum "tests/requirements.txt" }}-{{ checksum "docs/requirements.txt" }}-{{ .Environment.CIRCLE_JOB }}
-          paths:
-            - env
 
       - run:
           name: run cpp tests
