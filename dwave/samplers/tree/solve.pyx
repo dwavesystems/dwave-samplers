@@ -99,7 +99,7 @@ def solve_bqm_wrapper(bqm: BinaryQuadraticModel,
     # create a numpy array without making a copy then tell numpy it needs to
     # free the memory
     samples = np.asarray(<samples_type[:srows, :scols]> samples_pointer)
-    PyArray_ENABLEFLAGS(samples, np.NPY_OWNDATA)
+    PyArray_ENABLEFLAGS(samples, np.NPY_ARRAY_OWNDATA)
 
     # convert the samples to spin if necessary
     cdef size_t i, j
@@ -111,7 +111,7 @@ def solve_bqm_wrapper(bqm: BinaryQuadraticModel,
 
     energies = np.asarray(<energies_type[:num_energies]> energies_pointer)
 
-    PyArray_ENABLEFLAGS(energies, np.NPY_OWNDATA)
+    PyArray_ENABLEFLAGS(energies, np.NPY_ARRAY_OWNDATA)
 
     energies += bqm.offset
 
