@@ -140,7 +140,7 @@ def sample_bqm_wrapper(bqm: BinaryQuadraticModel,
     # create a numpy array without making a copy then tell numpy it needs to
     # free the memory
     samples = np.asarray(<samples_type[:srows, :scols]> samples_pointer)
-    PyArray_ENABLEFLAGS(samples, np.NPY_OWNDATA)
+    PyArray_ENABLEFLAGS(samples, np.NPY_ARRAY_OWNDATA)
 
     # convert the samples to spin if necessary
     cdef size_t i, j
@@ -152,17 +152,17 @@ def sample_bqm_wrapper(bqm: BinaryQuadraticModel,
 
     if marginals:
         variable_marginals = np.asarray(<double[:smlen]> single_marginals_pointer)
-        PyArray_ENABLEFLAGS(variable_marginals, np.NPY_OWNDATA)
+        PyArray_ENABLEFLAGS(variable_marginals, np.NPY_ARRAY_OWNDATA)
 
         if pmrows * pmcols:
             interaction_marginals = np.asarray(<double[:pmrows, :pmcols]> pair_marginals_pointer)
-            PyArray_ENABLEFLAGS(interaction_marginals, np.NPY_OWNDATA)
+            PyArray_ENABLEFLAGS(interaction_marginals, np.NPY_ARRAY_OWNDATA)
         else:
             interaction_marginals = np.empty(shape=(pmrows, pmcols), dtype=np.double)
 
         if prows * pcols:
             interactions = np.asarray(<int[:prows, :pcols]> pair_pointer)
-            PyArray_ENABLEFLAGS(interactions, np.NPY_OWNDATA)
+            PyArray_ENABLEFLAGS(interactions, np.NPY_ARRAY_OWNDATA)
         else:
             interactions = np.empty(shape=(prows, pcols), dtype=np.double)
 
