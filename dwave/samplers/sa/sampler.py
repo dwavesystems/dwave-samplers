@@ -39,7 +39,7 @@ __all__ = ["Neal", "SimulatedAnnealingSampler"]
 
 
 class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
-    """Simulated annealing sampler for binary quadratic models.
+    r"""Simulated annealing sampler for binary quadratic models.
 
     `Simulated annealing <https://en.wikipedia.org/wiki/Simulated_annealing>`_
     can be used for heuristic optimization or approximate Boltzmann sampling. This
@@ -167,7 +167,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                randomize_order: bool = False,
                proposal_acceptance_criteria: str = 'Metropolis',
                **kwargs) -> dimod.SampleSet:
-        """Sample from a binary quadratic model.
+        r"""Sample from a binary quadratic model.
 
         Args:
             bqm: Binary quadratic model to be sampled.

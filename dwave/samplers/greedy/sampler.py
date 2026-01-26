@@ -29,7 +29,7 @@ __all__ = ["SteepestDescentSolver", "SteepestDescentSampler"]
 
 
 class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
-    """Steepest descent sampler for binary quadratic models.
+    r"""Steepest descent sampler for binary quadratic models.
 
     `Steepest descent <https://en.wikipedia.org/wiki/Gradient_descent>`_  is the
     discrete analogue of gradient descent, but the best move is computed using a
@@ -55,9 +55,9 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
     Aliased as :class:`~greedy.sampler.SteepestDescentSampler`.
 
     .. note::
-        Ocean SDK versions earlier than 8.0 supported also a 
-        ``SteepestDescentSampler`` under the ``greedy`` namespace in a 
-        ``dwave-greedy`` package. If your code uses that obsoleted class, 
+        Ocean SDK versions earlier than 8.0 supported also a
+        ``SteepestDescentSampler`` under the ``greedy`` namespace in a
+        ``dwave-greedy`` package. If your code uses that obsoleted class,
         upgrade lines such as
 
         >>> from greedy import SteepestDescentSampler   # doctest: +SKIP
