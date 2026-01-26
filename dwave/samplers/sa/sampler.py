@@ -272,21 +272,22 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                 energies found so far.
 
         Returns:
-            A `dimod.SampleSet` for the binary quadratic model.
+            A :class:`~dimod.SampleSet` for the binary quadratic model.
 
-            The `info` field of the sample set contains information about the sampling procedure:
-            1. the beta range used,
-            2. the beta schedule type used, and
-            3. timing information (details below).
+            The ``info`` field of the sample set contains information about the
+            sampling procedure: 1. the beta range used, 2. the beta schedule
+            type used, and 3. timing information (details below).
 
-            Timing information is categorized into three: preprocessing, sampling, and
-            postprocessing time. All timings are reported in units of nanoseconds.
+            Timing information is categorized into three: preprocessing,
+            sampling, and postprocessing time. All timings are reported in units
+            of nanoseconds.
 
-            Preprocessing time is the total time spent converting the BQM variable type (if
-            required), parsing input arguments, and determining an annealing schedule. Sampling time
-            is the total time the algorithm spent in sampling states of the binary quadratic model.
+            Preprocessing time is the total time spent converting the BQM
+            variable type (if required), parsing input arguments, and
+            determining an annealing schedule. Sampling time is the total time
+            the algorithm spent in sampling states of the binary quadratic model.
             Postprocessing time is the total time spent reverting variable type and creating a
-            `dimod.SampleSet`.
+            :class:`~dimod.SampleSet`.
 
         Examples:
             This example runs simulated annealing on a binary quadratic model

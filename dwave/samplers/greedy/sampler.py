@@ -187,14 +187,16 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
                 next descent variable instead of linear array).
 
         Returns:
-            A `dimod.SampleSet` for the binary quadratic model.
+            A :class:`~dimod.SampleSet` for the binary quadratic model.
 
-            The `info` field of the sample set contains three categories of timing information:
-            preprocessing, sampling, and postprocessing time. All timings are reported in units of
-            nanoseconds. Preprocessing time is the total time spent converting the BQM variable type
-            (if required) and parsing input arguments. Sampling time is the total time the algorithm
-            spent in sampling states of the binary quadratic model. Postprocessing time is the total
-            time spent reverting variable type and creating a `dimod.SampleSet`.
+            The ``info`` field of the sample set contains three categories of
+            timing information: preprocessing, sampling, and postprocessing time.
+            All timings are reported in units of nanoseconds. Preprocessing time
+            is the total time spent converting the BQM variable type (if
+            required) and parsing input arguments. Sampling time is the total
+            time the algorithm spent in sampling states of the binary quadratic
+            model. Postprocessing time is the total time spent reverting
+            variable type and creating a :class:`~dimod.SampleSet`.
 
         Note:
             Number of descents (single variable flips) taken to reach the local
