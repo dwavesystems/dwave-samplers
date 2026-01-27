@@ -28,7 +28,7 @@ extensions = [
 
 autosummary_generate = True
 
-source_suffix = [".rst", ".md"]
+source_suffix = {'.rst': 'restructuredtext', '.md': 'restructuredtext'}
 
 add_module_names = False
 

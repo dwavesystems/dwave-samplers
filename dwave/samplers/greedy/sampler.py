@@ -29,7 +29,7 @@ __all__ = ["SteepestDescentSolver", "SteepestDescentSampler"]
 
 
 class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
-    """Steepest descent sampler for binary quadratic models.
+    r"""Steepest descent sampler for binary quadratic models.
 
     `Steepest descent <https://en.wikipedia.org/wiki/Gradient_descent>`_  is the
     discrete analogue of gradient descent, but the best move is computed using a
@@ -55,9 +55,9 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
     Aliased as :class:`~greedy.sampler.SteepestDescentSampler`.
 
     .. note::
-        Ocean SDK versions earlier than 8.0 supported also a 
-        ``SteepestDescentSampler`` under the ``greedy`` namespace in a 
-        ``dwave-greedy`` package. If your code uses that obsoleted class, 
+        Ocean SDK versions earlier than 8.0 supported also a
+        ``SteepestDescentSampler`` under the ``greedy`` namespace in a
+        ``dwave-greedy`` package. If your code uses that obsoleted class,
         upgrade lines such as
 
         >>> from greedy import SteepestDescentSampler   # doctest: +SKIP
@@ -187,14 +187,16 @@ class SteepestDescentSolver(dimod.Sampler, dimod.Initialized):
                 next descent variable instead of linear array).
 
         Returns:
-            A `dimod.SampleSet` for the binary quadratic model.
+            A :class:`~dimod.SampleSet` for the binary quadratic model.
 
-            The `info` field of the sample set contains three categories of timing information:
-            preprocessing, sampling, and postprocessing time. All timings are reported in units of
-            nanoseconds. Preprocessing time is the total time spent converting the BQM variable type
-            (if required) and parsing input arguments. Sampling time is the total time the algorithm
-            spent in sampling states of the binary quadratic model. Postprocessing time is the total
-            time spent reverting variable type and creating a `dimod.SampleSet`.
+            The ``info`` field of the sample set contains three categories of
+            timing information: preprocessing, sampling, and postprocessing time.
+            All timings are reported in units of nanoseconds. Preprocessing time
+            is the total time spent converting the BQM variable type (if
+            required) and parsing input arguments. Sampling time is the total
+            time the algorithm spent in sampling states of the binary quadratic
+            model. Postprocessing time is the total time spent reverting
+            variable type and creating a :class:`~dimod.SampleSet`.
 
         Note:
             Number of descents (single variable flips) taken to reach the local

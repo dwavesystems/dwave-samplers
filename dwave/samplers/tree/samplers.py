@@ -254,8 +254,8 @@ class TreeDecompositionSampler(dimod.Sampler):
 
             marginals:
                 Whether or not to compute the marginals. If True, they are
-                included in the return :obj:`~dimod.SampleSet`'s ``info`` field.
-                See example in :class:`.TreeDecompositionSampler`.
+                included in the return :class:`~dimod.SampleSet`'s ``info``
+                field. See example in :class:`.TreeDecompositionSampler`.
 
             seed:
                 Random number generator seed. Negative values cause a
