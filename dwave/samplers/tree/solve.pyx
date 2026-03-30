@@ -1,7 +1,3 @@
-# distutils: language = c++
-# cython: language_level = 3
-# distutils: include_dirs = dwave/samplers/tree/src/include/
-
 # Copyright 2019 D-Wave Systems Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +24,7 @@ from dimod.binary.binary_quadratic_model import BinaryQuadraticModel
 
 from dwave.samplers.tree.orang cimport energies_type, samples_type, PyArray_ENABLEFLAGS
 
-cdef extern from "src/include/solve.hpp":
+cdef extern from "solve.hpp":
     void solveBQM[V, B](cppBinaryQuadraticModel[B, V]& refBQM,
                         int* var_order,
                         double beta,

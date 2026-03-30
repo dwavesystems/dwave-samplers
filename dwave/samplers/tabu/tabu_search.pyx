@@ -1,7 +1,3 @@
-# distutils: language = c++
-# distutils: include_dirs = dwave/samplers/tabu/src/
-# distutils: sources = dwave/samplers/tabu/src/tabu_search.cpp dwave/samplers/tabu/src/tabu_utils.cpp dwave/samplers/tabu/src/bqp.cpp
-
 # Copyright 2020 D-Wave Systems Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
