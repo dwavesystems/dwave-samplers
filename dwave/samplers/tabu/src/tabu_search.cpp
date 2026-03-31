@@ -19,6 +19,8 @@
 #include "common.h"
 #include "tabu_utils.h"
 
+namespace dwave::samplers::tabu {
+
 using std::vector;
 using std::size_t;
 
@@ -475,3 +477,5 @@ void TabuSearch::computeC(vector<vector<double>> &C, const vector<int> &solution
         C[i][i] = (solution[i] == 1)? -C[i][i] : C[i][i];
     }
 }
+
+}  // namespace dwave::samplers::tabu

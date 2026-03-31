@@ -21,6 +21,8 @@ Copyright 2024 D-Wave
 #include <limits>
 #include "cpu_rotormc.h"
 
+namespace dwave::samplers::sqa {
+
 #ifndef M_PI
 #define M_PI (3.14159265358979323846)
 #endif
@@ -558,3 +560,5 @@ int general_simulated_annealing(
     // return the number of samples we actually took
     return sample;
 }
+
+}  // namespace dwave::samplers::sqa

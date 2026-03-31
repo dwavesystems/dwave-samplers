@@ -28,7 +28,7 @@
 #include <combine.h>
 #include <marginalizer.h>
 
-namespace orang {
+namespace dwave::samplers::tree {
 
 class LogSumMarginalizer : public Marginalizer<double> {
 public:
@@ -163,6 +163,6 @@ public:
   }
 };
 
-} // namespace orang
+} // namespace dwave::samplers::tree
 
 #endif

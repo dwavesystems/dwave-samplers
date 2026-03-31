@@ -37,6 +37,7 @@ Copyright 2024 D-Wave
 #include <stdexcept>
 #include "localPIMC.h"
 
+namespace dwave::samplers::sqa {
 
 using namespace std;
 
@@ -712,3 +713,5 @@ int general_simulated_annealing(
     // return the number of samples we actually took
     return sample_index;
 }
+
+}  // namespace dwave::samplers::sqa

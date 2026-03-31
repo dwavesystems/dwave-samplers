@@ -18,37 +18,36 @@
 #include <cstdint>
 #include <vector>
 
-using std::vector;
-
+namespace dwave::samplers::greedy {
 
 double get_flip_energy(
     int var,
     std::int8_t *state,
-    const vector<double>& linear_biases,
-    const vector<vector<int>>& neighbors,
-    const vector<vector<double>>& neighbour_couplings
+    const std::vector<double>& linear_biases,
+    const std::vector<std::vector<int>>& neighbors,
+    const std::vector<std::vector<double>>& neighbour_couplings
 );
 
 double get_state_energy(
     std::int8_t* state,
-    const vector<double>& linear_biases,
-    const vector<int>& coupler_starts,
-    const vector<int>& coupler_ends,
-    const vector<double>& coupler_weights
+    const std::vector<double>& linear_biases,
+    const std::vector<int>& coupler_starts,
+    const std::vector<int>& coupler_ends,
+    const std::vector<double>& coupler_weights
 );
 
 unsigned steepest_gradient_descent_solver(
     std::int8_t* state,
-    const vector<double>& linear_biases,
-    const vector<vector<int>>& neighbors,
-    const vector<vector<double>>& neighbour_couplings
+    const std::vector<double>& linear_biases,
+    const std::vector<std::vector<int>>& neighbors,
+    const std::vector<std::vector<double>>& neighbour_couplings
 );
 
 unsigned steepest_gradient_descent_ls_solver(
     std::int8_t* state,
-    const vector<double>& linear_biases,
-    const vector<vector<int>>& neighbors,
-    const vector<vector<double>>& neighbour_couplings
+    const std::vector<double>& linear_biases,
+    const std::vector<std::vector<int>>& neighbors,
+    const std::vector<std::vector<double>>& neighbour_couplings
 );
 
 void steepest_gradient_descent(
@@ -56,11 +55,13 @@ void steepest_gradient_descent(
     double* energies,
     unsigned* num_steps,
     const int num_samples,
-    const vector<double>& linear_biases,
-    const vector<int>& coupler_starts,
-    const vector<int>& coupler_ends,
-    const vector<double>& coupler_weights,
+    const std::vector<double>& linear_biases,
+    const std::vector<int>& coupler_starts,
+    const std::vector<int>& coupler_ends,
+    const std::vector<double>& coupler_weights,
     bool large_sparse_opt=false
 );
+
+}  // namespace dwave::samplers::greedy
 
 #endif

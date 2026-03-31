@@ -25,7 +25,7 @@
 #include <table.h>
 #include <marginalizer.h>
 
-namespace orang {
+namespace dwave::samplers::tree {
 
 template<typename Y>
 class ValueCount {
@@ -121,6 +121,6 @@ public:
   }
 };
 
-} // namespace orang
+} // namespace dwave::samplers::tree
 
 #endif

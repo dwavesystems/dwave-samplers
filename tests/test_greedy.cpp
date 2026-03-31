@@ -17,6 +17,7 @@
 #include "catch2/catch_test_macros.hpp"
 #include "descent.h"
 
+using namespace dwave::samplers::greedy;
 
 TEST_CASE("Test steepest_gradient_descent") {
     int num_samples = 1;
@@ -26,10 +27,10 @@ TEST_CASE("Test steepest_gradient_descent") {
     unsigned num_steps[1] = {0};
 
     // bqm ~ {(0, 1): 1, (1, 2): 1, (2, 0): 1})
-    vector<double> linear_biases {0, 0, 0};
-    vector<int> coupler_starts {0, 1, 2};
-    vector<int> coupler_ends {1, 2, 0};
-    vector<double> coupler_weights {1.0, 1.0, 1.0};
+    std::vector<double> linear_biases {0, 0, 0};
+    std::vector<int> coupler_starts {0, 1, 2};
+    std::vector<int> coupler_ends {1, 2, 0};
+    std::vector<double> coupler_weights {1.0, 1.0, 1.0};
 
     steepest_gradient_descent(
         states, energies, num_steps, num_samples,

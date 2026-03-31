@@ -38,6 +38,8 @@ Copyright 2024 D-Wave
 #include <cstdlib>
 #include <random>
 
+namespace dwave::samplers::sqa {
+
 #ifdef _MSC_VER
     // add uint64_t definition for windows
     typedef __int64 int64_t;
@@ -143,5 +145,7 @@ class localPIMC {
     void readSlice(std::int8_t *vals);
     int readBreaks(int *vals, int *breaks_buffer, int capacity);
 };
+
+}  // namespace dwave::samplers::sqa
 
 #endif

@@ -19,7 +19,7 @@ import numpy as np
 cimport numpy as np
 
 
-cdef extern from "cpu_sa.h":
+cdef extern from "cpu_sa.h" namespace "dwave::samplers::sa":
     ctypedef bool (*callback)(void *function)
     ctypedef enum Proposal:
         Gibbs, Metropolis

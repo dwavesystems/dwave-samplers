@@ -24,7 +24,7 @@
 
 #include <base.h>
 
-namespace orang {
+namespace dwave::samplers::tree {
 
 class Graph {
 private:
@@ -95,6 +95,6 @@ public:
   }
 };
 
-} // namespace orang
+} // namespace dwave::samplers::tree
 
 #endif

@@ -19,6 +19,8 @@
 
 #include "common.h"
 
+namespace dwave::samplers::tabu {
+
 using std::vector;
 
 BQP::BQP(std::vector<std::vector<double>> Q) 
@@ -119,3 +121,5 @@ void BQP::printSolution() {
     }
     printf("\n");
 }
+
+}  // namespace dwave::samplers::tabu

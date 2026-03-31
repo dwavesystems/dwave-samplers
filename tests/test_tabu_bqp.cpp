@@ -20,6 +20,7 @@
 #include "bqp.h"
 
 using std::vector;
+using namespace dwave::samplers::tabu;
 
 TEST_CASE("Test constructor") {
     vector<vector<double> > bad_Q {{1,-2},

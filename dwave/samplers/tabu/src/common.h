@@ -19,6 +19,8 @@
 #include <sstream>
 #include <cstdlib>
 
+namespace dwave::samplers::tabu {
+
 class Exception: public std::exception
 {
     public:
@@ -32,5 +34,7 @@ class Exception: public std::exception
     protected:
         std::string error_msg;
 };
+
+}  // namespace dwave::samplers::tabu
 
 #endif

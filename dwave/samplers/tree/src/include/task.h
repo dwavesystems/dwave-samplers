@@ -29,7 +29,7 @@
 #include <treedecomp.h>
 #include <marginalizer.h>
 
-namespace orang {
+namespace dwave::samplers::tree {
 
 class TaskBase {
 protected:
@@ -278,6 +278,6 @@ Task<Ops>::baseTables(
 }
 
 
-} // end of namespace orang
+} // end of namespace dwave::samplers::tree
 
 #endif
