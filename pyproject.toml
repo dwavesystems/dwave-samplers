@@ -1,17 +1,88 @@
 [build-system]
 requires = [
-    "setuptools>=46.4.0",       # PEP-420 support, PEP-517/518 support, setup.cfg attr: support
-    "wheel>=0.30.0",            # limited python api support
-    "cython~=3.0",
-    "dimod==0.12.21",           # Lowest that support Python 3.10 through 3.14 and NumPy 2.0
+    # Same as dependency-groups.build
+    "cython~=3.2.0",
+    "dimod==0.12.21",  # oldest dimod that supports Python 3.14
+    "meson~=1.10.2",  # latest as of March 2026
+    "meson-python~=0.19.0",  # latest as of March 2026
+    "ninja~=1.13.0",  # latest as of March 2026
     "numpy~=2.0",
 ]
-build-backend = "setuptools.build_meta"
+build-backend = "mesonpy"
+
+[project]
+name = "dwave-samplers"
+dynamic = ["version"]
+authors = [
+    {name = "D-Wave", email = "tools@dwavesys.com"},
+]
+description = "Ocean-compatible collection of solvers/samplers."
+license = {file = "LICENSE"}
+classifiers = [
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Operating System :: MacOS",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3 :: Only",
+    'Programming Language :: Python :: Implementation :: CPython',
+]
+requires-python = ">=3.10"
+dependencies = [
+    "dimod>=0.12.21,<0.13.0",  # oldest dimod that supports Python 3.14
+    "networkx>=3,<4",
+    "numpy>=1.21.6,<3.0.0 ",   # oldest that supports Python 3.10
+]
+
+[project.readme]
+file = "README.rst"
+content-type = "text/x-rst"
+
+[project.urls]
+Changelog = "https://github.com/dwavesystems/dwave-samplers/releases"
+Documentation = "https://docs.dwavequantum.com"
+"Source Code" = "https://github.com/dwavesystems/dwave-samplers"
+
+[dependency-groups]
+build = [
+    # Same as build-system.requires
+    "cython~=3.2.0",
+    "dimod==0.12.21",
+    "meson~=1.9.0",
+    "meson-python~=0.18.0",
+    "ninja~=1.13.0",
+    "numpy~=2.0",
+]
+changelog = [
+    "reno==4.1.0",
+]
+dev = [
+    # Install requirements
+    "networkx==3.2.1",
+    "numpy==2.3.3; python_version >= '3.11'",
+    {include-group = "build"},
+    {include-group = "changelog"},
+]
+docs = [
+    "pydata-sphinx-theme==0.16.1",
+    "sphinx==8.2.3",
+]
+test = [
+    "parameterized==0.7.4",
+]
 
 [tool.cibuildwheel]
 build-verbosity = "1"
 skip = "pp* *musllinux*"
-before-test = "pip install -r {project}/tests/requirements.txt"
+
+before-test = "pip install --group test"
 test-command = "python -m unittest discover {project}/tests/"
 
 [tool.cibuildwheel.linux]
@@ -28,14 +99,19 @@ archs = "AMD64"
 before-build = "pip install delvewheel>=1.4.0"
 repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel} --namespace-pkg dwave"
 
-[tool.coverage.run]
-omit = ["tests/*"]
-source = ["dwave/samplers"]
-
-[tool.coverage.report]
-include_namespace_packages = true
-exclude_lines = [
-    "pragma: no cover",
-    "raise NotImplementedError",
-    "if __name__ == .__main__.:",
+[[tool.cibuildwheel.overrides]]
+# For Python3.12+, rather than building individual wheels we build an abi3
+# wheel. 313t and 314t do not support abi wheels yet.
+select = "cp31[!01]-*"  # uses fnmatch, will fail for 3.20+ but good enough for now
+build-frontend = { name = "build", args = ["-Csetup-args=-Dpython.allow_limited_api=true"] }
+inherit.repair-wheel-command = "append"
+repair-wheel-command = [
+    "pip install abi3audit",
+    "abi3audit --strict --report {wheel}",
 ]
+
+# This is, by default, overriden in meson.build. We then override the override
+# in cibuildwheel. It's a bit convoluted, but (as of August 2025) it's the only
+# way to get it to work, see https://github.com/mesonbuild/meson-python/issues/787
+[tool.meson-python]
+limited-api = true

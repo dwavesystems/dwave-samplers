@@ -10,7 +10,7 @@ commands:
     parameters:
       cibw-version:
         type: string
-        default: 3.2.1    # uses py314 final
+        default: 3.4.0    # latest as of March 2026
     steps:
       - run:
           name: run cibuildwheel
@@ -29,16 +29,11 @@ environment: &global-environment
 
 jobs:
   build-and-test-linux:
-    parameters:
-      python-version:
-        type: string
-
     docker:
       - image: cimg/python:3.12
 
     environment:
       <<: *global-environment
-      CIBW_PROJECT_REQUIRES_PYTHON: ~=<< parameters.python-version>>
       CIBW_ARCHS_LINUX: x86_64
 
     steps:
@@ -47,10 +42,6 @@ jobs:
       - run-cibuildwheel
 
   build-and-test-linux-aarch64:
-    parameters:
-      python-version:
-        type: string
-
     machine:
       image: default
 
@@ -58,7 +49,6 @@ jobs:
 
     environment:
       <<: *global-environment
-      CIBW_PROJECT_REQUIRES_PYTHON: ~=<< parameters.python-version>>
       CIBW_ARCHS_LINUX: aarch64
 
     steps:
@@ -66,17 +56,11 @@ jobs:
       - run-cibuildwheel
 
   build-and-test-osx:
-    parameters:
-      python-version:
-        type: string
-
     macos:
-      xcode: 16.4.0
-    resource_class: m4pro.medium
+      xcode: 26.2.0  # latest as of Jan 2026
 
     environment:
       <<: *global-environment
-      CIBW_PROJECT_REQUIRES_PYTHON: ~=<< parameters.python-version>>
 
     steps:
       - checkout
@@ -94,22 +78,17 @@ jobs:
           command: |
             python -m venv env
             . env/bin/activate
-            pip install -r requirements.txt
-            python setup.py sdist -d ./dist
+            pip install build pip --upgrade
+            python -m build --sdist
       - store_artifacts: *store-artifacts
       - persist_to_workspace: *persist-to-workspace
 
   build-and-test-windows:
-    parameters:
-      python-version:
-        type: string
-
     executor:
       name: win/default
 
     environment:
       <<: *global-environment
-      CIBW_PROJECT_REQUIRES_PYTHON: ~=<< parameters.python-version>>
       CIBW_ARCHS_WINDOWS: AMD64
 
     steps:
@@ -135,54 +114,22 @@ jobs:
             python -m pip install twine
             twine upload -u "$PYPI_USERNAME" -p "$PYPI_PASSWORD" --skip-existing ./dist/*
 
-  # and configuration to work correctly is a pain. And since there is not
-  # significant different between the linux/osx/windows code I think it
-  # suffices to just do it once
-  test-codecov:
-    docker:
-      - image: cimg/python:3.12
-
-    steps:
-      - checkout
-      - run:
-          name: install dependencies
-          command: |
-            python -m venv env
-            . env/bin/activate
-            pip install -r requirements.txt
-            pip install -r tests/requirements.txt
-      - run: &unix-build
-          name: build
-          command: |
-            . env/bin/activate
-            python setup.py build_ext --inplace
-      - run:
-          name: run coverage
-          command: |
-            . env/bin/activate
-            coverage run -m unittest
-            coverage xml
-      - codecov/upload:
-          file: coverage.xml
-
   test-doctest:
     docker:
       - image: cimg/python:3.12
 
     steps:
       - checkout
+      - attach_workspace:
+          at: dist
       - run:
-          name: install doxygen
-          command: sudo apt update && sudo apt install doxygen
-      - run:
-          name: install dependencies
+          name: install dependencies and package
           command: |
             python -m venv env
             . env/bin/activate
-            pip install -r requirements.txt
-            pip install -r docs/requirements.txt
-            pip install .
-      - run: *unix-build
+            pip install pip --upgrade
+            pip install --group dev --group docs
+            pip install dwave-samplers --no-index -f dist/ --no-deps --force-reinstall
       - run:
           name: build docs
           command: |
@@ -229,11 +176,12 @@ jobs:
           name: run tests
           command: |
             . env/bin/activate
-            cd tests/
-            pip install -r requirements.txt
+            pip install pip --upgrade
+            pip install --group test
+            cd tests
             python -m unittest
 
-  test-linux-cpp11:
+  test-linux-cpp:
     docker:
       - image: cimg/python:3.12
 
@@ -245,13 +193,15 @@ jobs:
           command: |
             python -m venv env
             . env/bin/activate
-            pip install -r requirements.txt -r tests/requirements.txt -r docs/requirements.txt
+            pip install pip --upgrade
+            pip install --group dev --group test
 
       - run:
           name: run cpp tests
           command: |
             . env/bin/activate
-            make -C tests/cpp/ --always-make
+            meson setup _build -Dbuildtype=debug
+            meson test -C _build
 
   test-sdist:
     docker:
@@ -272,19 +222,26 @@ jobs:
 workflows:
   tests:
     jobs:
-      - build-and-test-linux: &build
-          matrix:
-            parameters:
-              # versions are built with ~= so the patch version doesn't matter
-              python-version: &python-versions [3.10.0, 3.11.0, 3.12.0, 3.13.0, 3.14.0]
-      - build-and-test-linux-aarch64: *build
-      - build-and-test-osx: *build
-      - build-and-test-windows: *build
-      - build-sdist
-      - test-codecov
-      - test-doctest
+      - build-and-test-linux:
+          filters: &tags
+            # also run on tags so the deploy pipeline works
+            tags:
+              only: &version-string /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
+      - build-and-test-linux-aarch64:
+          filters: *tags
+      - build-and-test-osx:
+          filters: *tags
+      - build-and-test-windows:
+          filters: *tags
+      - build-sdist:
+          filters: *tags
+      - test-doctest:
+          filters: *tags
+          requires:
+            - build-and-test-linux
       - test-dependencies:
           name: test-dependencies-python<< matrix.python-version >>-dependencies=<< matrix.dependency-versions >>
+          filters: *tags
           requires:
             - build-and-test-linux
           matrix:
@@ -293,32 +250,16 @@ workflows:
               # Skip some of the intermediate Python versions for speed
               python-version: ["3.10", "3.14"]
               only-binary: ["numpy,dimod,networkx"]
-      - test-linux-cpp11  
+      - test-linux-cpp:
+          filters: *tags
       - test-sdist:
+          filters: *tags
           requires:
             - build-sdist
-  deploy:
-    jobs:
-      - build-and-test-linux: &deploy-build
-          <<: *build
-          filters:
-            tags:
-              only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
-            branches:
-              ignore: /.*/
-      - build-and-test-linux-aarch64: *deploy-build
-      - build-and-test-osx: *deploy-build
-      - build-and-test-windows: *deploy-build
-      - build-sdist:
-          filters:
-            tags:
-              only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
-            branches:
-              ignore: /.*/
       - deploy-all:
           filters:
             tags:
-              only: /^[0-9]+(\.[0-9]+)*((\.dev|rc)([0-9]+)?)?$/
+              only: *version-string
             branches:
               ignore: /.*/
           requires:

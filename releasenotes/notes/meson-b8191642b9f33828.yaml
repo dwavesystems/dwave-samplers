@@ -1,0 +1,4 @@
+---
+features:
+  - Build with `meson` rather than `setuptools`.
+  - Use Python's limited API for Python 3.12+.

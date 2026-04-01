@@ -108,21 +108,7 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# cython files
-dwave/samplers/greedy/*.cpp
-dwave/samplers/greedy/*.html
-dwave/samplers/random/*.cpp
-dwave/samplers/random/*.html
-dwave/samplers/sa/*.cpp
-dwave/samplers/sa/*.html
-dwave/samplers/sqa/*.cpp
-dwave/samplers/sqa/*.html
-dwave/samplers/tabu/*.cpp
-dwave/samplers/tabu/*.html
-dwave/samplers/tree/*.cpp
-dwave/samplers/tree/*.html
-
-# C++ testing
-tests/cpp/*.o
-tests/cpp/*.out
-tests/cpp/test_main
+# meson-managed subprojects
+subprojects/
+!subprojects/*.wrap
+!subprojects/README.rst

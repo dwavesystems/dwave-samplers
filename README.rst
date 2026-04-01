@@ -4,9 +4,6 @@
 .. image:: https://img.shields.io/pypi/pyversions/dwave-samplers.svg
     :target: https://pypi.python.org/pypi/dwave-samplers
 
-.. image:: https://codecov.io/gh/dwavesystems/dwave-samplers/branch/main/graph/badge.svg
-    :target: https://codecov.io/gh/dwavesystems/dwave-samplers
-
 .. image:: https://circleci.com/gh/dwavesystems/dwave-samplers.svg?style=svg
     :target: https://circleci.com/gh/dwavesystems/dwave-samplers
 
@@ -257,6 +254,34 @@ To install the core package:
 .. code-block:: bash
 
     pip install dwave-samplers
+
+During package development, it is often convenient to use an editable install.
+See `meson-python's editable installs
+<https://meson-python.readthedocs.io/en/latest/how-to-guides/editable-installs.html>`_
+for more details.
+
+.. code-block:: bash
+
+    pip install --group dev
+    pip install --editable . \
+        --no-build-isolation \
+        --config-settings=editable-verbose=true
+
+To run the C++ tests, first install the project dependencies, then setup a
+``meson`` build directory. You must configure the build as a debug build for
+the tests to run.
+
+.. code-block:: bash
+
+    pip install --group dev
+    meson setup build -Dbuildtype=debug
+
+You can then run the tests using
+`meson's test framework <https://mesonbuild.com/Unit-tests.html>`_.
+
+.. code-block:: bash
+
+    meson test -Cbuild
 
 License
 =======

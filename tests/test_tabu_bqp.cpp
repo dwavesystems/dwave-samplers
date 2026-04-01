@@ -12,14 +12,14 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
-#include "../Catch2/single_include/catch2/catch.hpp"
+#include "catch2/catch_test_macros.hpp"
+#include "catch2/matchers/catch_matchers_all.hpp"
 
 #include <vector>
 
-#include "bqp.cpp"
+#include "bqp.h"
 
 using std::vector;
-using Catch::Matchers::Contains;
 
 TEST_CASE("Test constructor") {
     vector<vector<double> > bad_Q {{1,-2},
@@ -27,14 +27,14 @@ TEST_CASE("Test constructor") {
 
     REQUIRE_THROWS_WITH([&]() {
         BQP bqp = BQP(bad_Q);
-    }(), Contains("Q must be symmetric"));
+    }(), Catch::Matchers::ContainsSubstring("Q must be symmetric"));
 
     bad_Q = {{1,-2},
              {-2, 1, 0}};
 
     REQUIRE_THROWS_WITH([&]() {
         BQP bqp = BQP(bad_Q);
-    }(), Contains("Q must be a symmetric square matrix"));   
+    }(), Catch::Matchers::ContainsSubstring("Q must be a symmetric square matrix"));   
 }
 
 TEST_CASE("Test BQP::initialize()") {
