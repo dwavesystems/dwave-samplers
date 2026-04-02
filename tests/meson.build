@@ -10,7 +10,7 @@ tests_greedy = executable(
     ],
     dependencies: [
         catch2,
-        dep_greedy,
+        greedy_dep,
     ],
 )
 test('tests-greedy', tests_greedy, verbose: true)
@@ -22,7 +22,7 @@ tests_tabu = executable(
     ],
     dependencies: [
         catch2,
-        dep_tabu,
+        tabu_dep,
     ],
 )
 test('tests-tabu', tests_tabu, verbose: true)
