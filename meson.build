@@ -42,14 +42,12 @@ dimod_dep = declare_dependency(
     include_directories: run_command(
         py,
         ['-c', 'import os.path; import dimod; print(os.path.relpath(dimod.get_include()))'],
-        check: true
       ).stdout().strip(),
 )
 numpy_dep = declare_dependency(
     include_directories: run_command(
         py,
         ['-c', 'import os.path; import numpy as np; print(os.path.relpath(np.get_include()))'],
-        check: true
       ).stdout().strip(),
 )
 
