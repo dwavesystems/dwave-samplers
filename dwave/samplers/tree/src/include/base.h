@@ -23,7 +23,7 @@
 #include <vector>
 #include <cstdint>
 
-namespace orang {
+namespace dwave::samplers::tree {
 
 typedef std::uint_least32_t Var;
 typedef std::vector<Var> VarVector;
@@ -34,6 +34,6 @@ typedef std::vector<DomIndex> DomIndexVector;
 
 typedef std::vector<std::size_t> SizeVector;
 
-} // namespace orang
+} // namespace dwave::samplers::tree
 
 #endif

@@ -19,6 +19,8 @@
 #include <stdexcept>
 #include "descent.h"
 
+namespace dwave::samplers::greedy {
+
 using std::vector;
 using std::set;
 using std::runtime_error;
@@ -402,3 +404,5 @@ void steepest_gradient_descent(
         );
     }
 }
+
+}  // namespace dwave::samplers::greedy

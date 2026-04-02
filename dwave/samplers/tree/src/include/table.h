@@ -30,7 +30,7 @@
 #include <exception.h>
 #include <base.h>
 
-namespace orang {
+namespace dwave::samplers::tree {
 
 struct TableVar {
   Var index;
@@ -196,6 +196,6 @@ public:
   }
 };
 
-} // namespace orang
+} // namespace dwave::samplers::tree
 
 #endif

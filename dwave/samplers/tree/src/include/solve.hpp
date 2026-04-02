@@ -35,16 +35,16 @@ using std::size_t;
 using std::numeric_limits;
 using std::vector;
 
-using orang::DomIndexVector;
-using orang::VarVector;
-using orang::Table;
-using orang::TreeDecomp;
-using orang::BucketTree;
-using orang::MinSolution;
-using orang::MinSolutionSet;
+using dwave::samplers::tree::DomIndexVector;
+using dwave::samplers::tree::VarVector;
+using dwave::samplers::tree::Table;
+using dwave::samplers::tree::TreeDecomp;
+using dwave::samplers::tree::BucketTree;
+using dwave::samplers::tree::MinSolution;
+using dwave::samplers::tree::MinSolutionSet;
 
-typedef orang::Task<orang::MinOperations<double, orang::Plus<double> > > SolveTask;
-typedef std::vector<orang::Table<double>::smartptr> Tables;
+typedef dwave::samplers::tree::Task<dwave::samplers::tree::MinOperations<double, dwave::samplers::tree::Plus<double> > > SolveTask;
+typedef std::vector<dwave::samplers::tree::Table<double>::smartptr> Tables;
 
 namespace {
 

@@ -18,6 +18,8 @@
 
 #include <vector>
 
+namespace dwave::samplers::tabu {
+
 class BQP 
 {
     public:
@@ -82,5 +84,7 @@ class BQP
         unsigned long long evalNum;
         double upperBound;
 };
+
+}  // namespace dwave::samplers::tabu
 
 #endif

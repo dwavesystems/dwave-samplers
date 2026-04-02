@@ -20,9 +20,9 @@
 using std::size_t;
 using std::vector;
 
-using orang::DomIndexVector;
-using orang::VarVector;
-using orang::Table;
+using dwave::samplers::tree::DomIndexVector;
+using dwave::samplers::tree::VarVector;
+using dwave::samplers::tree::Table;
 
 class MallocPtr {
 private:

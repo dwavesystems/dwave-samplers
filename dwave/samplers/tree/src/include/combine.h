@@ -18,7 +18,7 @@
 #ifndef ORANG_COMBINE_H
 #define ORANG_COMBINE_H
 
-namespace orang {
+namespace dwave::samplers::tree {
 
 template<typename Y>
 struct Plus {

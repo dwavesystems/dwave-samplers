@@ -31,7 +31,7 @@
 #include <task.h>
 #include <merger.h>
 
-namespace orang {
+namespace dwave::samplers::tree {
 
 template<typename Y>
 struct NodeTables {
@@ -284,6 +284,6 @@ void BucketTree<T>::buildNodeTables(typename BucketTree<T>::Node::smartptr& node
   node->piTable.reset();
 }
 
-} // namespace orang
+} // namespace dwave::samplers::tree
 
 #endif

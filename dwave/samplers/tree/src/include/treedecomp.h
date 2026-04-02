@@ -32,7 +32,7 @@
 #include <exception.h>
 #include <graph.h>
 
-namespace orang {
+namespace dwave::samplers::tree {
 
 class TreeDecompNode {
 public:
@@ -256,6 +256,6 @@ public:
   }
 };
 
-} // end namespace orang
+} // end namespace dwave::samplers::tree
 
 #endif

@@ -15,7 +15,7 @@
 from libcpp.vector cimport vector
 
 
-cdef extern from "tabu_search.h" nogil:
+cdef extern from "tabu_search.h" namespace "dwave::samplers::tabu" nogil:
     cdef cppclass TabuSearch:
         TabuSearch(vector[vector[double]] Q,
                    const vector[int] initSol,

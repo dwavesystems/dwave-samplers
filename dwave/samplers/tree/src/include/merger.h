@@ -32,7 +32,7 @@
 #include <task.h>
 #include <marginalizer.h>
 
-namespace orang {
+namespace dwave::samplers::tree {
 
 template<typename T>
 class TableMerger {

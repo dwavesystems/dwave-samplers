@@ -14,5 +14,9 @@
 
 #pragma once
 
+namespace dwave::samplers::tabu {
+
 // High-precision per-thread monotonic clock value expressed in milliseconds
 long long realtime_clock();
+
+}  // namespace dwave::samplers::tabu

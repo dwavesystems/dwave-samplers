@@ -17,7 +17,7 @@ from libcpp.vector cimport vector
 
 cimport numpy as np
 
-cdef extern from "descent.h":
+cdef extern from "descent.h" namespace "dwave::samplers::greedy":
 
     unsigned int steepest_gradient_descent(
         np.int8_t* states,

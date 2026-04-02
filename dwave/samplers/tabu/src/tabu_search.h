@@ -15,13 +15,15 @@
 #ifndef __TABU_SEARCH_H__
 #define __TABU_SEARCH_H__
 
-#define LAMBDA 5000
-#define ALPHA 0.4
-
 #include <vector>
 #include <random>
 
 #include "bqp.h"
+
+namespace dwave::samplers::tabu {
+
+#define LAMBDA 5000
+#define ALPHA 0.4
 
 typedef struct bqpSolver_Callback {
   void (*func)(const struct bqpSolver_Callback *callback, BQP *bqp);
@@ -148,5 +150,7 @@ class TabuSearch
          */
         std::default_random_engine generator;
 };
+
+}  // namespace dwave::samplers::tabu
 
 #endif

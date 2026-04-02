@@ -20,30 +20,30 @@
 
 #include <string>
 
-namespace orang {
+namespace dwave::samplers::tree {
 
 class Exception {
 private:
   std::string msg_;
 public:
-  Exception(const std::string& msg = "orang::Exception") : msg_(msg) {}
+  Exception(const std::string& msg = "dwave::samplers::tree::Exception") : msg_(msg) {}
 
   const std::string& what() const { return msg_; }
 };
 
 class LengthException : public Exception {
 public:
-  LengthException(const std::string& msg = "orang::LengthException") : Exception(msg) {}
+  LengthException(const std::string& msg = "dwave::samplers::tree::LengthException") : Exception(msg) {}
 };
 
 class InvalidArgumentException : public Exception {
 public:
-  InvalidArgumentException(const std::string& msg = "orang::InvalidArgumentException") : Exception(msg) {}
+  InvalidArgumentException(const std::string& msg = "dwave::samplers::tree::InvalidArgumentException") : Exception(msg) {}
 };
 
 class OperationUnavailable : public Exception {
 public:
-  OperationUnavailable(const std::string& msg = "orang::OperationUnavailable") : Exception(msg) {}
+  OperationUnavailable(const std::string& msg = "dwave::samplers::tree::OperationUnavailable") : Exception(msg) {}
 };
 
 }

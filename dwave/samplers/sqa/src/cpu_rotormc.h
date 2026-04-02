@@ -19,6 +19,8 @@ Copyright 2024 D-Wave
 
 #include <cstdint>
 
+namespace dwave::samplers::sqa {
+
 #ifdef _MSC_VER
     // add uint64_t definition for windows
     typedef __int64 int64_t;
@@ -79,5 +81,7 @@ int general_simulated_annealing(
     callback interrupt_callback,
     void * const interrupt_function
 );
+
+}  // namespace dwave::samplers::sqa
 
 #endif

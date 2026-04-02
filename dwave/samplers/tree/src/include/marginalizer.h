@@ -24,7 +24,7 @@
 #include <base.h>
 #include <table.h>
 
-namespace orang {
+namespace dwave::samplers::tree {
 
 template<typename Y>
 class Marginalizer {
@@ -97,6 +97,6 @@ struct MarginalizerTypes {
   typedef std::shared_ptr<solvablemarginalizer_type> solvablemarginalizer_smartptr;
 };
 
-} // namespace orang
+} // namespace dwave::samplers::tree
 
 #endif

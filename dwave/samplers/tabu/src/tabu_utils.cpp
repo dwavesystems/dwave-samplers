@@ -20,6 +20,8 @@
 
 #include <Windows.h>
 
+namespace dwave::samplers::tabu {
+
 long long realtime_clock() {
     LARGE_INTEGER frequency;
     LARGE_INTEGER now;
@@ -30,12 +32,18 @@ long long realtime_clock() {
     return (long long)(1000.0 * now.QuadPart / frequency.QuadPart);
 }
 
+}  // namespace dwave::samplers::tabu
+
 #else
+
+namespace dwave::samplers::tabu {
 
 long long realtime_clock() {
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
 }
+
+}  // namespace dwave::samplers::tabu
 
 #endif

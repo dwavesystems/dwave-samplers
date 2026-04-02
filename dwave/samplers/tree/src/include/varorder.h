@@ -34,7 +34,7 @@
 #include <graph.h>
 #include <task.h>
 
-namespace orang {
+namespace dwave::samplers::tree {
 
 namespace greedyvarorder {
 namespace internal {
@@ -449,7 +449,7 @@ Iter selectVar(Iter begin, Iter baseEnd, Iter finalEnd, Rng& rng, float selectio
   return ret;
 }
 
-} // namespace orang::greedyvarorder::internal
+} // namespace dwave::samplers::tree::greedyvarorder::internal
 
 
 
@@ -468,7 +468,7 @@ enum Heuristics {
   NUM_HEURISTICS
 };
 
-} // namespace orang::greedyvarorder
+} // namespace dwave::samplers::tree::greedyvarorder
 
 
 
@@ -594,6 +594,6 @@ VarVector greedyVarOrder(
   return varOrder;
 }
 
-} // namespace orang
+} // namespace dwave::samplers::tree
 
 #endif

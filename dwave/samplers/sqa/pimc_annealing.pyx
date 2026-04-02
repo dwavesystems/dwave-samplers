@@ -24,7 +24,7 @@ import numpy as np
 cimport numpy as np
 
 
-cdef extern from "localPIMC.h":
+cdef extern from "localPIMC.h" namespace "dwave::samplers::sqa":
     ctypedef bool (*callback)(void *function)
 
     int general_simulated_annealing(

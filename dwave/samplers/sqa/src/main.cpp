@@ -35,6 +35,8 @@ Copyright 2024 D-Wave
 #include <iostream>
 #include "localPIMC.h"
 
+using namespace dwave::samplers::sqa;
+
 int main(int argc, char *argv[]) {
     if (argc < 3) {
         std::cerr << "Requires two arguments: experimentNo[0,1] initialCondition[-1,0,1]\n e.g. ./_demo 1 1\n";

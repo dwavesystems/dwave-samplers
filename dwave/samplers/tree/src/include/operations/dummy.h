@@ -21,7 +21,7 @@
 #include <exception.h>
 #include <marginalizer.h>
 
-namespace orang {
+namespace dwave::samplers::tree {
 
 class DummyOperations {
 public:
@@ -46,6 +46,6 @@ public:
   solution_type initSolution(const DomIndexVector&) const { throw OperationUnavailable(); }
 };
 
-} // namespace orang
+} // namespace dwave::samplers::tree
 
 #endif

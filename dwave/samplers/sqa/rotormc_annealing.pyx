@@ -24,7 +24,7 @@ import numpy as np
 cimport numpy as np
 
 
-cdef extern from "cpu_rotormc.h":
+cdef extern from "cpu_rotormc.h" namespace "dwave::samplers::sqa":
     ctypedef bool (*callback)(void *function)
     ctypedef enum Proposal:
         GibbsNonErgodic, MetropolisNonErgodic,
