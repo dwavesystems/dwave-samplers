@@ -84,7 +84,7 @@ Get the best 5 sample found in .1 seconds.
 Simulated Annealing
 -------------------
 
-`Simulated annealing <https://en.wikipedia.org/wiki/Simulated_annealing>`_ can
+`Simulated annealing <https://en.wikipedia.org/wiki/Simulated_annealing>`__ can
 be used for heuristic optimization or approximate Boltzmann sampling. The
 *dwave-samplers* implementation approaches the equilibrium distribution by
 performing updates at a sequence of decreasing temperatures, terminating at the
@@ -147,7 +147,7 @@ Sample projected states from a quantum process with a linear schedule
 Steepest Descent
 ----------------
 
-`Steepest descent <https://en.wikipedia.org/wiki/Gradient_descent>`_ is the
+`Steepest descent <https://en.wikipedia.org/wiki/Gradient_descent>`__ is the
 discrete analogue of gradient descent, but the best move is computed using a
 local minimization rather rather than computing a gradient. The dimension along
 which to descend is determined, at each step, by the variable flip that causes
@@ -216,7 +216,7 @@ Sample using both default and custom values of tenure and number of restarts.
 Tree Decomposition
 ------------------
 
-`Tree decomposition <https://en.wikipedia.org/wiki/Tree_decomposition>`_-based
+`Tree decomposition <https://en.wikipedia.org/wiki/Tree_decomposition>`__-based
 solvers have a runtime that is exponential in the
 `treewidth <https://en.wikipedia.org/wiki/Treewidth>`_ of the problem graph. For
 problems with low treewidth, the solver can find ground states very quickly.
