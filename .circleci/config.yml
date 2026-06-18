@@ -95,6 +95,22 @@ jobs:
       - checkout
       - run-cibuildwheel
 
+  check-dist:
+    docker:
+      - image: cimg/python:3.12
+
+    steps:
+      - attach_workspace:
+          at: dist
+
+      - run:
+          name: check package
+          command: |
+            python -m venv env
+            . env/bin/activate
+            python -m pip install twine
+            twine check ./dist/*
+
   deploy-all:
     docker:
       - image: cimg/python:3.12
@@ -256,6 +272,14 @@ workflows:
           filters: *tags
           requires:
             - build-sdist
+      - check-dist:
+          filters: *tags
+          requires:
+            - build-and-test-linux
+            - build-and-test-linux-aarch64
+            - build-and-test-osx
+            - build-and-test-windows
+            - build-sdist
       - deploy-all:
           filters:
             tags:
@@ -268,3 +292,4 @@ workflows:
             - build-and-test-osx
             - build-and-test-windows
             - build-sdist
+            - check-dist
