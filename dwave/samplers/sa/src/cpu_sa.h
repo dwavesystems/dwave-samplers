@@ -18,6 +18,7 @@
 #define _cpu_sa_h
 
 #include <cstdint>
+#include <vector>
 
 namespace dwave::samplers::sa {
 
@@ -60,7 +61,7 @@ void simulated_annealing_run(
 
 typedef bool (*const callback)(void * const function);
 
-int general_simulated_annealing(
+int cpu_general_simulated_annealing(
     std::int8_t *states,
     double *energies,
     const int num_samples,

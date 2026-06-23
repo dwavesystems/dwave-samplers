@@ -1,3 +1,8 @@
+# distutils: language = c++
+# distutils: include_dirs = dwave/samplers/sa/src/
+# distutils: sources = dwave/samplers/sa/src/cpu_sa.cpp dwave/samplers/sa/src/fast_cpu_sa.cpp
+# cython: language_level = 3
+
 # Copyright 2018 D-Wave Systems Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +30,7 @@ cdef extern from "cpu_sa.h" namespace "dwave::samplers::sa":
         Gibbs, Metropolis
     ctypedef enum VariableOrder:
         Sequential, Random
-    int general_simulated_annealing(
+    int cpu_general_simulated_annealing(
             np.int8_t* samples,
             double* energies,
             const int num_samples,
@@ -41,13 +46,30 @@ cdef extern from "cpu_sa.h" namespace "dwave::samplers::sa":
             callback interrupt_callback,
             void *interrupt_function) nogil
 
+cdef extern from "fast_cpu_sa.h":
+    int fast_cpu_general_simulated_annealing(
+            np.int8_t* samples,
+            double* energies,
+            const int num_samples,
+            const vector[double] & h,
+            const vector[int] & coupler_starts,
+            const vector[int] & coupler_ends,
+            const vector[double] & coupler_weights,
+            const int sweeps_per_beta,
+            const vector[double] & beta_schedule,
+            const unsigned long long seed,
+            const VariableOrder varorder,
+            const Proposal proposal_acceptance_criteria,
+            callback interrupt_callback,
+            void *interrupt_function) nogil
 
 def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
                         coupler_weights, sweeps_per_beta, beta_schedule, seed,
                         np.ndarray[np.int8_t, ndim=2, mode="c"] states_numpy,
                         randomize_order=False,
                         proposal_acceptance_criteria='Metropolis',
-                        interrupt_function=None):
+                        interrupt_function=None,
+                        sa_backend='cpu_sa'):
     """Wraps `general_simulated_annealing` from `cpu_sa.cpp`. Accepts
     an Ising problem defined on a general graph and returns samples
     using simulated annealing.
@@ -118,6 +140,9 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
         When `Metropolis`, each spin flip proposal is accepted according to the
         Metropolis-Hastings criteria.
 
+    sa_backend: str
+        Backend implementation: ``'cpu_sa'``, ``'fast_cpu_sa'``.
+
     Returns
     -------
     samples : numpy.ndarray
@@ -168,22 +193,52 @@ def simulated_annealing(num_samples, h, coupler_starts, coupler_ends,
     else:
         _interrupt_function = <void *>interrupt_function
 
+    cdef int _backend_kind = -1
+    if sa_backend == 'cpu_sa':
+        _backend_kind = 0
+    elif sa_backend == 'fast_cpu_sa':
+        _backend_kind = 1
+
+    cdef int num = -1
 
     with nogil:
-        num = general_simulated_annealing(_states,
-                                          _energies,
-                                          _num_samples,
-                                          _h,
-                                          _coupler_starts,
-                                          _coupler_ends,
-                                          _coupler_weights,
-                                          _sweeps_per_beta,
-                                          _beta_schedule,
-                                          _seed,
-                                          _varorder,
-                                          _proposal_acceptance_criteria,
-                                          interrupt_callback,
-                                          _interrupt_function)
+        if _backend_kind == 0:
+            num = cpu_general_simulated_annealing(_states,
+                                                  _energies,
+                                                  _num_samples,
+                                                  _h,
+                                                  _coupler_starts,
+                                                  _coupler_ends,
+                                                  _coupler_weights,
+                                                  _sweeps_per_beta,
+                                                  _beta_schedule,
+                                                  _seed,
+                                                  _varorder,
+                                                  _proposal_acceptance_criteria,
+                                                  interrupt_callback,
+                                                  _interrupt_function)
+        elif _backend_kind == 1:
+            num = fast_cpu_general_simulated_annealing(_states,
+                                                       _energies,
+                                                       _num_samples,
+                                                       _h,
+                                                       _coupler_starts,
+                                                       _coupler_ends,
+                                                       _coupler_weights,
+                                                       _sweeps_per_beta,
+                                                       _beta_schedule,
+                                                       _seed,
+                                                       _varorder,
+                                                       _proposal_acceptance_criteria,
+                                                       interrupt_callback,
+                                                       _interrupt_function)
+        else:
+            num = -1
+
+    if num == -1:
+        raise ValueError(f"Unknown sa_backend: {sa_backend}")
+    if num == -2:
+        raise ValueError("interrupt_function is not supported with sa_backend='fast_cpu_sa'")
 
     # discard the noise if we were interrupted
     return states_numpy[:num], energies_numpy[:num]

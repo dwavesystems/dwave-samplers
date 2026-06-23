@@ -250,7 +250,7 @@ double get_state_energy(
 //        if the function returns True then it will stop running.
 // @param interrupt_function A pointer to contents that are passed to interrupt_callback.
 // @return the number of samples taken. If no interrupt occured, will equal num_samples.
-int general_simulated_annealing(
+int cpu_general_simulated_annealing(
     std::int8_t* states,
     double* energies,
     const int num_samples,
