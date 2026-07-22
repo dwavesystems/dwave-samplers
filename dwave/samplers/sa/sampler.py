@@ -149,6 +149,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                            'initial_states_generator': [],
                            'randomize_order': [],
                            'proposal_acceptance_criteria': [],
+                           'sa_backend': [],
                            }
         self.properties = {'beta_schedule_options': ('linear', 'geometric',
                                                      'custom')}
@@ -166,6 +167,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                initial_states_generator: InitialStateGenerator = "random",
                randomize_order: bool = False,
                proposal_acceptance_criteria: str = 'Metropolis',
+               sa_backend: str = 'fast_cpu_sa',
                **kwargs) -> dimod.SampleSet:
         r"""Sample from a binary quadratic model.
 
@@ -265,6 +267,10 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                 When "Metropolis", each spin flip proposal is accepted according
                 to the Metropolis-Hastings criteria.
 
+            sa_backend:
+                Simulated annealing engine implementation. Supported values:
+                ``"cpu_sa"`` (default), ``"fast_cpu_sa"``.
+
             interrupt_function (function, optional):
                 A function called with no parameters between each sample of
                 simulated annealing. If the function returns True, simulated
@@ -362,12 +368,22 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
         if interrupt_function and not callable(interrupt_function):
             raise TypeError("'interrupt_function' should be a callable")
 
+        if interrupt_function is not None and sa_backend == "fast_cpu_sa":
+            # fast_cpu_sa does not support interrupt callbacks, so fall back to cpu_sa.
+            sa_backend = "cpu_sa"
+
         if not isinstance(num_sweeps_per_beta, Integral):
             error_msg = "'num_sweeps_per_beta' should be a positive integer: value = {}".format(num_sweeps_per_beta)
             raise TypeError(error_msg)
         if num_sweeps_per_beta < 1:
             error_msg = "'num_sweeps_per_beta' should be a positive integer: value = {}".format(num_sweeps_per_beta)
             raise ValueError(error_msg)
+
+        if sa_backend not in ("cpu_sa", "fast_cpu_sa"):
+            raise ValueError(
+                "'sa_backend' must be one of 'cpu_sa', 'fast_cpu_sa': "
+                f"value = {sa_backend}"
+            )
 
         # handle beta_schedule et al
         if beta_schedule_type == "custom":
@@ -433,7 +449,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
             num_sweeps_per_beta, beta_schedule,
             seed, initial_states_array,
             randomize_order, proposal_acceptance_criteria,
-            interrupt_function)
+            interrupt_function, sa_backend)
         timestamp_postprocess = perf_counter_ns()
 
         info = {

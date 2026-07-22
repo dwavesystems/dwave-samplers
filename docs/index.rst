@@ -9,6 +9,7 @@ dwave-samplers
     :maxdepth: 1
 
     api_ref
+    sa_backend_parallelization
 
 About dwave-samplers
 ====================

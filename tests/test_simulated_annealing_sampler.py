@@ -186,6 +186,17 @@ class TestSimulatedAnnealingSampler(unittest.TestCase):
         self.assertEqual(col, 2)  # should get back two variables
         self.assertIs(resp.vartype, dimod.SPIN)  # should be ising
 
+    def test_sa_backend_option(self):
+        sampler = SimulatedAnnealingSampler()
+        h = {"a": 0, "b": -1}
+        J = {("a", "b"): -1}
+
+        resp = sampler.sample_ising(h, J, sa_backend="fast_cpu_sa", num_reads=5)
+        self.assertEqual(resp.record.sample.shape[0], 5)
+
+        with self.assertRaises(ValueError):
+            sampler.sample_ising(h, J, sa_backend="not_a_backend")
+
     def test_sample_qubo(self):
         Q = {(0, 1): 1}
         resp = SimulatedAnnealingSampler().sample_qubo(Q)

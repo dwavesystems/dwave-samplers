@@ -16,6 +16,8 @@ import os
 import time
 import unittest
 import contextlib
+import ctypes
+import subprocess
 from concurrent.futures import ThreadPoolExecutor, wait
 from copy import deepcopy
 from time import perf_counter
@@ -93,6 +95,7 @@ def cpu_count():
 
 
 class TestSA(unittest.TestCase):
+
     def _sample_fm_problem(self, num_variables=10, num_samples=100, num_sweeps=1000):
         h = [-1] * num_variables
         (coupler_starts, coupler_ends, coupler_weights) = zip(
@@ -154,6 +157,21 @@ class TestSA(unittest.TestCase):
             energies.shape == (num_samples,),
             "Sampler returned wrong number of energies",
         )
+
+    def test_backend_fast_cpu_sa(self):
+        num_variables, num_samples = 10, 20
+        problem = self._sample_fm_problem(
+            num_variables=num_variables, num_samples=num_samples
+        )
+
+        samples, energies = simulated_annealing(*problem, sa_backend="fast_cpu_sa")
+        self.assertEqual(samples.shape, (num_samples, num_variables))
+        self.assertEqual(energies.shape, (num_samples,))
+
+    def test_backend_invalid(self):
+        problem = self._sample_fm_problem(num_variables=6, num_samples=5)
+        with self.assertRaises(ValueError):
+            simulated_annealing(*problem, sa_backend="invalid_backend")
 
     def test_good_results(self):
         num_variables = 5
