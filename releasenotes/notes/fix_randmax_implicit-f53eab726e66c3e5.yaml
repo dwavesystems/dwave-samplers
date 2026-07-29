@@ -1,0 +1,4 @@
+---
+fixes:
+  - |
+    Address implicit conversion warnings for ``RANDMAX``.

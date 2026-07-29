@@ -183,7 +183,7 @@ void simulated_annealing_run(
                         // get a random number, storing it in rand
                         FASTRAND(rand);
                         // accept the flip if exp(-delta_energy*beta) > random(0, 1)
-                        if (exp(-delta_energy[var]*beta) * RANDMAX > rand) {
+                        if (exp(-delta_energy[var]*beta) * (double)RANDMAX > rand) {
                             flip_spin = true;
                         }
                     }
@@ -196,7 +196,7 @@ void simulated_annealing_run(
                     // Gibbs update: Sample fairly from the two available
                     // states, independent of the current value
                     FASTRAND(rand);
-                    if (RANDMAX > rand * (1+exp(delta_energy[var]*beta))) {
+                    if ((double)RANDMAX > rand * (1+exp(delta_energy[var]*beta))) {
                         flip_spin = true;
                     }
                     break;
@@ -232,7 +232,7 @@ void simulated_annealing_run(
 		      std::assert(osi>=0);*/
 		      auto randL = rand;
 		      FASTRAND(rand); // Perhaps safe to reuse high precision bits, but why risk it.. 
-		      uint8_t pac = (p*RANDMAX > randL) ?
+		      uint8_t pac = (p*(double)RANDMAX > randL) ?
 			(osi + 1)*(2*(rand%2) - 1):
 			rand%(2*osi + 1) - osi;
 		      proposed_angle = state[var] + pac;
@@ -260,7 +260,7 @@ void simulated_annealing_run(
                         // get a random number, storing it in rand
                         FASTRAND(rand);
                         // accept the flip if exp(-delta_energy*beta) > random(0, 1)
-                        if (exp(delta_logmeasure) * RANDMAX > rand) {
+                        if (exp(delta_logmeasure) * (double)RANDMAX > rand) {
                             flip_spin = true;
                         }
                     }
