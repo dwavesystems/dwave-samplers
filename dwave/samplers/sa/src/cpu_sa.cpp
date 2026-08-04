@@ -73,6 +73,21 @@ double get_flip_energy(
     return -2 * state[var] * energy;
 }
 
+// Returns the energy delta from flipping all variables
+// @param state the current state of all variables
+// @param h vector of h or field value on each variable
+// @return delta energy
+double get_all_flip_energy(
+    std::int8_t *state,
+    const vector<double>& h
+) {
+    double all_flip_energy = 0.0;
+    for (int var = 0; var < h.size(); var++) {
+        all_flip_energy += h[var] * state[var];
+    }
+    return -2 * all_flip_energy;
+}
+
 // Performs a single run of simulated annealing with the given inputs.
 // @param state a int8 array where each int8 holds the state of a
 //        variable. Note that this will be used as the initial state of the
@@ -89,6 +104,12 @@ double get_flip_energy(
 //        `beta_schedule`.
 // @param beta_schedule A list of the beta values to run `sweeps_per_beta`
 //        sweeps at.
+// @param has_ss_proposals A boolean that indicates whether single spin-flip
+//        updates should be performed.
+// @param has_gsi_proposals A boolean that indicates whether global spin flip
+//        updates should be performed.
+// @param has_wolff_proposals A boolean that indicates whether Wolff cluster
+//        updates should be performed.
 // @return Nothing, but `state` now contains the result of the run.
 template <VariableOrder varorder, Proposal proposal_acceptance_criteria>
 void simulated_annealing_run(
@@ -98,7 +119,10 @@ void simulated_annealing_run(
     const vector<vector<int>>& neighbors,
     const vector<vector<double>>& neighbour_couplings,
     const int sweeps_per_beta,
-    const vector<double>& beta_schedule
+    const vector<double>& beta_schedule,
+    const bool has_ss_proposals,
+    const bool has_gsi_proposals,
+    const bool has_wolff_proposals
 ) {
     const int num_vars = h.size();
 
@@ -108,12 +132,25 @@ void simulated_annealing_run(
 
     uint64_t rand; // this will hold the value of the rng
 
+    // buffers reused by the Wolff cluster update below; `in_cluster` marks the
+    // variables currently in the growing cluster, while `cluster_members` and
+    // `cluster_stack` track the members and the growth frontier respectively
+    std::vector<char> in_cluster(num_vars, 0);
+    std::vector<int> cluster_members;
+    std::vector<int> cluster_stack;
+    cluster_members.reserve(num_vars);
+    cluster_stack.reserve(num_vars);
+
     // build the delta_energy array by getting the delta energy for each
-    // variable
+    // variable, this could be conditional on has_ss_proposals, but the benefit is negligible
     for (int var = 0; var < num_vars; var++) {
         delta_energy[var] = get_flip_energy(var, state, h, degrees,
                                             neighbors, neighbour_couplings);
     }
+    // Calculate energy change from a has_gsi_proposals, could
+    // be conditional, but the benefit is negligible
+
+    double all_flip_energy = get_all_flip_energy(state, h);
 
     bool flip_spin;
     // perform the sweeps
@@ -128,66 +165,198 @@ void simulated_annealing_run(
             // 1 / 2^64. since log(1 / 2^64) = -44.361, if the delta energy is
             // greater than 44.361 / beta, then we can safely skip computing
             // the probability.
-            const double threshold = 44.36142 / beta;
-            for (int varI = 0; varI < num_vars; varI++) {
-                int var;
-                if constexpr (varorder == Random) {
-                    FASTRAND(rand);
-                    var = rand%num_vars;
-                } else {
-                    var = varI;
-                }
-                if (delta_energy[var] >= threshold) continue;
-
-                flip_spin = false;
-
-                if constexpr (proposal_acceptance_criteria == Metropolis) {
-                    // Metropolis-Hastings acceptance rule
-                    if (delta_energy[var] <= 0.0) {
-                        // automatically accept any flip that results in a lower
-                        // energy
-                        flip_spin = true;
-                    } else {
-                        // get a random number, storing it in rand
+            if (has_ss_proposals) {
+                const double threshold = 44.36142 / beta;
+                for (int varI = 0; varI < num_vars; varI++) {
+                    int var;
+                    if constexpr (varorder == Random) {
                         FASTRAND(rand);
-                        // accept the flip if exp(-delta_energy*beta) > random(0, 1)
-                        if (exp(-delta_energy[var]*beta) * RANDMAX > rand) {
+                        var = rand%num_vars;
+                    } else {
+                        var = varI;
+                    }
+                    if (delta_energy[var] >= threshold) continue;
+
+                    flip_spin = false;
+
+                    if constexpr (proposal_acceptance_criteria == Metropolis) {
+                        // Metropolis-Hastings acceptance rule
+                        if (delta_energy[var] <= 0.0) {
+                            // automatically accept any flip that results in a lower
+                            // energy
+                            flip_spin = true;
+                        } else {
+                            // get a random number, storing it in rand
+                            FASTRAND(rand);
+                            // accept the flip if exp(-delta_energy*beta) > random(0, 1)
+                            if (exp(-delta_energy[var]*beta) * RANDMAX > rand) {
+                                flip_spin = true;
+                            }
+                        }
+                    }
+                    else {
+                        // Gibbs update: Sample fairly from the two available states,
+                        // independent of the current value
+                        FASTRAND(rand);
+                        if (RANDMAX > rand * (1+exp(delta_energy[var]*beta))) {
                             flip_spin = true;
                         }
                     }
-                }
-                else {
-                    // Gibbs update: Sample fairly from the two available states,
-                    // independent of the current value
-                    FASTRAND(rand);
-                    if (RANDMAX > rand * (1+exp(delta_energy[var]*beta))) {
-                        flip_spin = true;
+
+                    if (flip_spin) {
+                        // since we have accepted the spin flip of variable `var`,
+                        // we need to adjust the delta energies of all the
+                        // neighboring variables
+                        const std::int8_t multiplier = 4 * state[var];
+                        // iterate over the neighbors of `var`
+                        for (int n_i = 0; n_i < degrees[var]; n_i++) {
+                            int neighbor = neighbors[var][n_i];
+                            // adjust the delta energy by
+                            // 4 * `var` state * coupler weight * neighbor state
+                            // the 4 is because the original contribution from
+                            // `var` to the neighbor's delta energy was
+                            // 2 * `var` state * coupler weight * neighbor state,
+                            // so since we are flipping `var`'s state, we need to
+                            // multiply it again by 2 to get the full offset.
+                            delta_energy[neighbor] += multiplier *
+                                neighbour_couplings[var][n_i] * state[neighbor];
+                        }
+
+                        // now we just need to flip its state and negate its delta
+                        // energy
+                        state[var] *= -1;
+                        delta_energy[var] *= -1;
+                        // update the whole-state inversion energy delta; state[var]
+                        // is the post-flip value, so the field contribution changes
+                        // by -4 * state[var] * h[var]
+                        all_flip_energy -= 4 * state[var] * h[var];
                     }
                 }
-
-                if (flip_spin) {
-                    // since we have accepted the spin flip of variable `var`,
-                    // we need to adjust the delta energies of all the
-                    // neighboring variables
-                    const std::int8_t multiplier = 4 * state[var];
-                    // iterate over the neighbors of `var`
+            }
+            if (has_gsi_proposals) {
+                /*
+                    Poor man's Wolff algorithm, but sufficient to
+                    accelerate mixing for nearly symmetric states at large
+                    Hamming distance (small h). Proposed once per sweep.
+                */
+                FASTRAND(rand);
+                if (RANDMAX > rand * (1+exp(all_flip_energy*beta))) {
+                    all_flip_energy *= -1;
+                    for (int var = 0; var < num_vars; var++) {
+                        state[var] *= -1;
+                        // under a global flip the coupling terms of delta_energy are
+                        // unchanged; only the field term flips, giving a net change
+                        // of -4 * state[var] * h[var] (state[var] post-flip)
+                        delta_energy[var] -= 4 * state[var] * h[var];
+                    }
+                }
+            }
+            if (has_wolff_proposals) {
+                /*
+                    Wolff cluster update. A cluster of spins is grown outward
+                    from a uniformly selected seed variable: a satisfied bond,
+                    for which neighbour_couplings[i][j] * state[i] * state[j] < 0,
+                    links its two variables into the same cluster with the Wolff
+                    bond probability p = 1 - exp(-2 * beta * |J_ij|). Flipping the
+                    whole cluster is then accepted according to the Metropolis or
+                    Gibbs criteria on the total energy change, which preserves
+                    detailed balance in the presence of local fields h.
+                */
+                FASTRAND(rand);
+                int seed = rand % num_vars;
+                cluster_members.clear();
+                cluster_stack.clear();
+                in_cluster[seed] = 1;
+                cluster_members.push_back(seed);
+                cluster_stack.push_back(seed);
+                while (!cluster_stack.empty()) {
+                    int var = cluster_stack.back();
+                    cluster_stack.pop_back();
+                    // try to grow the cluster across each incident bond
                     for (int n_i = 0; n_i < degrees[var]; n_i++) {
                         int neighbor = neighbors[var][n_i];
-                        // adjust the delta energy by
-                        // 4 * `var` state * coupler weight * neighbor state
-                        // the 4 is because the original contribution from
-                        // `var` to the neighbor's delta energy was
-                        // 2 * `var` state * coupler weight * neighbor state,
-                        // so since we are flipping `var`'s state, we need to
-                        // multiply it again by 2 to get the full offset.
-                        delta_energy[neighbor] += multiplier *
-                            neighbour_couplings[var][n_i] * state[neighbor];
+                        if (in_cluster[neighbor]) continue;
+                        // probability of adding the neighbor to the cluster;
+                        // this is non-positive (and therefore never accepted)
+                        // for frustrated bonds where J_ij * s_i * s_j > 0
+                        double p_add = 1.0 - exp(2.0 * beta *
+                            neighbour_couplings[var][n_i] * state[var] * state[neighbor]);
+                        FASTRAND(rand);
+                        if (p_add * RANDMAX > rand) {
+                            in_cluster[neighbor] = 1;
+                            cluster_members.push_back(neighbor);
+                            cluster_stack.push_back(neighbor);
+                        }
                     }
+                }
 
-                    // now we just need to flip its state and negate its delta
-                    // energy
-                    state[var] *= -1;
-                    delta_energy[var] *= -1;
+                // energy change from flipping every spin in the cluster: the
+                // field term for each member plus the coupling terms that cross
+                // the cluster boundary (bonds internal to the cluster are
+                // unchanged when all their endpoints flip together)
+                double cluster_flip_energy = 0.0;
+                for (int ci = 0; ci < (int)cluster_members.size(); ci++) {
+                    int var = cluster_members[ci];
+                    cluster_flip_energy -= 2.0 * h[var] * state[var];
+                    for (int n_i = 0; n_i < degrees[var]; n_i++) {
+                        int neighbor = neighbors[var][n_i];
+                        if (in_cluster[neighbor]) continue;
+                        cluster_flip_energy -= 2.0 * neighbour_couplings[var][n_i]
+                            * state[var] * state[neighbor];
+                    }
+                }
+
+                bool flip_cluster = false;
+                if constexpr (proposal_acceptance_criteria == Metropolis) {
+                    // Metropolis-Hastings acceptance rule on the cluster flip
+                    if (cluster_flip_energy <= 0.0) {
+                        flip_cluster = true;
+                    } else {
+                        FASTRAND(rand);
+                        if (exp(-cluster_flip_energy * beta) * RANDMAX > rand) {
+                            flip_cluster = true;
+                        }
+                    }
+                } else {
+                    // Gibbs acceptance rule on the cluster flip
+                    FASTRAND(rand);
+                    if (RANDMAX > rand * (1 + exp(cluster_flip_energy * beta))) {
+                        flip_cluster = true;
+                    }
+                }
+                
+                // TO DO: We should allow an option for Wolff to run without
+                // has_gsi_proposals, and single bit flips, in which case this
+                // expensive stage can be skipped. Other efficiencies may
+                // also be possible.
+                if (flip_cluster) {
+                    // flip every spin in the accepted cluster
+                    for (int ci = 0; ci < (int)cluster_members.size(); ci++) {
+                        state[cluster_members[ci]] *= -1;
+                    }
+                    // recompute the single-flip delta energies for the cluster
+                    // members and their neighbors, and refresh the global
+                    // inversion energy, since many spins changed at once
+                    if (has_ss_proposals) {
+                        for (int ci = 0; ci < (int)cluster_members.size(); ci++) {
+                            int var = cluster_members[ci];
+                            delta_energy[var] = get_flip_energy(var, state, h, degrees,
+                                                                neighbors, neighbour_couplings);
+                            for (int n_i = 0; n_i < degrees[var]; n_i++) {
+                                int neighbor = neighbors[var][n_i];
+                                delta_energy[neighbor] = get_flip_energy(neighbor, state, h,
+                                    degrees, neighbors, neighbour_couplings);
+                            }
+                        }
+                    }
+                    if (has_gsi_proposals) {
+                        all_flip_energy = get_all_flip_energy(state, h);
+                    }
+                }
+
+                // clear the cluster membership marks for the next sweep
+                for (int ci = 0; ci < (int)cluster_members.size(); ci++) {
+                    in_cluster[cluster_members[ci]] = 0;
                 }
             }
         }
@@ -246,6 +415,14 @@ double get_state_energy(
 //        `beta_schedule`.
 // @param beta_schedule A list of the beta values to run `sweeps_per_beta`
 //        sweeps at.
+// @param has_ss_proposals When true, single spin-flip updates are proposed
+//        throughout each sweep.
+// @param has_gsi_proposals When true, a global spin-inversion (Wolff-like) move is
+//        proposed at the end of every sweep to accelerate mixing between
+//        nearly symmetric states.
+// @param has_wolff_proposals When true, a Wolff cluster move is proposed at the
+//        end of every sweep: a cluster grown from a random seed via satisfied
+//        bonds is flipped subject to the Metropolis or Gibbs acceptance rule.
 // @param interrupt_callback A function that is invoked between each run of simulated annealing
 //        if the function returns True then it will stop running.
 // @param interrupt_function A pointer to contents that are passed to interrupt_callback.
@@ -263,6 +440,9 @@ int general_simulated_annealing(
     const uint64_t seed,
     const VariableOrder varorder,
     const Proposal proposal_acceptance_criteria,
+    const bool has_ss_proposals,
+    const bool has_gsi_proposals,
+    const bool has_wolff_proposals,
     callback interrupt_callback,
     void * const interrupt_function
 ) {
@@ -325,26 +505,34 @@ int general_simulated_annealing(
         std::int8_t *state = states + sample*num_vars;
         // then do the actual sample. this function will modify state, storing
         // the sample there
-	// Branching here is designed to make expicit compile time optimizations
+        // Branching here is designed to make explicit compile time optimizations
         if (varorder == Random) {
             if (proposal_acceptance_criteria == Metropolis) {
                 simulated_annealing_run<Random, Metropolis>(state, h, degrees,
                                                     neighbors, neighbour_couplings,
-                                                    sweeps_per_beta, beta_schedule);
+                                                    sweeps_per_beta, beta_schedule,
+                                                    has_ss_proposals,
+                                                    has_gsi_proposals, has_wolff_proposals);
             } else {
                 simulated_annealing_run<Random, Gibbs>(state, h, degrees,
                                                      neighbors, neighbour_couplings,
-                                                     sweeps_per_beta, beta_schedule);
+                                                     sweeps_per_beta, beta_schedule,
+                                                     has_ss_proposals,
+                                                     has_gsi_proposals, has_wolff_proposals);
           }
         } else {
             if (proposal_acceptance_criteria == Metropolis) {
                 simulated_annealing_run<Sequential, Metropolis>(state, h, degrees,
                                                      neighbors, neighbour_couplings,
-                                                     sweeps_per_beta, beta_schedule);
+                                                     sweeps_per_beta, beta_schedule,
+                                                     has_ss_proposals,
+                                                     has_gsi_proposals, has_wolff_proposals);
             } else {
                 simulated_annealing_run<Sequential, Gibbs>(state, h, degrees,
                                                       neighbors, neighbour_couplings,
-                                                      sweeps_per_beta, beta_schedule);
+                                                      sweeps_per_beta, beta_schedule,
+                                                      has_ss_proposals,
+                                                      has_gsi_proposals, has_wolff_proposals);
             }
         }
         // compute the energy of the sample and store it in `energies`
