@@ -1,0 +1,9 @@
+---
+prelude: >
+  - |
+    Simulated Bifurcation algorithms are an important class of heuristic
+    optimization algorithm that is readily supported alongside simulated
+    annealing.
+features:
+  - |
+    Implements the dSBM algorithm https://www.science.org/doi/epdf/10.1126/sciadv.abe7953
