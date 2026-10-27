@@ -1,0 +1,10 @@
+---
+features:
+  - |
+    Add ``PlanarGraphSampler``, a fair sampler for planar Ising problems with
+    no linear biases. It draws exact (fair) samples from the Boltzmann
+    distribution, computes the log partition function (``logZ``) via the
+    Kasteleyn method, and returns variable and interaction marginals. The log
+    partition function and marginals are returned in the sample set's
+    :attr:`~dimod.SampleSet.info` field. See `#43
+    <https://github.com/dwavesystems/dwave-samplers/issues/43>`_.

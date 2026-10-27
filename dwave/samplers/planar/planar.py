@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import math
+import typing
 from collections import OrderedDict, namedtuple
 
 import networkx as nx
@@ -21,7 +22,7 @@ Edge = namedtuple('Edge', ['head', 'tail', 'key'])
 """Represents a (directed) edge in a Multigraph"""
 
 
-def rotation_from_coordinates(G: nx.MultiGraph, pos: dict) -> dict:
+def rotation_from_coordinates(G: nx.MultiGraph, pos: typing.Mapping) -> dict:
     """Compute the rotation system for a planar G from the node positions.
 
     Args:
