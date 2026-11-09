@@ -3,7 +3,7 @@ requires = [
     # Same as dependency-groups.build
     "cython~=3.2.0",
     "dimod==0.12.21",  # oldest dimod that supports Python 3.14
-    "meson~=1.11.0",  # latest as of July 2026
+    "meson~=1.12.0",  # latest as of November 2026
     "meson-python~=0.19.0",  # latest as of July 2026
     "ninja~=1.13.0",  # latest as of July 2026
 ]
@@ -54,7 +54,7 @@ build = [
     # Same as build-system.requires
     "cython~=3.2.0",
     "dimod==0.12.21",
-    "meson~=1.11.0",
+    "meson~=1.12.0",
     "meson-python~=0.19.0",
     "ninja~=1.13.0",
 ]
