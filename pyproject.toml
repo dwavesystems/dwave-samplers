@@ -25,7 +25,6 @@ classifiers = [
     "Operating System :: MacOS",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -33,7 +32,7 @@ classifiers = [
     "Programming Language :: Python :: 3 :: Only",
     'Programming Language :: Python :: Implementation :: CPython',
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "dimod>=0.12.21,<0.13.0",  # oldest dimod that supports Python 3.14
     "networkx>=3,<4",
@@ -64,7 +63,7 @@ changelog = [
 dev = [
     # Install requirements
     "networkx==3.2.1",
-    "numpy==2.3.3; python_version >= '3.11'",
+    "numpy==2.3.3",
     {include-group = "build"},
     {include-group = "changelog"},
 ]
