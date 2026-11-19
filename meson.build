@@ -38,6 +38,10 @@ sa_dep = declare_dependency(
     include_directories: ['dwave/samplers/sa/src/'],
     sources: ['dwave/samplers/sa/src/cpu_sa.cpp'],
 )
+sbm_dep = declare_dependency(
+    include_directories: ['dwave/samplers/sbm/src/'],
+    sources: ['dwave/samplers/sbm/src/cpu_dsbm.cpp'],
+)
 sqa_dep = declare_dependency(
     include_directories: ['dwave/samplers/sqa/src/'],
     sources: [
@@ -113,6 +117,15 @@ if get_option('build-python')
         'dwave/samplers/sa/simulated_annealing.pyx',
         dependencies: [sa_dep],
         subdir: 'dwave/samplers/sa',
+        kwargs: extension_kwargs,
+    )
+
+    # -- Discrete Simulated Bifurcation Machine
+    py.extension_module(
+        'dsbm',
+        'dwave/samplers/sbm/dsbm.pyx',
+        dependencies: [sbm_dep],
+        subdir: 'dwave/samplers/sbm',
         kwargs: extension_kwargs,
     )
 
