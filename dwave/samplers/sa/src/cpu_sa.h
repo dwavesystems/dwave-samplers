@@ -55,7 +55,10 @@ void simulated_annealing_run(
     const std::vector<std::vector<int>>& neighbors,
     const std::vector<std::vector<double>>& neighbour_couplings,
     const int sweeps_per_beta,
-    const std::vector<double>& beta_schedule
+    const std::vector<double>& beta_schedule,
+    const bool has_ss_proposals,
+    const bool has_gsi_proposals,
+    const bool has_wolff_proposals
 );
 
 typedef bool (*const callback)(void * const function);
@@ -73,6 +76,9 @@ int general_simulated_annealing(
     const uint64_t seed,
     const VariableOrder varorder,
     const Proposal proposal_acceptance_criteria,
+    const bool has_ss_proposals,
+    const bool has_gsi_proposals,
+    const bool has_wolff_proposals,
     callback interrupt_callback,
     void * const interrupt_function
 );

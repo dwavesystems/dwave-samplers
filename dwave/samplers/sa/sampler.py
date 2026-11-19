@@ -106,6 +106,7 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
         beta_range
         beta_schedule
         beta_schedule_type
+        has_gsi_proposals
         initial_states
         initial_states_generator
         interrupt_function
@@ -115,6 +116,8 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
         proposal_acceptance_criteria
         randomize_order
         seed
+        has_ss_proposals
+        has_wolff_proposals
         >>> sampler.parameters['beta_range']
         []
         >>> sampler.parameters['beta_schedule_type']
@@ -149,6 +152,9 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                            'initial_states_generator': [],
                            'randomize_order': [],
                            'proposal_acceptance_criteria': [],
+                           'has_ss_proposals': [],
+                           'has_gsi_proposals': [],
+                           'has_wolff_proposals': [],
                            }
         self.properties = {'beta_schedule_options': ('linear', 'geometric',
                                                      'custom')}
@@ -166,6 +172,9 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                initial_states_generator: InitialStateGenerator = "random",
                randomize_order: bool = False,
                proposal_acceptance_criteria: str = 'Metropolis',
+               has_ss_proposals: bool = True,
+               has_gsi_proposals: bool = False,
+               has_wolff_proposals: bool = False,
                **kwargs) -> dimod.SampleSet:
         r"""Sample from a binary quadratic model.
 
@@ -246,24 +255,59 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
                     states if fewer than ``num_reads`` or truncates if greater.
 
             randomize_order:
-                When `True`, each spin update selects a variable uniformly at random.
-                This method is ergodic, obeys detailed balance and preserves symmetries
-                of the model.
+                When `True`, each single-spin update selects a variable
+                uniformly at random. This method is ergodic, obeys detailed
+                balance, and preserves symmetries of the model.
 
-                When `False`, updates proceed sequentially through the labeled variables
-                on each sweep so that all variables are updated once per sweep. This method:
-
-                * can be non-ergodic in special cases when used with ``proposal_acceptance_critera=="Metropolis"``.
+                When `False`, single-spin updates proceed sequentially through
+                the labeled variables on each sweep so that all variables are
+                updated once per sweep. This method:
 
                 * can introduce a dynamical bias as a function of variable order.
 
-                * has faster per spin update than the True method.
+                * has faster per spin update than the `True` method.
+
+                * when used with ``proposal_acceptance_criteria=="Metropolis"``, 
+                  can be non-ergodic (or realize slow mixing dynamics) at (or
+                  approaching) zero and infinite temperature .
 
             proposal_acceptance_criteria:
-                When "Gibbs", each spin flip proposal is accepted according
+                When "Gibbs", each proposal is accepted according
                 to the Gibbs criteria.
-                When "Metropolis", each spin flip proposal is accepted according
+                When "Metropolis", each proposal is accepted according
                 to the Metropolis-Hastings criteria.
+
+            has_ss_proposals:
+                When `True` (default), single-spin updates are proposed
+                in each sweep using the selected proposal acceptance criteria.
+                When `False`, single-spin flip proposals are not made.
+
+            has_gsi_proposals:
+                When `True`, a global-spin-inversion update is
+                proposed per sweep. When `False` (default), no global inversion
+                proposals are applied. This move is non-ergodic with more than
+                1 spin and should typically be combined with
+                ``has_ss_proposals``. This may accelerate mixing between
+                nearly symmetric states at large Hamming distance (small
+                fields) relative to single spin flip proposals alone. When
+                enabled, the update follows single-spin proposals. Global spin
+                flip proposals are significantly less
+                costly per sweep than the net cost of single-spin proposals.
+
+            has_wolff_proposals:
+                When `True`, a Wolff cluster move is proposed per sweep. A
+                cluster grown from a random seed variable via satisfied bonds is
+                flipped subject to the Metropolis or Gibbs acceptance criteria.
+                When `False` (default), no cluster move is applied. When
+                enabled, the update follows single-spin proposals and global
+                inversion proposals, which can be disabled (for a standard
+                Wolff algorithm) by setting
+                ``has_ss_proposals`` and
+                ``has_gsi_proposals`` to `False`.
+                When appropriate, cluster proposals are typically significantly
+                more costly per sweep than single-spin update proposals. They
+                are known to scalably accelerate mixing in nearly unfrustrated
+                models with small fields.
 
             interrupt_function (function, optional):
                 A function called with no parameters between each sample of
@@ -433,6 +477,9 @@ class SimulatedAnnealingSampler(dimod.Sampler, dimod.Initialized):
             num_sweeps_per_beta, beta_schedule,
             seed, initial_states_array,
             randomize_order, proposal_acceptance_criteria,
+            has_ss_proposals,
+            has_gsi_proposals,
+            has_wolff_proposals,
             interrupt_function)
         timestamp_postprocess = perf_counter_ns()
 
