@@ -16,9 +16,9 @@ authors = [
     {name = "D-Wave", email = "tools@dwavesys.com"},
 ]
 description = "Ocean-compatible collection of solvers/samplers."
-license = {file = "LICENSE"}
+license = "Apache-2.0"
+license-files = ["LICEN[CS]E*"]
 classifiers = [
-    "License :: OSI Approved :: Apache Software License",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX",
     "Operating System :: Unix",
