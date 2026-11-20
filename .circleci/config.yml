@@ -173,10 +173,6 @@ jobs:
     parameters:
       python-version:
         type: string
-      dependency-versions:
-        type: string
-      only-binary:
-        type: string
 
     docker:
       - image: python:<< parameters.python-version >>-slim
@@ -185,13 +181,20 @@ jobs:
       - checkout
       - attach_workspace:
           at: dist
+
       - run:
-          name: install
+          name: select wheel
+          command: |
+            pip download --no-index --no-deps --only-binary=:all: \
+              -f dist --dest /tmp/wheel dwave-samplers
+
+      - run:
+          name: install oldest dependencies
           command: |
             python -m venv env
             . env/bin/activate
-            pip install << parameters.dependency-versions >> --upgrade --only-binary << parameters.only-binary >>
-            pip install dwave-samplers --no-index -f dist/ --no-deps --force-reinstall
+            pip install pip --upgrade
+            pip install --group deps-oldest /tmp/wheel/*.whl
 
       - run: &unix-run-tests
           name: run tests
@@ -201,6 +204,17 @@ jobs:
             pip install --group test
             cd tests
             python -m unittest
+            rm -r ../env
+
+      - run:
+          name: install latest dependencies
+          command: |
+            python -m venv env
+            . env/bin/activate
+            pip install pip --upgrade
+            pip install --upgrade-strategy=eager /tmp/wheel/*.whl
+
+      - run: *unix-run-tests
 
   test-linux-cpp:
     docker:
@@ -276,16 +290,14 @@ workflows:
           requires:
             - build-and-test-linux
       - test-dependencies:
-          name: test-dependencies-python<< matrix.python-version >>-dependencies=<< matrix.dependency-versions >>
+          name: test-dependencies-python<< matrix.python-version >>
           filters: *tags
           requires:
             - build-and-test-linux
           matrix:
             parameters:
-              dependency-versions: [dimod==0.12.21 numpy==2 networkx==3.2, dimod numpy networkx]
               # Skip some of the intermediate Python versions for speed
               python-version: ["3.11", "3.15"]
-              only-binary: ["numpy,dimod,networkx"]
       - test-linux-cpp:
           filters: *tags
       - test-osx-cpp:
