@@ -13,7 +13,7 @@ commands:
         default: ""
       cibw-version:
         type: string
-        default: 4.1.0    # latest as of July 2026
+        default: 4.3.5    # latest as of November 2026
     steps:
       - run:
           name: run cibuildwheel
@@ -60,7 +60,7 @@ jobs:
 
   build-and-test-osx:
     macos:
-      xcode: 26.2.0  # latest as of Jan 2026
+      xcode: 27.3.0   # latest as of November 2026
 
     environment:
       <<: *global-environment
@@ -282,15 +282,10 @@ workflows:
             - build-and-test-linux
           matrix:
             parameters:
-              dependency-versions: [dimod==0.12.21 numpy==2 networkx==3, dimod numpy networkx]
+              dependency-versions: [dimod==0.12.21 numpy==2 networkx==3.2, dimod numpy networkx]
               # Skip some of the intermediate Python versions for speed
-              python-version: ["3.11", "3.14"]
+              python-version: ["3.11", "3.15"]
               only-binary: ["numpy,dimod,networkx"]
-            exclude:
-              # Python 3.14 doesn't support Numpy 2.0
-              - dependency-versions: "dimod==0.12.21 numpy==2 networkx==3"
-                python-version: "3.14"
-                only-binary: "numpy,dimod,networkx"
       - test-linux-cpp:
           filters: *tags
       - test-osx-cpp:
