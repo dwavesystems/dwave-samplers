@@ -2,7 +2,7 @@
 requires = [
     # Same as dependency-groups.build
     "cython~=3.2.0",
-    "dimod==0.12.21",  # oldest dimod that supports Python 3.14
+    "dimod==0.12.21", # oldest we support
     "meson~=1.12.0",  # latest as of November 2026
     "meson-python~=0.19.0",  # latest as of July 2026
     "ninja~=1.13.0",  # latest as of July 2026
@@ -16,27 +16,27 @@ authors = [
     {name = "D-Wave", email = "tools@dwavesys.com"},
 ]
 description = "Ocean-compatible collection of solvers/samplers."
-license = {file = "LICENSE"}
+license = "Apache-2.0"
+license-files = ["LICEN[CS]E*"]
 classifiers = [
-    "License :: OSI Approved :: Apache Software License",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX",
     "Operating System :: Unix",
     "Operating System :: MacOS",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Programming Language :: Python :: 3 :: Only",
     'Programming Language :: Python :: Implementation :: CPython',
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
-    "dimod>=0.12.21,<0.13.0",  # oldest dimod that supports Python 3.14
-    "networkx>=3,<4",
+    "dimod>=0.12.21,<0.13.0",   # oldest we support
+    "networkx>=3.2,<4",         # oldest that supports numpy 2
     "numpy>=2,<3 ",
 ]
 
@@ -61,12 +61,24 @@ build = [
 changelog = [
     "reno==4.1.0",
 ]
+deps-oldest = [
+    "dimod==0.12.21; python_version<'3.15'",    # oldest we support
+    "dimod==0.12.23; python_version>='3.15'",   # first that supports Python 3.15
+
+    "networkx==3.2; python_version<'3.13'",     # oldest we support
+    "networkx==3.4; python_version~='3.13.0'",
+    "networkx==3.6; python_version~='3.14.0'",
+    "networkx==3.7; python_version>='3.15'",    # first that supports Python 3.15
+
+    "numpy==2.0.0; python_version<'3.13'",      # oldest we support
+    "numpy==2.1.0; python_version~='3.13.0'",
+    "numpy==2.3.2; python_version~='3.14.0'",
+    "numpy==2.5.2; python_version>='3.15'",     # first that supports Python 3.15
+]
 dev = [
-    # Install requirements
-    "networkx==3.2.1",
-    "numpy==2.3.3; python_version >= '3.11'",
     {include-group = "build"},
     {include-group = "changelog"},
+    {include-group = "deps-oldest"},
 ]
 docs = [
     "pydata-sphinx-theme==0.16.1",
