@@ -1,0 +1,4 @@
+---
+fixes:
+  - |
+    Fix a crash in ``TabuSampler`` with infinite biases or biases whose sums overflow.

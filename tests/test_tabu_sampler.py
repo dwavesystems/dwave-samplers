@@ -184,6 +184,14 @@ class TestTabuSampler(unittest.TestCase):
         with self.assertRaises(ValueError):
             tabu.TabuSampler().sample(bqm, initial_states=[1, 1])
 
+    def test_infinite_bias(self):
+        bqm = dimod.BinaryQuadraticModel({0: np.inf, 1: 1.0}, {(0, 1): 1.0}, 0, 'SPIN')
+
+        # The Z coefficients keep the first search short, so the restart always runs
+        with self.assertRaisesRegex(RuntimeError, 'cannot select a variable'):
+            tabu.TabuSampler().sample(bqm, num_restarts=1, timeout=1000, coefficient_z_first=1,
+                                      coefficient_z_restart=1, lower_bound_z=1)
+
     def test_soft_num_reads(self):
         """Number of reads adapts to initial_states size, if provided."""
 
