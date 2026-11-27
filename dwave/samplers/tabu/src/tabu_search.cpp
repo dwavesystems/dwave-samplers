@@ -388,7 +388,7 @@ void TabuSearch::selectVariables(int numSelection, vector<vector<double>> &C, ve
             }
         }
         if (selectedVar < 0 || selectedVar > bqp.nVars - 1) {
-            printf("ERROR!!!\n");
+            throw Exception("cannot select a variable, the biases may be infinite or too large to sum");
         }
         I[ctr] = selectedVar;
         selected[selectedVar] = 1;

@@ -115,3 +115,16 @@ class TestTabuSearch(unittest.TestCase):
             init = [1, 1]
             tenure = 3
             search = tabu.TabuSearch(qubo, init, tenure, timeout, restarts)
+
+        # Values in Q that make the restart unable to select a variable. The Z
+        # coefficients keep the first search short, so the restart always runs.
+        short_first_search = dict(coeffZFirst=1, coeffZRestart=1, lowerBoundZ=1)
+
+        # Infinite value in Q
+        with self.assertRaisesRegex(RuntimeError, 'cannot select a variable'):
+            search = tabu.TabuSearch([[np.inf]], [1], 0, 1000, 1, **short_first_search)
+
+        # Finite values in Q whose sums overflow
+        with self.assertRaisesRegex(RuntimeError, 'cannot select a variable'):
+            search = tabu.TabuSearch([[1e308, 1e308], [1e308, 1e308]], [1, 1], 1, 1000, 1,
+                                     **short_first_search)
