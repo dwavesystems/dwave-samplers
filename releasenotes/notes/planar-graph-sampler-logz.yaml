@@ -1,0 +1,11 @@
+---
+features:
+  - |
+    Add ``PlanarGraphSampler``, a companion to ``PlanarGraphSolver`` for planar
+    Ising problems with no linear biases. The sampler draws exact (fair) samples
+    from the Boltzmann distribution at a given inverse temperature (``beta``)
+    using a contraction-tree scheme in which edge-contraction partition
+    functions, computed with the Kasteleyn method, give the conditional
+    probabilities of relative spin orientations. It also returns the log
+    partition function in the sample set's ``info`` field under the key
+    ``'log_partition_function'``.

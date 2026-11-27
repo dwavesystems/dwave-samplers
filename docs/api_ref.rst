@@ -36,6 +36,31 @@ Methods
     ~PlanarGraphSolver.sample_qubo
 
 
+PlanarGraphSampler
+------------------
+
+.. autoclass:: PlanarGraphSampler
+
+Attributes
+~~~~~~~~~~
+
+.. autosummary::
+    :toctree: generated/
+
+    ~PlanarGraphSampler.parameters
+    ~PlanarGraphSampler.properties
+
+Methods
+~~~~~~~
+
+.. autosummary::
+    :toctree: generated/
+
+    ~PlanarGraphSampler.sample
+    ~PlanarGraphSampler.sample_ising
+    ~PlanarGraphSampler.sample_qubo
+
+
 Random
 =======
 
