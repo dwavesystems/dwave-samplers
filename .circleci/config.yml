@@ -249,7 +249,7 @@ jobs:
 
   test-osx-cpp:
     macos:
-      xcode: 26.2.0  # latest as of Jan 2026
+      xcode: 27.3.0  # latest as of November 2026
 
     steps: *cpp-tests
 
